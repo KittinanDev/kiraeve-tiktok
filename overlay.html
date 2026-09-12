@@ -930,8 +930,10 @@ tailwind.config = {
   ws.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
-
-      if (data.type === 'init') {
+      if (data.type === 'refresh_overlays') {
+        window.location.reload();
+        return;
+      } else if (data.type === 'init') {
         if (data.config && data.config.widgets_visibility) applyWidgetVisibility(data.config.widgets_visibility);
         if (data.timer_seconds !== undefined) timerClockEl.innerText = formatTime(data.timer_seconds);
         if (data.top_gifters) renderLeaderboard(data.top_gifters);

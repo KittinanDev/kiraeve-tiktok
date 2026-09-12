@@ -108,6 +108,78 @@ tailwind.config = {
   ::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
+    /* Collapsible / Expanding Sidebar */
+  #main-sidebar {
+    width: 68px;
+    transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-x: hidden;
+  }
+  #main-sidebar:hover, #main-sidebar.pinned {
+    width: 260px;
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+  }
+  #main-sidebar .sidebar-text {
+    opacity: 0;
+    max-width: 0;
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #main-sidebar:hover .sidebar-text, #main-sidebar.pinned .sidebar-text {
+    opacity: 1;
+    max-width: 180px;
+  }
+  #main-sidebar .sidebar-icon-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 32px;
+    flex-shrink: 0;
+  }
+  #main-sidebar:not(:hover):not(.pinned) .submenu {
+    display: none !important;
+  }
+  #main-sidebar:not(:hover):not(.pinned) .category-header {
+    display: none !important;
+  }
+  #main-sidebar:not(:hover):not(.pinned) #sidebar-pin-btn {
+    display: none !important;
+  }
+  #main-sidebar:not(:hover):not(.pinned) #sidebar-update-badge {
+    display: none !important;
+  }
+  #main-sidebar:not(:hover):not(.pinned) .sidebar-footer-expanded {
+    display: none !important;
+  }
+
+  /* Universal Auto-Save Toast */
+  #auto-save-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: rgba(16, 185, 129, 0.95);
+    color: #ffffff;
+    padding: 10px 18px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+    z-index: 99999;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(14px) scale(0.95);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #auto-save-toast.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
   /* Sub-menu Collapsible Animation */
   .submenu {
     max-height: 0;
@@ -203,35 +275,42 @@ tailwind.config = {
 </head>
 <body class="min-h-screen flex text-sm">
 
-<!-- TikFinity Left Sidebar Navigation (Simplified without OBS & Games category) -->
-<aside class="w-64 bg-tik-sidebar border-r border-tik-card-border flex flex-col h-screen fixed left-0 top-0 z-50">
+<!-- TikFinity Left Sidebar Navigation (Collapsible with Smooth Hover & Pin) -->
+<aside id="main-sidebar" class="bg-tik-sidebar border-r border-tik-card-border flex flex-col h-screen fixed left-0 top-0 z-50">
   
   <!-- Kiraeve TikTok App Logo Header -->
-  <div class="px-5 py-4 border-b border-tik-card-border flex items-center gap-3">
-    <div class="relative w-10 h-10 rounded-xl overflow-hidden ring-1 ring-amber-500/30 shadow-sm flex-shrink-0 bg-black flex items-center justify-center">
-      <img src="/media/kiraeve_logo.jpg" alt="Kiraeve Logo" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='media/kiraeve_logo.jpg'">
+  <div class="px-3.5 py-4 border-b border-tik-card-border flex items-center justify-between gap-3 overflow-hidden">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="relative w-10 h-10 rounded-xl overflow-hidden ring-1 ring-amber-500/30 shadow-sm flex-shrink-0 bg-black flex items-center justify-center">
+        <img src="/media/kiraeve_logo.jpg" alt="Kiraeve Logo" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='media/kiraeve_logo.jpg'">
+      </div>
+      <div class="sidebar-text min-w-0">
+        <h1 class="font-semibold text-[15px] tracking-tight text-on-surface flex items-center gap-1.5 truncate">
+          <span>Kiraeve TikTok</span>
+        </h1>
+        <p class="text-[11px] font-medium text-amber-500 tracking-wider uppercase">Live Studio</p>
+      </div>
     </div>
-    <div class="min-w-0">
-      <h1 class="font-semibold text-[15px] tracking-tight text-on-surface flex items-center gap-1.5 truncate">
-        <span>Kiraeve TikTok</span>
-      </h1>
-      <p class="text-[11px] font-medium text-amber-500 tracking-wider uppercase">Live Studio</p>
-    </div>
+    <button id="sidebar-pin-btn" onclick="toggleSidebarPin()" title="Pin / Unpin Sidebar" class="text-on-surface-variant hover:text-amber-500 p-1.5 rounded-lg hover:bg-tik-card transition-colors flex-shrink-0">
+      <span class="material-symbols-outlined text-[18px]" id="sidebar-pin-icon">push_pin</span>
+    </button>
   </div>
 
   <!-- Multi-Level Navigation Menu -->
-  <nav class="p-3 space-y-1 flex-grow overflow-y-auto font-medium text-xs">
+  <nav class="p-2 space-y-1.5 flex-grow overflow-y-auto overflow-x-hidden font-medium text-xs">
     
     <!-- CATEGORY 1: Start & Setup -->
     <div>
-      <button onclick="toggleSubmenu('menu-start', 'start-main')" id="btn-start-main" class="main-nav-btn active w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-tik-card transition-all text-left">
-        <div class="flex items-center gap-2.5">
-          <span class="material-symbols-outlined text-[18px] text-tik-pink" style="font-variation-settings: 'FILL' 1;">home</span>
-          <span class="font-bold text-sm">Start & Setup</span>
+      <button onclick="toggleSubmenu('menu-start', 'start-main')" id="btn-start-main" class="main-nav-btn active w-full flex items-center justify-between px-2.5 py-2.5 rounded-lg text-on-surface-variant hover:bg-tik-card transition-all text-left">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="sidebar-icon-center">
+            <span class="material-symbols-outlined text-[20px] text-tik-pink" style="font-variation-settings: 'FILL' 1;">home</span>
+          </div>
+          <span class="font-bold text-sm sidebar-text">Start & Setup</span>
         </div>
-        <span class="material-symbols-outlined text-[16px] transition-transform duration-200" id="arrow-menu-start">expand_more</span>
+        <span class="material-symbols-outlined text-[16px] transition-transform duration-200 sidebar-text" id="arrow-menu-start">expand_more</span>
       </button>
-      <div id="menu-start" class="submenu open pl-6 space-y-1 mt-1">
+      <div id="menu-start" class="submenu open pl-8 space-y-1 mt-1">
         <button onclick="showSubTab('start-welcome', 'btn-start-welcome')" id="btn-start-welcome" class="sub-nav-btn active w-full text-left px-3 py-2 rounded-md text-on-surface-variant hover:text-white transition-all flex items-center gap-2">
           <span>• Welcome Overview</span>
         </button>
@@ -241,16 +320,18 @@ tailwind.config = {
       </div>
     </div>
 
-    <!-- CATEGORY 2: Overlays & Widgets (REMOVED OBS WORD) -->
-    <div class="pt-2">
-      <button onclick="toggleSubmenu('menu-overlays', 'overlays-all')" id="btn-overlays-all" class="main-nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-tik-card transition-all text-left">
-        <div class="flex items-center gap-2.5">
-          <span class="material-symbols-outlined text-[18px] text-tik-cyan">layers</span>
-          <span class="font-bold text-sm">Overlays & Widgets</span>
+    <!-- CATEGORY 2: Overlays & Widgets -->
+    <div class="pt-1">
+      <button onclick="toggleSubmenu('menu-overlays', 'overlays-all')" id="btn-overlays-all" class="main-nav-btn w-full flex items-center justify-between px-2.5 py-2.5 rounded-lg text-on-surface-variant hover:bg-tik-card transition-all text-left">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="sidebar-icon-center">
+            <span class="material-symbols-outlined text-[20px] text-tik-cyan">layers</span>
+          </div>
+          <span class="font-bold text-sm sidebar-text">Overlays & Widgets</span>
         </div>
-        <span class="material-symbols-outlined text-[16px] transition-transform duration-200" id="arrow-menu-overlays">expand_more</span>
+        <span class="material-symbols-outlined text-[16px] transition-transform duration-200 sidebar-text" id="arrow-menu-overlays">expand_more</span>
       </button>
-      <div id="menu-overlays" class="submenu open pl-6 space-y-1 mt-1">
+      <div id="menu-overlays" class="submenu open pl-8 space-y-1 mt-1">
         <button onclick="showSubTab('overlay-all', 'btn-overlay-all')" id="btn-overlay-all" class="sub-nav-btn w-full text-left px-3 py-2 rounded-md text-on-surface-variant hover:text-white transition-all flex items-center gap-2">
           <span>• All 6 Live Previews</span>
         </button>
@@ -276,15 +357,17 @@ tailwind.config = {
     </div>
 
     <!-- CATEGORY 3: Actions & Sim -->
-    <div class="pt-2">
-      <button onclick="toggleSubmenu('menu-actions', 'actions-main')" id="btn-actions-main" class="main-nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-tik-card transition-all text-left">
-        <div class="flex items-center gap-2.5">
-          <span class="material-symbols-outlined text-[18px] text-tik-emerald">science</span>
-          <span class="font-bold text-sm">Actions & Sim</span>
+    <div class="pt-1">
+      <button onclick="toggleSubmenu('menu-actions', 'actions-main')" id="btn-actions-main" class="main-nav-btn w-full flex items-center justify-between px-2.5 py-2.5 rounded-lg text-on-surface-variant hover:bg-tik-card transition-all text-left">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="sidebar-icon-center">
+            <span class="material-symbols-outlined text-[20px] text-tik-emerald">science</span>
+          </div>
+          <span class="font-bold text-sm sidebar-text">Actions & Sim</span>
         </div>
-        <span class="material-symbols-outlined text-[16px] transition-transform duration-200" id="arrow-menu-actions">expand_more</span>
+        <span class="material-symbols-outlined text-[16px] transition-transform duration-200 sidebar-text" id="arrow-menu-actions">expand_more</span>
       </button>
-      <div id="menu-actions" class="submenu open pl-6 space-y-1 mt-1">
+      <div id="menu-actions" class="submenu open pl-8 space-y-1 mt-1">
         <button onclick="showSubTab('action-simulator', 'btn-action-simulator')" id="btn-action-simulator" class="sub-nav-btn w-full text-left px-3 py-2 rounded-md text-on-surface-variant hover:text-white transition-all flex items-center gap-2">
           <span>• 🧪 Expanded Event Simulator</span>
         </button>
@@ -294,18 +377,20 @@ tailwind.config = {
       </div>
     </div>
 
-    <!-- CATEGORY 4: Sound System -->
-    <div class="pt-2">
-      <button onclick="toggleSubmenu('menu-sounds', 'sounds-main')" id="btn-sounds-main" class="main-nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-tik-card transition-all text-left">
-        <div class="flex items-center gap-2.5">
-          <span class="material-symbols-outlined text-[18px] text-blue-400">volume_up</span>
-          <span class="font-bold text-sm">Sound Alerts</span>
+    <!-- CATEGORY 4: Alerts & Media (Sound & Video Alerts) -->
+    <div class="pt-1">
+      <button onclick="toggleSubmenu('menu-sounds', 'sounds-main')" id="btn-sounds-main" class="main-nav-btn w-full flex items-center justify-between px-2.5 py-2.5 rounded-lg text-on-surface-variant hover:bg-tik-card transition-all text-left">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="sidebar-icon-center">
+            <span class="material-symbols-outlined text-[20px] text-blue-400">notifications_active</span>
+          </div>
+          <span class="font-bold text-sm sidebar-text">Alerts & Media</span>
         </div>
-        <span class="material-symbols-outlined text-[16px] transition-transform duration-200" id="arrow-menu-sounds">expand_more</span>
+        <span class="material-symbols-outlined text-[16px] transition-transform duration-200 sidebar-text" id="arrow-menu-sounds">expand_more</span>
       </button>
-      <div id="menu-sounds" class="submenu open pl-6 space-y-1 mt-1">
+      <div id="menu-sounds" class="submenu open pl-8 space-y-1 mt-1">
         <button onclick="showSubTab('sound-mapping', 'btn-sound-mapping')" id="btn-sound-mapping" class="sub-nav-btn w-full text-left px-3 py-2 rounded-md text-on-surface-variant hover:text-white transition-all flex items-center gap-2">
-          <span>• 🎵 Per-Gift Sounds & Upload</span>
+          <span>• 🔔 Sound & Video Alerts</span>
         </button>
       </div>
     </div>
@@ -313,33 +398,36 @@ tailwind.config = {
   </nav>
 
   <!-- Connection Status + Version Footer -->
-  <div class="p-3 border-t border-tik-card-border bg-tik-sidebar transition-colors space-y-2">
-    <!-- Server Status -->
-    <div class="bg-tik-card px-3 py-2 rounded-lg border border-tik-card-border flex items-center justify-between shadow-sm">
+  <div class="p-2.5 border-t border-tik-card-border bg-tik-sidebar transition-colors space-y-2 overflow-hidden">
+    <!-- Server Status Compact / Expanded -->
+    <div class="bg-tik-card px-2.5 py-2 rounded-lg border border-tik-card-border flex items-center justify-between shadow-sm">
       <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span class="text-[11px] font-mono font-semibold text-on-surface">Local Server</span>
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
+        <span class="text-[11px] font-mono font-semibold text-on-surface sidebar-text">Local Server</span>
       </div>
-      <span class="text-[11px] font-mono text-amber-500 font-semibold">:8765</span>
+      <span class="text-[11px] font-mono text-amber-500 font-semibold sidebar-text">:8765</span>
     </div>
-    <!-- App Version + Update Button -->
-    <div class="flex items-center justify-between px-1">
-      <span class="text-[11px] text-on-surface-variant font-mono flex items-center gap-1">
-        <span class="material-symbols-outlined text-[13px]">package_2</span>
-        <span>v</span><span id="sidebar-app-version">1.0.0</span>
-      </span>
-      <button onclick="openUpdateModal()" id="sidebar-update-btn"
-        class="flex items-center gap-1 text-[11px] font-semibold text-amber-500 hover:text-amber-400 transition-colors group">
-        <span class="material-symbols-outlined text-[14px] group-hover:rotate-180 transition-transform duration-500">autorenew</span>
-        <span>Check Updates</span>
-      </button>
-    </div>
-    <!-- Update Badge (แสดงเมื่อมีอัปเดตพร้อม) -->
-    <div id="sidebar-update-badge" class="hidden bg-amber-500/15 border border-amber-500/30 rounded-lg px-3 py-2 flex items-center gap-2 cursor-pointer" onclick="openUpdateModal()">
-      <span class="material-symbols-outlined text-[15px] text-amber-500 animate-bounce">system_update</span>
-      <div class="flex-1 min-w-0">
-        <p class="text-[11px] font-semibold text-amber-500 truncate">อัปเดตใหม่พร้อมแล้ว!</p>
-        <p class="text-[10px] text-on-surface-variant truncate" id="sidebar-update-version">v1.1.0</p>
+
+    <!-- App Version + Update Button (Expanded) -->
+    <div class="sidebar-footer-expanded space-y-2">
+      <div class="flex items-center justify-between px-1">
+        <span class="text-[11px] text-on-surface-variant font-mono flex items-center gap-1">
+          <span class="material-symbols-outlined text-[13px]">package_2</span>
+          <span>v</span><span id="sidebar-app-version">1.0.5</span>
+        </span>
+        <button onclick="openUpdateModal()" id="sidebar-update-btn"
+          class="flex items-center gap-1 text-[11px] font-semibold text-amber-500 hover:text-amber-400 transition-colors group">
+          <span class="material-symbols-outlined text-[14px] group-hover:rotate-180 transition-transform duration-500">autorenew</span>
+          <span>Check Updates</span>
+        </button>
+      </div>
+      <!-- Update Badge -->
+      <div id="sidebar-update-badge" class="hidden bg-amber-500/15 border border-amber-500/30 rounded-lg px-3 py-2 flex items-center gap-2 cursor-pointer" onclick="openUpdateModal()">
+        <span class="material-symbols-outlined text-[15px] text-amber-500 animate-bounce">system_update</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-[11px] font-semibold text-amber-500 truncate">อัปเดตใหม่พร้อมแล้ว!</p>
+          <p class="text-[10px] text-on-surface-variant truncate" id="sidebar-update-version">v1.0.5</p>
+        </div>
       </div>
     </div>
   </div>
@@ -511,7 +599,7 @@ tailwind.config = {
 
 
 <!-- Main Content Area -->
-<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<div id="main-content-wrapper" class="flex-1 ml-[68px] flex flex-col min-h-screen transition-all duration-300">
 
   <!-- Top Breadcrumb Navigation Bar -->
   <header class="h-16 bg-tik-sidebar border-b border-tik-card-border px-6 flex items-center justify-between sticky top-0 z-40 transition-colors">
@@ -920,7 +1008,7 @@ tailwind.config = {
               <label class="font-bold text-white text-xs block">🗣️ เสียงพากย์ภาษาไทย:</label>
               <select id="tts-voice-select" class="w-full bg-tik-card border border-tik-card-border rounded-lg px-3 py-2 text-xs text-tik-cyan font-bold focus:outline-none focus:border-tik-pink">
                 <option value="th-TH-PremwadeeNeural" selected>th-TH-PremwadeeNeural (ผู้หญิง - เสียงธรรมชาติ)</option>
-                <option value="th-TH-NawatNeural">th-TH-NawatNeural (ผู้ชาย - เสียงนุ่มนวล)</option>
+                
               </select>
             </div>
 
@@ -1073,14 +1161,8 @@ tailwind.config = {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="bg-tik-bg border border-tik-card-border rounded-lg p-4 space-y-2">
-            <label class="font-bold text-white text-xs block">🎨 รูปทรงโหลแก้ว (Jar Style):</label>
-            <select id="jar-style-select" class="w-full bg-tik-card border border-tik-card-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tik-pink">
-              <option value="glass_jar">🫙 Glass Jar (โหลแก้วทรงใสคลาสสิก)</option>
-              <option value="neon_box">📦 Neon Box (กล่องไฟนีออนโมเดิร์น)</option>
-              <option value="transparent">🖼️ Transparent Frame (ไร้ขอบลอยตัว)</option>
-            </select>
-          </div>
+          <!-- Jar Style Locked to Classic Glass Jar -->
+          <input type="hidden" id="jar-style-select" value="glass_jar">
 
           <div class="bg-tik-bg border border-tik-card-border rounded-lg p-4 space-y-2">
             <div class="flex justify-between">
@@ -1149,10 +1231,8 @@ tailwind.config = {
                 <option value="countup">⏱️ Countup (นับเดินหน้า ลดเวลาเมื่อส่งของขวัญ)</option>
               </select>
             </div>
-            <div>
-              <label class="font-bold text-white text-xs block">🛑 เพดานเวลาสูงสุด (Max Seconds Cap):</label>
-              <input type="number" id="timer-max-cap-input" class="w-full bg-tik-bg border border-tik-card-border rounded-lg px-3 py-2 text-xs text-white mt-1 focus:outline-none focus:border-tik-pink" value="86400">
-            </div>
+            <!-- Timer Max Cap Removed (Unlimited / No Ceiling) -->
+            <input type="hidden" id="timer-max-cap-input" value="999999999">
             <div class="bg-tik-pink/10 border border-tik-pink/30 rounded-lg p-3 text-xs text-tik-pink flex items-center gap-2">
               <span class="material-symbols-outlined text-base">info</span>
               <span><strong>ระบบปรับเวลาเฉพาะของขวัญที่ตั้งค่า:</strong> จะเพิ่ม/ลดเวลาเฉพาะรายชื่อของขวัญในตารางด้านล่างเท่านั้น (ไม่เพิ่มตามเหรียญ)</span>
@@ -2445,102 +2525,209 @@ tailwind.config = {
     <!-- SUB-PAGE 4.1: PER-GIFT SOUND ALERTS & MP3 UPLOADER -->
     <div id="tab-sound-mapping" class="tab-content space-y-6">
       
-      <!-- Hidden File Input for Quick Inline Upload -->
-      <input type="file" id="inline-sound-file-input" accept=".mp3,.wav,.ogg,.m4a" class="hidden" onchange="uploadInlineSoundFile(this)">
-
-      <!-- Section 1: Upload Custom Sound MP3 File -->
-      <div class="bg-tik-card border border-tik-card-border rounded-xl p-6 space-y-4">
-        <div class="flex justify-between items-center pb-2 border-b border-tik-card-border">
-          <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-tik-pink text-xl">cloud_upload</span>
-            <h2 class="text-lg font-bold text-white">Upload Custom MP3 Sound Effect</h2>
-          </div>
-          <span class="text-xs text-tik-cyan font-mono">.MP3, .WAV, .OGG, .M4A</span>
+      <!-- Sub-Navigation Header: Sound Alerts vs Video Alerts -->
+      <div class="flex items-center justify-between bg-tik-card border border-tik-card-border rounded-2xl p-2 shadow-sm">
+        <div class="flex items-center gap-2">
+          <button onclick="switchAlertMediaType('sound')" id="subnav-alert-sound" class="alert-media-tab-btn active px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all bg-amber-500 text-black shadow">
+            <span class="material-symbols-outlined text-[18px]">volume_up</span>
+            <span>🎵 เสียงแจ้งเตือน (Sound Alerts)</span>
+          </button>
+          <button onclick="switchAlertMediaType('video')" id="subnav-alert-video" class="alert-media-tab-btn px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all text-on-surface-variant hover:text-on-surface hover:bg-tik-card-subtle">
+            <span class="material-symbols-outlined text-[18px]">movie</span>
+            <span>🎬 วิดีโอแจ้งเตือน (Video Alerts)</span>
+          </button>
         </div>
-
-        <div class="flex flex-col sm:flex-row gap-3 items-center">
-          <input type="file" id="sound-file-input" accept=".mp3,.wav,.ogg,.m4a" class="flex-1 bg-tik-bg border border-tik-card-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tik-pink file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-tik-pink file:text-white hover:file:bg-tik-pink-hover cursor-pointer">
-          <button onclick="uploadCustomSound()" class="bg-tik-pink hover:bg-tik-pink-hover text-white font-bold px-5 py-2.5 rounded-lg text-xs transition-colors flex items-center gap-2 shadow-lg w-full sm:w-auto justify-center">
-            <span class="material-symbols-outlined text-[18px]">upload</span>
-            <span>Upload MP3 Sound</span>
+        <div class="flex items-center gap-2 px-2">
+          <button onclick="stopAllAudioPlayback()" class="bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all">
+            <span class="material-symbols-outlined text-[15px]">stop_circle</span>
+            <span>STOP ALL</span>
           </button>
         </div>
       </div>
 
-      <!-- Section 2: Audio File Library -->
-      <div class="bg-tik-card border border-tik-card-border rounded-xl p-6 space-y-4">
-        <div class="flex justify-between items-center pb-2 border-b border-tik-card-border">
-          <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-tik-amber text-xl">folder_open</span>
-            <h2 class="text-lg font-bold text-white">Audio Files Library (คลังไฟล์เสียงในระบบ)</h2>
+      <!-- ============================================================ -->
+      <!-- PANEL 1: SOUND ALERTS                                         -->
+      <!-- ============================================================ -->
+      <div id="panel-alert-sound" class="space-y-6">
+        <!-- Hidden File Input for Quick Inline Sound Upload -->
+        <input type="file" id="inline-sound-file-input" accept=".mp3,.wav,.ogg,.m4a" class="hidden" onchange="uploadInlineSoundFile(this)">
+
+        <!-- Section 1: Upload Custom Sound MP3 File -->
+        <div class="bg-tik-card border border-tik-card-border rounded-xl p-5 space-y-3">
+          <div class="flex justify-between items-center pb-2 border-b border-tik-card-border">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-tik-pink text-xl">cloud_upload</span>
+              <h2 class="text-base font-bold text-white">Upload Custom MP3 Sound Effect</h2>
+            </div>
+            <span class="text-xs text-tik-cyan font-mono">.MP3, .WAV, .OGG, .M4A</span>
           </div>
-          <div class="flex items-center gap-2">
-            <button onclick="stopAllAudioPlayback()" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/40 px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1">
-              <span class="material-symbols-outlined text-[14px]">stop_circle</span>
-              <span>🛑 STOP SOUNDS</span>
-            </button>
-            <button onclick="loadSoundsList()" class="text-xs text-tik-cyan font-bold hover:underline flex items-center gap-1">
-              <span class="material-symbols-outlined text-[14px]">refresh</span> Refresh Library
+
+          <div class="flex flex-col sm:flex-row gap-3 items-center">
+            <input type="file" id="sound-file-input" accept=".mp3,.wav,.ogg,.m4a" class="flex-1 bg-tik-bg border border-tik-card-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tik-pink file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-tik-pink file:text-white hover:file:bg-tik-pink-hover cursor-pointer">
+            <button onclick="uploadCustomSound()" class="bg-tik-pink hover:bg-tik-pink-hover text-white font-bold px-5 py-2.5 rounded-lg text-xs transition-colors flex items-center gap-2 shadow-lg w-full sm:w-auto justify-center">
+              <span class="material-symbols-outlined text-[18px]">upload</span>
+              <span>Upload MP3 Sound</span>
             </button>
           </div>
         </div>
 
-        <div id="sound-library-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <div class="text-xs text-on-surface-variant py-4 text-center col-span-full">กำลังโหลดคลังไฟล์เสียง...</div>
+        <!-- Section 2: Audio File Library -->
+        <div class="bg-tik-card border border-tik-card-border rounded-xl p-5 space-y-4">
+          <div class="flex justify-between items-center pb-2 border-b border-tik-card-border">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-amber-500 text-xl">folder_open</span>
+              <h2 class="text-base font-bold text-white">Audio Files Library (คลังไฟล์เสียงในระบบ)</h2>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="loadSoundsList()" class="text-xs text-tik-cyan font-bold hover:underline flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">refresh</span> Refresh Library
+              </button>
+            </div>
+          </div>
+
+          <div id="sound-library-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div class="text-xs text-on-surface-variant py-4 text-center col-span-full">กำลังโหลดคลังไฟล์เสียง...</div>
+          </div>
+        </div>
+
+        <!-- Section 3: Per-Gift Sound Alert Mappings Table -->
+        <div class="bg-tik-card border border-tik-card-border rounded-xl p-5 space-y-5">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-tik-card-border">
+            <div>
+              <h2 class="text-base font-bold text-white flex items-center gap-2">
+                <span class="material-symbols-outlined text-emerald-500 text-xl">tune</span>
+                <span>TikTok Per-Gift Sound Alert Mappings</span>
+              </h2>
+              <p class="text-xs text-on-surface-variant mt-0.5">จับคู่ของขวัญ TikTok กับไฟล์เสียง เมื่อผู้ชมส่งของขวัญระบบจะเล่นเสียงตามจำนวนครั้งแบบเรียงคิวต่อเนื่อง (ไม่ทับกัน)</p>
+            </div>
+            <div class="flex gap-2 w-full sm:w-auto">
+              <button onclick="triggerInlineAudioPicker()" class="bg-tik-pink/20 text-tik-pink border border-tik-pink/40 hover:bg-tik-pink/30 px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">upload_file</span>
+                <span>➕ Upload MP3</span>
+              </button>
+              <button onclick="addGiftMappingRow()" class="bg-amber-500 hover:bg-amber-600 text-black font-bold px-3.5 py-2 rounded-lg text-xs flex items-center gap-1.5 shadow">
+                <span class="material-symbols-outlined text-[16px]">add</span>
+                <span>Add Sound Mapping</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="text-on-surface-variant border-b border-tik-card-border">
+                  <th class="pb-3 px-2">TIKTOK GIFT NAME (เลือกของขวัญ)</th>
+                  <th class="pb-3 px-2">MIN COUNT</th>
+                  <th class="pb-3 px-2">ASSIGNED MP3 SOUND FILE</th>
+                  <th class="pb-3 px-2">VOLUME</th>
+                  <th class="pb-3 px-2 text-center">ENABLED</th>
+                  <th class="pb-3 px-2 text-right">ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="gift-mappings-tbody" class="divide-y divide-tik-card-border">
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <!-- Section 3: Per-Gift Sound Alert Mappings Table -->
-      <div class="bg-tik-card border border-tik-card-border rounded-xl p-6 space-y-6">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-tik-card-border">
-          <div>
-            <h2 class="text-lg font-bold text-white flex items-center gap-2">
-              <span class="material-symbols-outlined text-tik-emerald text-xl">tune</span>
-              <span>TikTok Per-Gift Sound Alert Mappings</span>
-            </h2>
-            <p class="text-xs text-on-surface-variant mt-0.5">เลือกของขวัญ TikTok จากรายการดร็อปดาวน์ หรือพิมพ์ชื่อของขวัญเอง และกดเพิ่มไฟล์เสียงได้ทันที</p>
+      <!-- ============================================================ -->
+      <!-- PANEL 2: VIDEO ALERTS (NEW FEATURE)                          -->
+      <!-- ============================================================ -->
+      <div id="panel-alert-video" class="space-y-6 hidden">
+        <!-- Hidden File Input for Video Upload -->
+        <input type="file" id="video-file-input" accept=".mp4,.webm" class="hidden" onchange="uploadVideoFile(this)">
+
+        <!-- Video Alerts Header Card with Browser Source URL -->
+        <div class="bg-tik-card border border-tik-card-border rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-tik-card-border">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-amber-500 text-2xl">movie</span>
+              <div>
+                <h2 class="text-base font-bold text-white">OBS Video Alerts Overlay Setup</h2>
+                <p class="text-xs text-on-surface-variant">คัดลอก Browser Source URL ไปวางใน OBS Studio เพื่อแสดงวิดีโอป๊อปอัป มีม กรีนสกรีนเมื่อมีคนส่งของขวัญ</p>
+              </div>
+            </div>
+            <span class="text-xs text-amber-500 font-mono font-bold bg-amber-500/10 px-2.5 py-1 rounded-md border border-amber-500/30">.MP4, .WEBM (Alpha Supported)</span>
           </div>
-          <div class="flex gap-2 w-full sm:w-auto">
-            <button onclick="stopAllAudioPlayback()" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/40 px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-[16px]">stop_circle</span>
-              <span>🛑 STOP AUDIO</span>
-            </button>
-            <button onclick="triggerInlineAudioPicker()" class="bg-tik-pink/20 text-tik-pink border border-tik-pink/40 hover:bg-tik-pink/30 px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-[16px]">upload_file</span>
-              <span>➕ Upload MP3</span>
-            </button>
-            <button onclick="addGiftMappingRow()" class="bg-tik-cyan/20 text-tik-cyan border border-tik-cyan/40 hover:bg-tik-cyan/30 px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-[16px]">add</span>
-              <span>Add Gift Mapping</span>
-            </button>
-            <button onclick="saveGiftMappings()" class="bg-tik-emerald hover:bg-emerald-400 text-black font-bold px-4 py-2 rounded-lg text-xs transition-colors flex items-center gap-1.5 shadow-lg">
-              <span class="material-symbols-outlined text-[16px]">save</span>
-              <span>Save Mappings</span>
-            </button>
+
+          <div class="space-y-1.5">
+            <label class="text-xs text-on-surface-variant font-medium">OBS Browser Source URL (ขนาดแนะนำ: 1920x1080 หรือตามจอ):</label>
+            <div class="flex gap-2">
+              <input type="text" readonly class="flex-1 bg-tik-bg border border-tik-card-border rounded-lg px-3 py-2 font-mono text-xs text-white" value="http://localhost:8765/overlay_video.html">
+              <button onclick="copyToClipboard('http://localhost:8765/overlay_video.html')" class="bg-amber-500 hover:bg-amber-600 text-black px-4 py-2 rounded-lg font-bold text-xs shadow">COPY URL</button>
+              <a href="http://localhost:8765/overlay_video.html" target="_blank" class="bg-tik-card-border hover:bg-tik-sidebar text-white px-3 py-2 rounded-lg text-xs flex items-center justify-center">
+                <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+              </a>
+            </div>
           </div>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead>
-              <tr class="text-on-surface-variant border-b border-tik-card-border">
-                <th class="pb-3 px-2">TIKTOK GIFT NAME (เลือกของขวัญ)</th>
-                <th class="pb-3 px-2">MIN COUNT</th>
-                <th class="pb-3 px-2">ASSIGNED MP3 SOUND FILE</th>
-                <th class="pb-3 px-2">VOLUME</th>
-                <th class="pb-3 px-2 text-center">ENABLED</th>
-                <th class="pb-3 px-2 text-right">ACTION</th>
-              </tr>
-            </thead>
-            <tbody id="gift-mappings-tbody" class="divide-y divide-tik-card-border">
-            </tbody>
-          </table>
+        <!-- Section: Video Files Library -->
+        <div class="bg-tik-card border border-tik-card-border rounded-xl p-5 space-y-4">
+          <div class="flex justify-between items-center pb-2 border-b border-tik-card-border">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-tik-cyan text-xl">video_library</span>
+              <h2 class="text-base font-bold text-white">Video Files Library (คลังไฟล์วิดีโอ / มีมในระบบ)</h2>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="document.getElementById('video-file-input').click()" class="bg-amber-500 hover:bg-amber-600 text-black px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow">
+                <span class="material-symbols-outlined text-[16px]">upload</span>
+                <span>Upload Video (MP4/WebM)</span>
+              </button>
+              <button onclick="loadVideosList()" class="text-xs text-tik-cyan font-bold hover:underline flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">refresh</span> Refresh Library
+              </button>
+            </div>
+          </div>
+
+          <div id="video-library-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div class="text-xs text-on-surface-variant py-4 text-center col-span-full">กำลังโหลดคลังวิดีโอ...</div>
+          </div>
+        </div>
+
+        <!-- Section: Per-Gift Video Mappings Table -->
+        <div class="bg-tik-card border border-tik-card-border rounded-xl p-5 space-y-5">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-tik-card-border">
+            <div>
+              <h2 class="text-base font-bold text-white flex items-center gap-2">
+                <span class="material-symbols-outlined text-amber-500 text-xl">featured_video</span>
+                <span>TikTok Per-Gift Video Alert Mappings</span>
+              </h2>
+              <p class="text-xs text-on-surface-variant mt-0.5">เลือกของขวัญ TikTok และเลือกวิดีโอที่ต้องการให้เล่นบนจอ OBS ปรับตำแหน่ง ขนาด และระดับเสียงได้ตามต้องการ</p>
+            </div>
+            <div class="flex gap-2 w-full sm:w-auto">
+              <button onclick="addVideoMappingRow()" class="bg-amber-500 hover:bg-amber-600 text-black font-bold px-3.5 py-2 rounded-lg text-xs flex items-center gap-1.5 shadow">
+                <span class="material-symbols-outlined text-[16px]">add</span>
+                <span>Add Video Mapping</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="text-on-surface-variant border-b border-tik-card-border">
+                  <th class="pb-3 px-2">TIKTOK GIFT (ของขวัญ)</th>
+                  <th class="pb-3 px-2">MIN COUNT</th>
+                  <th class="pb-3 px-2">ASSIGNED VIDEO FILE</th>
+                  <th class="pb-3 px-2">POSITION (ตำแหน่ง)</th>
+                  <th class="pb-3 px-2">SCALE</th>
+                  <th class="pb-3 px-2">VOLUME</th>
+                  <th class="pb-3 px-2 text-center">ENABLED</th>
+                  <th class="pb-3 px-2 text-right">ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="video-mappings-tbody" class="divide-y divide-tik-card-border">
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
     </div>
 
-  </main>
+</main>
 </div>
 
 <script>
@@ -2761,59 +2948,58 @@ tailwind.config = {
         else if (section === 'auction' && typeof saveAuctionConfig === 'function') await saveAuctionConfig();
         else if (section === 'gacha' && typeof saveGachaConfig === 'function') await saveGachaConfig();
         else if (section === 'gift_mappings' && typeof saveGiftMappings === 'function') await saveGiftMappings();
+        else if (section === 'gift_video_mappings' && typeof saveVideoMappings === 'function') await saveVideoMappings();
         else if (section === 'timer_mappings' && typeof saveTimerMappings === 'function') await saveTimerMappings();
         else if (section === 'tiktok' && typeof saveTikTokAutoConnectSetting === 'function') await saveTikTokAutoConnectSetting();
         showAutoSaveIndicator();
       } catch (err) {
         console.warn('Auto-save error:', err);
       }
-    }, 600);
+    }, 500);
   }
 
   function showAutoSaveIndicator() {
-    let el = document.getElementById('auto-save-pill');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'auto-save-pill';
-      el.className = 'fixed bottom-4 right-4 bg-emerald-500/90 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 transition-all duration-300 z-50 pointer-events-none opacity-0';
-      el.innerHTML = '<span class="material-symbols-outlined text-[14px]">cloud_done</span><span>บันทึกอัตโนมัติแล้ว</span>';
-      document.body.appendChild(el);
-    }
-    el.style.opacity = '1';
-    el.style.transform = 'translateY(0)';
+    const el = document.getElementById('auto-save-toast');
+    if (!el) return;
+    el.classList.add('show');
     setTimeout(() => {
-      if (el) {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(6px)';
-      }
+      if (el) el.classList.remove('show');
     }, 1800);
   }
 
   document.addEventListener('input', (e) => {
     const target = e.target;
     if (!target) return;
-    if (target.closest('#tab-jar')) triggerAutoSave('jar');
-    else if (target.closest('#tab-timer')) triggerAutoSave('timer');
-    else if (target.closest('#tab-tts')) triggerAutoSave('tts');
-    else if (target.closest('#tab-leaderboard')) triggerAutoSave('leaderboard');
-    else if (target.closest('#tab-auction')) triggerAutoSave('auction');
-    else if (target.closest('#tab-gacha')) triggerAutoSave('gacha');
+    if (target.closest('#tab-jar') || target.closest('#tab-overlay-jar')) triggerAutoSave('jar');
+    else if (target.closest('#tab-timer') || target.closest('#tab-overlay-timer')) triggerAutoSave('timer');
+    else if (target.closest('#tab-tts') || target.closest('#tab-overlay-tts')) triggerAutoSave('tts');
+    else if (target.closest('#tab-leaderboard') || target.closest('#tab-overlay-leaderboard')) triggerAutoSave('leaderboard');
+    else if (target.closest('#tab-auction') || target.closest('#tab-overlay-auction')) triggerAutoSave('auction');
+    else if (target.closest('#tab-gacha') || target.closest('#tab-overlay-gacha')) triggerAutoSave('gacha');
+    else if (target.closest('#tab-sound-mapping')) {
+      if (target.closest('#panel-alert-video')) triggerAutoSave('gift_video_mappings');
+      else triggerAutoSave('gift_mappings');
+    }
+    else if (target.closest('#tab-start-connection')) triggerAutoSave('tiktok');
   });
 
   document.addEventListener('change', (e) => {
     const target = e.target;
     if (!target) return;
-    if (target.closest('#tab-jar')) triggerAutoSave('jar');
-    else if (target.closest('#tab-timer')) triggerAutoSave('timer');
-    else if (target.closest('#tab-tts')) triggerAutoSave('tts');
-    else if (target.closest('#tab-leaderboard')) triggerAutoSave('leaderboard');
-    else if (target.closest('#tab-auction')) triggerAutoSave('auction');
-    else if (target.closest('#tab-gacha')) triggerAutoSave('gacha');
-    else if (target.closest('#tab-sounds')) triggerAutoSave('gift_mappings');
-    else if (target.closest('#tab-tiktok')) triggerAutoSave('tiktok');
+    if (target.closest('#tab-jar') || target.closest('#tab-overlay-jar')) triggerAutoSave('jar');
+    else if (target.closest('#tab-timer') || target.closest('#tab-overlay-timer')) triggerAutoSave('timer');
+    else if (target.closest('#tab-tts') || target.closest('#tab-overlay-tts')) triggerAutoSave('tts');
+    else if (target.closest('#tab-leaderboard') || target.closest('#tab-overlay-leaderboard')) triggerAutoSave('leaderboard');
+    else if (target.closest('#tab-auction') || target.closest('#tab-overlay-auction')) triggerAutoSave('auction');
+    else if (target.closest('#tab-gacha') || target.closest('#tab-overlay-gacha')) triggerAutoSave('gacha');
+    else if (target.closest('#tab-sound-mapping')) {
+      if (target.closest('#panel-alert-video')) triggerAutoSave('gift_video_mappings');
+      else triggerAutoSave('gift_mappings');
+    }
+    else if (target.closest('#tab-start-connection')) triggerAutoSave('tiktok');
   });
 
-  function escapeHtml(str) {
+    function escapeHtml(str) {
     if (str === null || str === undefined) return '';
     return String(str)
       .replace(/&/g, '&amp;')
@@ -2973,7 +3159,7 @@ tailwind.config = {
       'overlay-gacha': { main: 'Overlays & Widgets', sub: 'CS:GO Gacha Reel' },
       'action-simulator': { main: 'Actions & Sim', sub: 'Expanded Event Simulator' },
       'action-logs': { main: 'Actions & Sim', sub: 'Real-Time System Logs' },
-      'sound-mapping': { main: 'Sound Alerts', sub: 'Per-Gift Sounds & Upload' }
+      'sound-mapping': { main: 'Alerts & Media', sub: 'Sound & Video Alerts' }
     };
 
     const info = breadcrumbMap[subTabId] || { main: 'Dashboard', sub: 'Overview' };
@@ -3118,11 +3304,74 @@ tailwind.config = {
     appendLog('💾 บันทึกการตั้งค่า Siri TTS เรียบร้อยแล้ว!');
   }
 
+  // ============================================================
+  // Video Alerts & Library State
+  // ============================================================
+  let availableVideoFiles = [];
+  let currentVideoMappings = [];
+  let currentGiftPickerTarget = null; // { type: 'sound'|'video'|'timer', idx: number }
+  let activeVideoAlert = null;
+
+  // Sidebar Pinning State
+  let isSidebarPinned = false;
+  function toggleSidebarPin() {
+    isSidebarPinned = !isSidebarPinned;
+    const sidebar = document.getElementById('main-sidebar');
+    const wrapper = document.getElementById('main-content-wrapper');
+    const pinIcon = document.getElementById('sidebar-pin-icon');
+    if (isSidebarPinned) {
+      sidebar.classList.add('pinned');
+      if (wrapper) {
+        wrapper.classList.remove('ml-[68px]');
+        wrapper.classList.add('ml-[260px]');
+      }
+      if (pinIcon) pinIcon.style.color = '#f59e0b';
+    } else {
+      sidebar.classList.remove('pinned');
+      if (wrapper) {
+        wrapper.classList.remove('ml-[260px]');
+        wrapper.classList.add('ml-[68px]');
+      }
+      if (pinIcon) pinIcon.style.color = '';
+    }
+  }
+
+  // Switch between Sound Alerts and Video Alerts
+  function switchAlertMediaType(type) {
+    const soundPanel = document.getElementById('panel-alert-sound');
+    const videoPanel = document.getElementById('panel-alert-video');
+    const soundBtn = document.getElementById('subnav-alert-sound');
+    const videoBtn = document.getElementById('subnav-alert-video');
+
+    if (type === 'sound') {
+      if (soundPanel) soundPanel.classList.remove('hidden');
+      if (videoPanel) videoPanel.classList.add('hidden');
+      if (soundBtn) {
+        soundBtn.className = 'alert-media-tab-btn active px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all bg-amber-500 text-black shadow';
+      }
+      if (videoBtn) {
+        videoBtn.className = 'alert-media-tab-btn px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all text-on-surface-variant hover:text-on-surface hover:bg-tik-card-subtle';
+      }
+    } else {
+      if (soundPanel) soundPanel.classList.add('hidden');
+      if (videoPanel) videoPanel.classList.remove('hidden');
+      if (videoBtn) {
+        videoBtn.className = 'alert-media-tab-btn active px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all bg-amber-500 text-black shadow';
+      }
+      if (soundBtn) {
+        soundBtn.className = 'alert-media-tab-btn px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all text-on-surface-variant hover:text-on-surface hover:bg-tik-card-subtle';
+      }
+      loadVideosList();
+    }
+  }
+
+  // Unified Gift Catalog Loader
   async function loadGiftCatalog() {
     try {
       const res = await fetch('/api/gift-catalog');
       const data = await res.json();
       if (data.gifts && data.gifts.length > 0) {
+        allCatalogGifts = data.gifts;
         const t1 = [], t2 = [], t3 = [], t4 = [];
         data.gifts.forEach(g => {
           const c = g.coins || 1;
@@ -3139,107 +3388,180 @@ tailwind.config = {
           { category: "10,000+ Coins (อลังการ)", gifts: t4 }
         ];
         renderGiftMappingsTable();
+        renderVideoMappingsTable();
         renderTimerMappingsTable();
+        populateUniversalGiftSelect(allCatalogGifts);
       }
     } catch(e) { console.error('Catalog load error:', e); }
   }
 
-  function generateFullGiftOptionsHtml(selectedGiftName = '') {
-    const targetName = (selectedGiftName || '').trim().toLowerCase();
+  // Searchable Gift Picker Modal Implementation
+  function openGiftPickerModal(targetType, idx) {
+    currentGiftPickerTarget = { type: targetType, idx: idx };
+    const modal = document.getElementById('gift-picker-modal');
+    const searchInput = document.getElementById('gift-picker-search-input');
+    const customInput = document.getElementById('gift-picker-custom-input');
+    
+    if (modal) modal.classList.remove('hidden');
+    if (searchInput) {
+      searchInput.value = '';
+      setTimeout(() => searchInput.focus(), 50);
+    }
+    if (customInput) customInput.value = '';
+    
+    filterGiftPickerCategory('all');
+  }
 
-    let listToUse = [];
-    if (allCatalogGifts && allCatalogGifts.length > 0) {
-      listToUse = [...allCatalogGifts].sort((a, b) => b.coins - a.coins);
-    } else {
-      listToUse = popularTikTokGifts.flatMap(c => c.gifts);
+  function closeGiftPickerModal() {
+    const modal = document.getElementById('gift-picker-modal');
+    if (modal) modal.classList.add('hidden');
+    currentGiftPickerTarget = null;
+  }
+
+  let activePickerCategory = 'all';
+  function filterGiftPickerCategory(cat) {
+    activePickerCategory = cat;
+    document.querySelectorAll('.gift-picker-chip').forEach(btn => {
+      btn.classList.remove('active', 'bg-amber-500', 'text-black', 'font-bold');
+      btn.classList.add('bg-tik-card', 'border', 'border-tik-card-border', 'text-on-surface');
+    });
+    
+    const chipBtns = document.querySelectorAll('.gift-picker-chip');
+    if (cat === 'all' && chipBtns[0]) {
+      chipBtns[0].classList.add('active', 'bg-amber-500', 'text-black', 'font-bold');
+    } else if (cat === 'small' && chipBtns[1]) {
+      chipBtns[1].classList.add('active', 'bg-amber-500', 'text-black', 'font-bold');
+    } else if (cat === 'med' && chipBtns[2]) {
+      chipBtns[2].classList.add('active', 'bg-amber-500', 'text-black', 'font-bold');
+    } else if (cat === 'big' && chipBtns[3]) {
+      chipBtns[3].classList.add('active', 'bg-amber-500', 'text-black', 'font-bold');
+    } else if (cat === 'mega' && chipBtns[4]) {
+      chipBtns[4].classList.add('active', 'bg-amber-500', 'text-black', 'font-bold');
     }
 
-    const isPreset = listToUse.some(g => g.name.trim().toLowerCase() === targetName);
+    renderGiftPickerGrid();
+  }
 
-    const megaGifts = listToUse.filter(g => g.coins >= 10000);
-    const bigGifts = listToUse.filter(g => g.coins >= 1000 && g.coins < 10000);
-    const medGifts = listToUse.filter(g => g.coins >= 100 && g.coins < 1000);
-    const smallGifts = listToUse.filter(g => g.coins < 100);
+  function filterGiftPickerGifts(query) {
+    renderGiftPickerGrid(query);
+  }
 
-    const renderGroup = (label, gifts) => {
-      if (!gifts || gifts.length === 0) return '';
-      return `
-        <optgroup label="── ${label} ──">
-          ${gifts.map(g => `
-            <option value="${g.name}" ${g.name.trim().toLowerCase() === targetName ? 'selected' : ''}>${g.name} (${g.coins.toLocaleString()} 🪙)</option>
-          `).join('')}
-        </optgroup>
+  function renderGiftPickerGrid(query = '') {
+    const grid = document.getElementById('gift-picker-grid');
+    if (!grid) return;
+
+    let list = (allCatalogGifts && allCatalogGifts.length > 0)
+      ? [...allCatalogGifts]
+      : (popularTikTokGifts ? popularTikTokGifts.flatMap(c => c.gifts) : []);
+
+    // Filter by Category
+    if (activePickerCategory === 'small') list = list.filter(g => (g.coins || 1) < 100);
+    else if (activePickerCategory === 'med') list = list.filter(g => (g.coins || 1) >= 100 && (g.coins || 1) < 1000);
+    else if (activePickerCategory === 'big') list = list.filter(g => (g.coins || 1) >= 1000 && (g.coins || 1) < 10000);
+    else if (activePickerCategory === 'mega') list = list.filter(g => (g.coins || 1) >= 10000);
+
+    // Filter by Query
+    const q = (query || document.getElementById('gift-picker-search-input')?.value || '').trim().toLowerCase();
+    if (q) {
+      list = list.filter(g => (g.name || '').toLowerCase().includes(q));
+    }
+
+    if (list.length === 0) {
+      grid.innerHTML = `
+        <div class="col-span-full py-12 text-center text-on-surface-variant">
+          <span class="material-symbols-outlined text-4xl mb-2 opacity-50">search_off</span>
+          <p class="text-xs">ไม่พบของขวัญที่ตรงกับ "${escapeHtml(q)}"</p>
+          <p class="text-[11px] mt-1 text-amber-500">สามารถพิมพ์ชื่อของขวัญเองในช่อง "พิมพ์ชื่อเอง" ด้านล่างได้เลยครับ</p>
+        </div>
       `;
-    };
-
-    let html = '';
-    html += renderGroup('👑 10,000+ Coins (มหาของขวัญใหญ่)', megaGifts);
-    html += renderGroup('🏎️ 1,000 - 9,999 Coins (ของขวัญใหญ่)', bigGifts);
-    html += renderGroup('🍩 100 - 999 Coins (ของขวัญปานกลาง)', medGifts);
-    html += renderGroup('🌹 1 - 99 Coins (ของขวัญทั่วไป)', smallGifts);
-
-    html += `<optgroup label="── กำหนดเอง ──"><option value="__custom__" ${!isPreset && selectedGiftName ? 'selected' : ''}>✍️ พิมพ์ชื่อของขวัญเอง (Custom)...</option></optgroup>`;
-
-    return html;
-  }
-
-  // Load Audio Sounds Library
-  async function loadSoundsList() {
-    try {
-      await loadGiftCatalog();
-      const res = await fetch('/api/sounds');
-      const data = await res.json();
-      availableSoundFiles = data.sounds || [];
-      renderSoundsLibrary();
-      renderGiftMappingsTable();
-      renderTimerMappingsTable();
-    } catch (e) { console.error(e); }
-  }
-
-  let activeLocalAudio = null;
-  function playAudioPreview(url) {
-    if (activeLocalAudio) {
-      activeLocalAudio.pause();
-      activeLocalAudio.currentTime = 0;
-    }
-    activeLocalAudio = new Audio(url);
-    activeLocalAudio.play().catch(e => {});
-  }
-
-  async function stopAllAudioPlayback() {
-    if (activeLocalAudio) {
-      activeLocalAudio.pause();
-      activeLocalAudio.currentTime = 0;
-      activeLocalAudio = null;
-    }
-    try {
-      await fetch('/api/mock-event', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event_type: 'stop_audio' })
-      });
-    } catch(e) {}
-    appendLog('🛑 สั่งหยุดเล่นเสียงทั้งหมด (Stop All Audio) สำเร็จ!');
-  }
-
-  function renderSoundsLibrary() {
-    const container = document.getElementById('sound-library-list');
-    if (!container) return;
-    if (availableSoundFiles.length === 0) {
-      container.innerHTML = '<div class="text-xs text-on-surface-variant py-4 text-center col-span-full">ยังไม่มีไฟล์เสียงในคลัง</div>';
       return;
     }
-    container.innerHTML = availableSoundFiles.map(s => `
+
+    grid.innerHTML = list.map(g => {
+      const icon = g.icon || `/api/gift-icon?name=${encodeURIComponent(g.name)}`;
+      const coins = g.coins || 1;
+      return `
+        <button type="button" onclick="selectGiftFromModal('${escapeHtml(g.name)}', '${encodeURIComponent(icon)}', ${coins})"
+          class="flex items-center gap-2.5 p-2 rounded-xl bg-tik-card hover:bg-tik-card-subtle border border-tik-card-border hover:border-amber-500 transition-all text-left group">
+          <img src="${icon}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='/api/gift-icon?name=Rose';"
+            class="w-9 h-9 object-contain rounded-lg bg-tik-bg p-1 border border-tik-card-border flex-shrink-0 group-hover:scale-105 transition-transform" alt="${escapeHtml(g.name)}">
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-bold text-on-surface truncate group-hover:text-amber-500 transition-colors">${escapeHtml(g.name)}</p>
+            <p class="text-[10px] text-on-surface-variant font-mono flex items-center gap-1">
+              <span>${coins.toLocaleString()}</span>
+              <span>🪙</span>
+            </p>
+          </div>
+        </button>
+      `;
+    }).join('');
+  }
+
+  function selectGiftFromModal(name, iconUrl, coins) {
+    if (!currentGiftPickerTarget) return;
+    const { type, idx } = currentGiftPickerTarget;
+
+    if (type === 'sound') {
+      if (currentGiftMappings[idx]) {
+        currentGiftMappings[idx].gift_name = name;
+        renderGiftMappingsTable();
+        triggerAutoSave('gift_mappings');
+      }
+    } else if (type === 'video') {
+      if (currentVideoMappings[idx]) {
+        currentVideoMappings[idx].gift_name = name;
+        renderVideoMappingsTable();
+        triggerAutoSave('gift_video_mappings');
+      }
+    } else if (type === 'timer') {
+      if (currentTimerMappings[idx]) {
+        currentTimerMappings[idx].gift_name = name;
+        renderTimerMappingsTable();
+        triggerAutoSave('timer_mappings');
+      }
+    }
+    closeGiftPickerModal();
+  }
+
+  function selectCustomGiftFromModal() {
+    const input = document.getElementById('gift-picker-custom-input');
+    const name = input ? input.value.trim() : '';
+    if (!name) {
+      alert('กรุณาพิมพ์ชื่อของขวัญก่อนครับ');
+      return;
+    }
+    selectGiftFromModal(name, '', 1);
+  }
+
+  // Load Video Files Library
+  async function loadVideosList() {
+    try {
+      const res = await fetch('/api/videos');
+      const data = await res.json();
+      availableVideoFiles = data.videos || [];
+      renderVideosLibrary();
+      renderVideoMappingsTable();
+    } catch(e) { console.error('Error loading video list:', e); }
+  }
+
+  function renderVideosLibrary() {
+    const container = document.getElementById('video-library-list');
+    if (!container) return;
+    if (availableVideoFiles.length === 0) {
+      container.innerHTML = '<div class="text-xs text-on-surface-variant py-4 text-center col-span-full">ยังไม่มีไฟล์วิดีโอในคลัง media/Video</div>';
+      return;
+    }
+    container.innerHTML = availableVideoFiles.map(v => `
       <div class="bg-tik-bg border border-tik-card-border rounded-lg p-3 flex items-center justify-between gap-2">
         <div class="truncate">
-          <div class="font-bold text-white text-xs truncate" title="${s.name}">${s.name}</div>
-          <div class="text-[10px] text-tik-cyan font-mono">${s.size_kb} KB</div>
+          <div class="font-bold text-white text-xs truncate" title="${v.name}">${v.name}</div>
+          <div class="text-[10px] text-amber-500 font-mono">${v.size_mb} MB</div>
         </div>
-        <div class="flex items-center gap-1.5">
-          <button onclick="playAudioPreview('${s.url}')" class="bg-tik-card-border hover:bg-tik-sidebar text-white p-1.5 rounded text-xs flex items-center justify-center" title="Test Sound">
-            <span class="material-symbols-outlined text-[16px] text-tik-emerald">play_arrow</span>
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+          <button onclick="previewVideoAlert('/media/Video/${encodeURIComponent(v.name)}')" class="bg-tik-card-border hover:bg-tik-sidebar text-white p-1.5 rounded text-xs flex items-center justify-center" title="Preview Video">
+            <span class="material-symbols-outlined text-[16px] text-amber-500">play_circle</span>
           </button>
-          <button onclick="deleteSoundFile('${s.name}')" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 p-1.5 rounded text-xs flex items-center justify-center" title="Delete Sound">
+          <button onclick="deleteVideoFile('${v.name}')" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 p-1.5 rounded text-xs flex items-center justify-center" title="Delete Video">
             <span class="material-symbols-outlined text-[16px]">delete</span>
           </button>
         </div>
@@ -3247,55 +3569,188 @@ tailwind.config = {
     `).join('');
   }
 
-  function triggerInlineAudioPicker() {
-    document.getElementById('inline-sound-file-input').click();
-  }
-
-  async function uploadInlineSoundFile(input) {
+  async function uploadVideoFile(input) {
     if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
     const formData = new FormData();
-    formData.append('file', input.files[0]);
+    formData.append('file', file);
 
-    appendLog(`📤 กำลังอัปโหลดไฟล์เสียง "${input.files[0].name}"...`);
+    appendLog(`📤 กำลังอัปโหลดไฟล์วิดีโอ "${file.name}"...`);
     try {
-      const res = await fetch('/api/upload-sound', { method: 'POST', body: formData });
+      const res = await fetch('/api/upload-video', { method: 'POST', body: formData });
       const data = await res.json();
       if (data.ok) {
-        appendLog(`✅ อัปโหลดไฟล์เสียงสำเร็จ: ${data.filename}`);
+        appendLog(`✅ อัปโหลดวิดีโอสำเร็จ: ${data.filename}`);
         input.value = '';
-        await loadSoundsList();
+        await loadVideosList();
       } else {
-        alert('อัปโหลดล้มเหลว: ' + data.error);
+        alert('อัปโหลดวิดีโอล้มเหลว: ' + data.error);
       }
     } catch(e) { alert('Upload error: ' + e); }
   }
 
-  async function uploadCustomSound() {
-    const input = document.getElementById('sound-file-input');
-    if (!input.files || input.files.length === 0) {
-      alert('กรุณาเลือกไฟล์เสียง MP3/WAV ก่อนครับ');
-      return;
-    }
-    await uploadInlineSoundFile(input);
-  }
-
-  async function deleteSoundFile(filename) {
-    if (!confirm(`คุณต้องการลบไฟล์เสียง "${filename}" ใช่หรือไม่?`)) return;
+  async function deleteVideoFile(filename) {
+    if (!confirm(`คุณต้องการลบไฟล์วิดีโอ "${filename}" ใช่หรือไม่?`)) return;
     try {
-      const res = await fetch(`/api/delete-sound?filename=${encodeURIComponent(filename)}`, { method: 'DELETE' });
+      const res = await fetch(`/api/delete-video?filename=${encodeURIComponent(filename)}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.ok) {
-        appendLog(`🗑️ ลบไฟล์เสียง: ${filename}`);
-        await loadSoundsList();
+        appendLog(`🗑️ ลบไฟล์วิดีโอ: ${filename}`);
+        await loadVideosList();
       }
     } catch(e) { console.error(e); }
   }
 
+  function previewVideoAlert(url) {
+    const existing = document.getElementById('video-alert-preview-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'video-alert-preview-modal';
+    modal.className = 'fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4';
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    modal.innerHTML = `
+      <div class="relative max-w-3xl w-full bg-tik-card border border-tik-card-border rounded-2xl overflow-hidden shadow-2xl">
+        <div class="flex items-center justify-between p-3 border-b border-tik-card-border">
+          <span class="text-xs font-bold text-white flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-amber-500 text-[18px]">play_circle</span>
+            <span>Video Alert Preview</span>
+          </span>
+          <button onclick="document.getElementById('video-alert-preview-modal').remove()" class="text-on-surface-variant hover:text-white p-1 rounded-lg">
+            <span class="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+        <div class="aspect-video bg-black flex items-center justify-center">
+          <video src="${url}" autoplay controls class="max-w-full max-h-full object-contain"></video>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  // Render Video Mappings Table
+  function renderVideoMappingsTable() {
+    const tbody = document.getElementById('video-mappings-tbody');
+    if (!tbody) return;
+    if (!currentVideoMappings || currentVideoMappings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="py-4 text-center text-on-surface-variant">ยังไม่มีการตั้งค่าวิดีโอป๊อปอัปเฉพาะของขวัญ กดปุ่ม + Add Video Mapping เพื่อเพิ่ม</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = currentVideoMappings.map((m, idx) => {
+      const videoOptionsHtml = availableVideoFiles.map(v => `
+        <option value="${v.name}" ${v.name === m.video_file ? 'selected' : ''}>${v.name}</option>
+      `).join('');
+
+      const iconUrl = `/api/gift-icon?name=${encodeURIComponent(m.gift_name || 'Rose')}`;
+
+      return `
+        <tr class="hover:bg-tik-bg/40">
+          <td class="py-2.5 px-2">
+            <button type="button" onclick="openGiftPickerModal('video', ${idx})"
+              class="flex items-center gap-2.5 p-1.5 rounded-xl border border-tik-card-border hover:border-amber-500 bg-tik-bg transition-all text-left">
+              <img src="${iconUrl}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='/api/gift-icon?name=Rose';"
+                class="w-7 h-7 object-contain rounded-lg bg-tik-card p-0.5 border border-tik-card-border flex-shrink-0" alt="Gift Icon">
+              <div class="min-w-0">
+                <p class="text-xs font-bold text-white truncate w-28">${escapeHtml(m.gift_name || 'Rose')}</p>
+                <p class="text-[10px] text-amber-500 font-semibold">คลิกเพื่อเปลี่ยน ➔</p>
+              </div>
+            </button>
+          </td>
+          <td class="py-2.5 px-2">
+            <input type="number" min="1" value="${m.min_count || 1}" onchange="updateVideoMappingField(${idx}, 'min_count', parseInt(this.value))"
+              class="bg-tik-bg border border-tik-card-border rounded px-2 py-1 text-xs text-white w-14 text-center focus:outline-none focus:border-amber-500 font-mono">
+          </td>
+          <td class="py-2.5 px-2">
+            <select onchange="updateVideoMappingField(${idx}, 'video_file', this.value)"
+              class="bg-tik-bg border border-tik-card-border rounded px-2 py-1 text-xs text-amber-500 font-mono w-48 focus:outline-none focus:border-amber-500">
+              ${videoOptionsHtml}
+            </select>
+          </td>
+          <td class="py-2.5 px-2">
+            <select onchange="updateVideoMappingField(${idx}, 'position', this.value)"
+              class="bg-tik-bg border border-tik-card-border rounded px-2 py-1 text-xs text-on-surface font-semibold w-28 focus:outline-none focus:border-amber-500">
+              <option value="center" ${m.position === 'center' ? 'selected' : ''}>🎯 กลางจอ</option>
+              <option value="bottom" ${m.position === 'bottom' ? 'selected' : ''}>⬇️ ล่างจอ</option>
+              <option value="top" ${m.position === 'top' ? 'selected' : ''}>⬆️ บนจอ</option>
+              <option value="left" ${m.position === 'left' ? 'selected' : ''}>⬅️ ซ้ายจอ</option>
+              <option value="right" ${m.position === 'right' ? 'selected' : ''}>➡️ ขวาจอ</option>
+              <option value="fullscreen" ${m.position === 'fullscreen' ? 'selected' : ''}>📺 เต็มจอ</option>
+            </select>
+          </td>
+          <td class="py-2.5 px-2">
+            <div class="flex items-center gap-1.5">
+              <input type="range" min="0.3" max="2.0" step="0.1" value="${m.scale !== undefined ? m.scale : 1.0}"
+                oninput="this.nextElementSibling.innerText = Math.round(this.value * 100) + '%'"
+                onchange="updateVideoMappingField(${idx}, 'scale', parseFloat(this.value))" class="w-16 accent-amber-500">
+              <span class="text-[10px] font-mono text-on-surface-variant w-8">${Math.round((m.scale !== undefined ? m.scale : 1.0) * 100)}%</span>
+            </div>
+          </td>
+          <td class="py-2.5 px-2">
+            <div class="flex items-center gap-1.5">
+              <input type="range" min="0" max="1" step="0.05" value="${m.volume !== undefined ? m.volume : 0.8}"
+                oninput="this.nextElementSibling.innerText = Math.round(this.value * 100) + '%'"
+                onchange="updateVideoMappingField(${idx}, 'volume', parseFloat(this.value))" class="w-16 accent-amber-500">
+              <span class="text-[10px] font-mono text-on-surface-variant w-8">${Math.round((m.volume !== undefined ? m.volume : 0.8) * 100)}%</span>
+            </div>
+          </td>
+          <td class="py-2.5 px-2 text-center">
+            <input type="checkbox" ${m.enabled !== false ? 'checked' : ''} onchange="updateVideoMappingField(${idx}, 'enabled', this.checked)" class="toggle-checkbox">
+          </td>
+          <td class="py-2.5 px-2 text-right">
+            <div class="flex items-center justify-end gap-1">
+              <button onclick="previewVideoAlert('/media/Video/' + encodeURIComponent('${m.video_file}'))" class="bg-tik-card-border hover:bg-tik-sidebar text-white px-2 py-1 rounded text-[11px]" title="Preview Video">▶</button>
+              <button onclick="removeVideoMappingRow(${idx})" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 px-2 py-1 rounded text-[11px]" title="Remove Row">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function addVideoMappingRow() {
+    const defaultVid = availableVideoFiles.length > 0 ? availableVideoFiles[0].name : "Homelander Looking at a Big Green Screen.mp4";
+    currentVideoMappings.push({
+      gift_name: "Lion",
+      min_count: 1,
+      video_file: defaultVid,
+      position: "center",
+      scale: 1.0,
+      volume: 0.8,
+      enabled: true
+    });
+    renderVideoMappingsTable();
+    triggerAutoSave('gift_video_mappings');
+  }
+
+  function removeVideoMappingRow(idx) {
+    currentVideoMappings.splice(idx, 1);
+    renderVideoMappingsTable();
+    triggerAutoSave('gift_video_mappings');
+  }
+
+  function updateVideoMappingField(idx, field, value) {
+    if (currentVideoMappings[idx]) {
+      currentVideoMappings[idx][field] = value;
+      triggerAutoSave('gift_video_mappings');
+    }
+  }
+
+  async function saveVideoMappings() {
+    await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ gift_video_mappings: currentVideoMappings })
+    });
+    appendLog('💾 บันทึกการตั้งค่าวิดีโอแจ้งเตือน (Video Alerts) เรียบร้อยแล้ว!');
+  }
+
+  // Render Per-Gift Sound Alert Mappings Table (Updated with Searchable Gift Picker)
   function renderGiftMappingsTable() {
     const tbody = document.getElementById('gift-mappings-tbody');
     if (!tbody) return;
-    if (currentGiftMappings.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-on-surface-variant">ยังไม่มีการตั้งค่าเสียงเฉพาะของขวัญ กดปุ่ม + Add Gift Mapping เพื่อเพิ่ม</td></tr>';
+    if (!currentGiftMappings || currentGiftMappings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-on-surface-variant">ยังไม่มีการตั้งค่าเสียงเฉพาะของขวัญ กดปุ่ม + Add Sound Mapping เพื่อเพิ่ม</td></tr>';
       return;
     }
 
@@ -3304,28 +3759,29 @@ tailwind.config = {
         <option value="${s.name}" ${s.name === m.sound_file ? 'selected' : ''}>${s.name}</option>
       `).join('');
 
-      const giftOptionsHtml = generateFullGiftOptionsHtml(m.gift_name);
-      const isPreset = giftOptionsHtml.includes('selected');
+      const iconUrl = `/api/gift-icon?name=${encodeURIComponent(m.gift_name || 'Rose')}`;
 
       return `
         <tr class="hover:bg-tik-bg/40">
           <td class="py-2.5 px-2">
-            <div class="flex items-center gap-2.5">
-              <img src="/api/gift-icon?name=${encodeURIComponent(m.gift_name || 'Rose')}" id="gift-icon-preview-${idx}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='/api/gift-icon?name=Rose';" class="w-8 h-8 object-contain rounded-lg bg-tik-bg p-1 border border-tik-card-border shrink-0 shadow" alt="Gift Icon">
-              <div class="flex flex-col gap-1">
-                <select onchange="handleGiftDropdownChange(${idx}, this.value)" class="bg-tik-bg border border-tik-card-border rounded px-2 py-1 text-xs text-white font-bold w-48 focus:outline-none focus:border-tik-pink">
-                  ${giftOptionsHtml}
-                </select>
-                <input type="text" id="custom-gift-input-${idx}" value="${m.gift_name || ''}" onchange="updateMappingField(${idx}, 'gift_name', this.value); handleGiftDropdownChange(${idx}, '__custom__')" class="bg-tik-bg border border-tik-card-border rounded px-2 py-1 text-xs text-tik-cyan font-bold w-48 focus:outline-none focus:border-tik-pink ${isPreset ? 'hidden' : ''}" placeholder="พิมพ์ชื่อของขวัญ TikTok...">
+            <button type="button" onclick="openGiftPickerModal('sound', ${idx})"
+              class="flex items-center gap-2.5 p-1.5 rounded-xl border border-tik-card-border hover:border-amber-500 bg-tik-bg transition-all text-left">
+              <img src="${iconUrl}" id="gift-icon-preview-${idx}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='/api/gift-icon?name=Rose';"
+                class="w-7 h-7 object-contain rounded-lg bg-tik-card p-0.5 border border-tik-card-border flex-shrink-0" alt="Gift Icon">
+              <div class="min-w-0">
+                <p class="text-xs font-bold text-white truncate w-32">${escapeHtml(m.gift_name || 'Rose')}</p>
+                <p class="text-[10px] text-amber-500 font-semibold">คลิกเพื่อเปลี่ยน ➔</p>
               </div>
-            </div>
+            </button>
           </td>
           <td class="py-2.5 px-2">
-            <input type="number" min="1" value="${m.min_count || 1}" onchange="updateMappingField(${idx}, 'min_count', parseInt(this.value))" class="bg-tik-bg border border-tik-card-border rounded px-2 py-1 text-xs text-white w-16 text-center focus:outline-none focus:border-tik-pink">
+            <input type="number" min="1" value="${m.min_count || 1}" onchange="updateMappingField(${idx}, 'min_count', parseInt(this.value))"
+              class="bg-tik-bg border border-tik-card-border rounded px-2 py-1 text-xs text-white w-14 text-center focus:outline-none focus:border-amber-500 font-mono">
           </td>
           <td class="py-2.5 px-2">
             <div class="flex items-center gap-1.5">
-              <select onchange="updateMappingField(${idx}, 'sound_file', this.value)" class="bg-tik-bg border border-tik-card-border rounded px-2 py-1 text-xs text-tik-cyan font-mono w-44 focus:outline-none focus:border-tik-pink">
+              <select onchange="updateMappingField(${idx}, 'sound_file', this.value)"
+                class="bg-tik-bg border border-tik-card-border rounded px-2 py-1 text-xs text-tik-cyan font-mono w-44 focus:outline-none focus:border-amber-500">
                 ${soundOptionsHtml}
               </select>
               <button onclick="triggerInlineAudioPicker()" class="bg-tik-pink/20 hover:bg-tik-pink/40 text-tik-pink px-2 py-1 rounded text-xs font-bold flex items-center gap-0.5" title="Upload New MP3 File Direct">
@@ -3334,9 +3790,11 @@ tailwind.config = {
             </div>
           </td>
           <td class="py-2.5 px-2">
-            <div class="flex items-center gap-2">
-              <input type="range" min="0" max="1" step="0.1" value="${m.volume !== undefined ? m.volume : 0.8}" onchange="updateMappingField(${idx}, 'volume', parseFloat(this.value))" class="w-20 accent-tik-pink">
-              <span class="text-[10px] font-mono text-on-surface-variant">${Math.round((m.volume !== undefined ? m.volume : 0.8) * 100)}%</span>
+            <div class="flex items-center gap-1.5">
+              <input type="range" min="0" max="1" step="0.05" value="${m.volume !== undefined ? m.volume : 0.8}"
+                oninput="this.nextElementSibling.innerText = Math.round(this.value * 100) + '%'"
+                onchange="updateMappingField(${idx}, 'volume', parseFloat(this.value))" class="w-16 accent-tik-pink">
+              <span class="text-[10px] font-mono text-on-surface-variant w-8">${Math.round((m.volume !== undefined ? m.volume : 0.8) * 100)}%</span>
             </div>
           </td>
           <td class="py-2.5 px-2 text-center">
@@ -3418,21 +3876,19 @@ tailwind.config = {
     }
 
     tbody.innerHTML = currentTimerMappings.map((m, idx) => {
-      const giftOptionsHtml = generateFullGiftOptionsHtml(m.gift_name);
-      const isPreset = giftOptionsHtml.includes('selected');
-
+      const iconUrl = `/api/gift-icon?name=${encodeURIComponent(m.gift_name || 'Rose')}`;
       return `
         <tr class="hover:bg-tik-bg/40">
           <td class="py-2.5 px-2">
-            <div class="flex items-center gap-2.5">
-              <img src="/api/gift-icon?name=${encodeURIComponent(m.gift_name || 'Rose')}" id="timer-gift-icon-preview-${idx}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='/api/gift-icon?name=Rose';" class="w-8 h-8 object-contain rounded-lg bg-tik-bg p-1 border border-tik-card-border shrink-0 shadow" alt="Gift Icon">
-              <div class="flex flex-col gap-1">
-                <select onchange="handleTimerGiftDropdownChange(${idx}, this.value)" class="bg-tik-bg border border-tik-card-border rounded px-2 py-1 text-xs text-white font-bold w-48 focus:outline-none focus:border-tik-pink">
-                  ${giftOptionsHtml}
-                </select>
-                <input type="text" id="custom-timer-gift-input-${idx}" value="${m.gift_name || ''}" onchange="updateTimerMappingField(${idx}, 'gift_name', this.value); handleTimerGiftDropdownChange(${idx}, '__custom__')" class="bg-tik-bg border border-tik-card-border rounded px-2 py-1 text-xs text-tik-cyan font-bold w-48 focus:outline-none focus:border-tik-pink ${isPreset ? 'hidden' : ''}" placeholder="พิมพ์ชื่อของขวัญ TikTok...">
+            <button type="button" onclick="openGiftPickerModal('timer', ${idx})"
+              class="flex items-center gap-2.5 p-1.5 rounded-xl border border-tik-card-border hover:border-amber-500 bg-tik-bg transition-all text-left">
+              <img src="${iconUrl}" id="timer-gift-icon-preview-${idx}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='/api/gift-icon?name=Rose';"
+                class="w-7 h-7 object-contain rounded-lg bg-tik-card p-0.5 border border-tik-card-border flex-shrink-0" alt="Gift Icon">
+              <div class="min-w-0">
+                <p class="text-xs font-bold text-white truncate w-32">${escapeHtml(m.gift_name || 'Rose')}</p>
+                <p class="text-[10px] text-amber-500 font-semibold">คลิกเพื่อเปลี่ยน ➔</p>
               </div>
-            </div>
+            </button>
           </td>
           <td class="py-2.5 px-2">
             <select onchange="updateTimerMappingField(${idx}, 'action', this.value)" class="bg-tik-bg border border-tik-card-border rounded px-2 py-1 text-xs font-bold ${m.action === 'subtract' ? 'text-red-400' : 'text-tik-emerald'} w-36 focus:outline-none focus:border-tik-pink">
@@ -3728,6 +4184,11 @@ tailwind.config = {
       }
       if (data.gift_sound_mappings) {
         currentGiftMappings = data.gift_sound_mappings;
+        renderGiftMappingsTable();
+      }
+      if (data.gift_video_mappings) {
+        currentVideoMappings = data.gift_video_mappings;
+        renderVideoMappingsTable();
       }
       if (data.tts_config) {
         ttsCurrentConfig = { ...ttsCurrentConfig, ...data.tts_config };
@@ -4546,6 +5007,7 @@ tailwind.config = {
       },
       timer_gift_mappings: currentTimerMappings,
       gift_sound_mappings: currentGiftMappings,
+      gift_video_mappings: currentVideoMappings,
       tts_config: ttsCurrentConfig
     };
     await fetch('/api/config', {
@@ -4905,18 +5367,7 @@ tailwind.config = {
     } catch (e) { appendLog('❌ เกิดข้อผิดพลาด: ' + e); }
   }
 
-  let allCatalogGifts = [];
-
-  async function loadGiftCatalog() {
-    try {
-      const res = await fetch('/api/gift-catalog');
-      const data = await res.json();
-      allCatalogGifts = data.gifts || [];
-      populateUniversalGiftSelect(allCatalogGifts);
-    } catch(e) {
-      console.error('Error loading gift catalog:', e);
-    }
-  }
+// (Duplicate loadGiftCatalog consolidated at top)
 
   function populateUniversalGiftSelect(gifts) {
     const selectEl = document.getElementById('uni-gift-select');
@@ -5277,5 +5728,71 @@ tailwind.config = {
     }, 200);
   }
 </script>
+<!-- ============================================================ -->
+<!-- Searchable TikTok Gift Picker Modal                            -->
+<!-- ============================================================ -->
+<div id="gift-picker-modal" class="fixed inset-0 z-[99999] flex items-center justify-center hidden"
+  style="background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);">
+  <div class="w-full max-w-2xl mx-4 rounded-2xl border border-tik-card-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+    style="background: var(--bg-sidebar);">
+    
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between px-5 py-4 border-b border-tik-card-border bg-tik-card">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500 flex-shrink-0">
+          <span class="material-symbols-outlined text-[20px]">featured_play_list</span>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-on-surface">เลือกของขวัญ TikTok (TikTok Gift Picker)</h2>
+          <p class="text-[11px] text-on-surface-variant">ค้นหาของขวัญ พิมพ์ชื่อเอง หรือเลือกจากหมวดหมู่เหรียญ</p>
+        </div>
+      </div>
+      <button onclick="closeGiftPickerModal()" class="text-on-surface-variant hover:text-on-surface transition-colors p-1 rounded-lg hover:bg-tik-card-subtle">
+        <span class="material-symbols-outlined text-[22px]">close</span>
+      </button>
+    </div>
+
+    <!-- Modal Search & Custom Input Bar -->
+    <div class="p-4 border-b border-tik-card-border bg-tik-card-subtle/50 space-y-3">
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-3.5 top-2.5 text-on-surface-variant text-[18px]">search</span>
+        <input type="text" id="gift-picker-search-input" oninput="filterGiftPickerGifts(this.value)" placeholder="ค้นหาชื่อของขวัญ เช่น Rose, Donut, Lion, หมวก, ยูนิคอร์น..." class="w-full bg-tik-bg border border-tik-card-border rounded-xl pl-10 pr-4 py-2.5 text-xs text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-amber-500 shadow-inner">
+      </div>
+
+      <!-- Quick Category Chips -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]" id="gift-picker-category-chips">
+        <button onclick="filterGiftPickerCategory('all')" class="gift-picker-chip active px-3 py-1 rounded-full font-bold bg-amber-500 text-black transition-all">ทั้งหมด (All)</button>
+        <button onclick="filterGiftPickerCategory('small')" class="gift-picker-chip px-3 py-1 rounded-full font-medium bg-tik-card border border-tik-card-border text-on-surface hover:border-amber-500 transition-all">1 - 99 🪙</button>
+        <button onclick="filterGiftPickerCategory('med')" class="gift-picker-chip px-3 py-1 rounded-full font-medium bg-tik-card border border-tik-card-border text-on-surface hover:border-amber-500 transition-all">100 - 999 🪙</button>
+        <button onclick="filterGiftPickerCategory('big')" class="gift-picker-chip px-3 py-1 rounded-full font-medium bg-tik-card border border-tik-card-border text-on-surface hover:border-amber-500 transition-all">1,000 - 9,999 🪙</button>
+        <button onclick="filterGiftPickerCategory('mega')" class="gift-picker-chip px-3 py-1 rounded-full font-medium bg-tik-card border border-tik-card-border text-on-surface hover:border-amber-500 transition-all">10,000+ 🪙</button>
+      </div>
+    </div>
+
+    <!-- Modal Gift Grid -->
+    <div class="p-4 flex-1 overflow-y-auto">
+      <div id="gift-picker-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- Modal Footer: Custom Name Fallback -->
+    <div class="px-5 py-3 border-t border-tik-card-border bg-tik-card flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2 flex-1 min-w-0">
+        <span class="text-xs text-on-surface-variant font-medium flex-shrink-0">พิมพ์ชื่อเอง:</span>
+        <input type="text" id="gift-picker-custom-input" placeholder="พิมพ์ชื่อของขวัญเอง เช่น Heart Me..." class="bg-tik-bg border border-tik-card-border rounded-lg px-3 py-1.5 text-xs text-on-surface flex-1 focus:outline-none focus:border-amber-500">
+        <button onclick="selectCustomGiftFromModal()" class="bg-tik-card hover:bg-tik-card-subtle text-amber-500 border border-amber-500/40 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex-shrink-0">ใช้ชื่อนี้</button>
+      </div>
+      <button onclick="closeGiftPickerModal()" class="text-xs font-semibold text-on-surface-variant hover:text-on-surface px-3 py-1.5">ยกเลิก</button>
+    </div>
+
+  </div>
+</div>
+
+<div id="auto-save-toast">
+  <span class="material-symbols-outlined text-[16px]">cloud_done</span>
+  <span>บันทึกอัตโนมัติเรียบร้อย</span>
+</div>
+
 </body>
 </html>

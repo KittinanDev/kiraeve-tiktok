@@ -171,7 +171,6 @@
             <span class="material-symbols-outlined text-purple-400 text-lg" style="font-variation-settings: 'FILL' 1;">gavel</span>
           </div>
           <div class="flex flex-col min-w-0">
-            <span class="text-[10px] font-black uppercase tracking-wider text-purple-400 leading-none">TikTok Live Auction</span>
             <h2 id="auc-title-el" class="font-black text-sm text-white truncate max-w-[240px] mt-0.5 leading-snug">
               ประมูล: ร้องเพลงตามใจผู้ชนะ
             </h2>
@@ -586,34 +585,34 @@
   }
 
   function renderContenders(topList, highestCoins) {
-    const contenders = topList.slice(1, 3);
+    const contenders = topList.slice(1, 5);
     if (contenders.length === 0) {
       contendersContainer.innerHTML = `
         <div class="col-span-2 bg-white/[0.02] border border-white/5 rounded-xl py-2 px-3 flex items-center justify-center text-xs text-gray-500 gap-2">
           <span>⚔️</span>
-          <span>รอผู้ท้าชิงอันดับ 2 และ 3 เข้าแข่งขัน...</span>
+          <span>รอผู้ท้าชิงอันดับ 2 - 5 เข้าแข่งขัน...</span>
         </div>
       `;
       return;
     }
 
-    const medals = ['🥈', '🥉'];
-    const borders = ['border-slate-300', 'border-amber-600'];
+    const rankBadges = ['🥈 #2', '🥉 #3', '4️⃣ #4', '5️⃣ #5'];
+    const borders = ['border-slate-300', 'border-amber-600', 'border-purple-400', 'border-cyan-400'];
 
     let html = '';
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 4; i++) {
       const c = contenders[i];
       if (c) {
         const gap = highestCoins - c.coins;
         html += `
           <div class="bg-white/[0.03] border border-white/10 rounded-xl p-2 flex items-center justify-between min-w-0">
-            <div class="flex items-center gap-2 min-w-0">
-              <span class="text-sm shrink-0">${medals[i]}</span>
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="text-[11px] font-black shrink-0 text-gray-300">${rankBadges[i]}</span>
               <div class="shrink-0">
-                ${renderAvatarHtml(c.profile_picture, c.sender, 28, 'border ' + borders[i])}
+                ${renderAvatarHtml(c.profile_picture, c.sender, 24, 'border ' + borders[i])}
               </div>
               <div class="flex flex-col min-w-0">
-                <span class="text-xs font-bold text-white truncate max-w-[85px] leading-tight">
+                <span class="text-xs font-bold text-white truncate max-w-[75px] leading-tight">
                   ${escapeHtml(c.sender)}
                 </span>
                 <span class="text-[9px] text-gray-400 font-mono leading-none mt-0.5">
@@ -622,15 +621,15 @@
               </div>
             </div>
             <span class="font-mono text-xs font-extrabold text-emerald-400 shrink-0">
-              ${c.coins.toLocaleString()} 🪙
+              ${c.coins.toLocaleString()}
             </span>
           </div>
         `;
       } else {
         html += `
           <div class="bg-white/[0.01] border border-white/5 rounded-xl p-2 flex items-center gap-2 text-xs text-gray-600">
-            <span class="text-sm opacity-60">${medals[i]}</span>
-            <span class="truncate">รอผู้ท้าชิง...</span>
+            <span class="text-xs opacity-60">${rankBadges[i]}</span>
+            <span class="truncate text-[11px]">รอผู้ท้าชิง...</span>
           </div>
         `;
       }
@@ -818,6 +817,10 @@
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        if (data.type === 'refresh_overlays') {
+          window.location.reload();
+          return;
+        }
         if (data.type === 'auction_dismiss_winner') {
           dismissWinner(true);
           if (data.auction) {

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kiraeve Video Alerts Overlay</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    background: transparent;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #video-container {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    opacity: 0;
+  }
+
+  #video-container.visible {
+    opacity: 1;
+  }
+
+  /* Positions */
+  #video-container.pos-center {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  #video-container.pos-top {
+    top: 10%;
+    left: 50%;
+    transform: translate(-50%, 0);
+  }
+
+  #video-container.pos-bottom {
+    bottom: 10%;
+    left: 50%;
+    transform: translate(-50%, 0);
+  }
+
+  #video-container.pos-left {
+    top: 50%;
+    left: 10%;
+    transform: translate(0, -50%);
+  }
+
+  #video-container.pos-right {
+    top: 50%;
+    right: 10%;
+    transform: translate(0, -50%);
+  }
+
+  #video-container.pos-fullscreen {
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    transform: none;
+  }
+
+  video {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 25px rgba(0,0,0,0.65));
+  }
+
+  #video-container.pos-fullscreen video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+</style>
+</head>
+<body>
+
+<div id="video-container" class="pos-center">
+  <video id="alert-video" playsinline></video>
+</div>
+
+<script>
+  const videoContainer = document.getElementById('video-container');
+  const alertVideo = document.getElementById('alert-video');
+
+  const videoQueue = [];
+  let isPlaying = false;
+
+  function enqueueVideo(videoData) {
+    if (!videoData || !videoData.url) return;
+    videoQueue.push(videoData);
+    if (!isPlaying) {
+      playNextVideo();
+    }
+  }
+
+  function playNextVideo() {
+    if (videoQueue.length === 0) {
+      isPlaying = false;
+      return;
+    }
+
+    isPlaying = true;
+    const current = videoQueue.shift();
+
+    videoContainer.className = '';
+    const pos = current.position || 'center';
+    videoContainer.classList.add('pos-' + pos);
+
+    const scale = current.scale !== undefined ? current.scale : 1.0;
+    alertVideo.style.transform = 'scale(' + scale + ')';
+
+    alertVideo.volume = current.volume !== undefined ? Math.max(0, Math.min(1, current.volume)) : 1.0;
+    alertVideo.src = current.url;
+
+    alertVideo.onloadedmetadata = () => {
+      alertVideo.play().then(() => {
+        videoContainer.classList.add('visible');
+      }).catch(err => {
+        console.warn('Auto-play blocked or video failed:', err);
+        finishVideo();
+      });
+    };
+
+    alertVideo.onended = () => {
+      finishVideo();
+    };
+
+    alertVideo.onerror = () => {
+      console.warn('Video failed to load:', current.url);
+      finishVideo();
+    };
+  }
+
+  function finishVideo() {
+    videoContainer.classList.remove('visible');
+    setTimeout(() => {
+      alertVideo.pause();
+      alertVideo.src = '';
+      setTimeout(() => {
+        playNextVideo();
+      }, 200);
+    }, 300);
+  }
+
+  function connectWebSocket() {
+    const WS_URL = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws';
+    const ws = new WebSocket(WS_URL);
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'refresh_overlays') {
+          window.location.reload();
+          return;
+        }
+
+        if (data.type === 'gift' && data.video_effect) {
+          enqueueVideo(data.video_effect);
+        } else if (data.type === 'video_alert') {
+          enqueueVideo(data);
+        }
+      } catch(e) {}
+    };
+
+    ws.onclose = () => {
+      setTimeout(connectWebSocket, 1500);
+    };
+
+    ws.onerror = () => {
+      try { ws.close(); } catch(e){}
+    };
+  }
+
+  connectWebSocket();
+</script>
+</body>
+</html>

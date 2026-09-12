@@ -338,6 +338,10 @@
   ws.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
+      if (data.type === 'refresh_overlays') {
+        window.location.reload();
+        return;
+      }
       if (data.type === 'init' && data.config) {
         if (data.config.tts_config) {
           ttsConfig = { ...ttsConfig, ...data.config.tts_config };

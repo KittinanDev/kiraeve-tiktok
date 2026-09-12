@@ -217,6 +217,10 @@
       if (isWarning) return; // Keep static warning demo state intact
       try {
         const data = JSON.parse(event.data);
+        if (data.type === 'refresh_overlays') {
+          window.location.reload();
+          return;
+        }
         if (data.type === 'init') {
           if (data.timer_initial_seconds) initialSeconds = data.timer_initial_seconds;
           if (data.timer_max_seconds) maxSeconds = data.timer_max_seconds;

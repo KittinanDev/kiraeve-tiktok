@@ -84,6 +84,8 @@ MEDIA_DIR = BASE_DIR / "media"
 MEDIA_DIR.mkdir(exist_ok=True)
 SOUNDEFFECT_DIR = BASE_DIR / "Soundeffect"
 SOUNDEFFECT_DIR.mkdir(exist_ok=True)
+VIDEO_DIR = BASE_DIR / "media" / "Video"
+VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 
 GIFT_CACHE_PATH = BASE_DIR / "gift_cache.json"
 
@@ -162,6 +164,9 @@ DEFAULT_CONFIG = {
     "gift_sound_mappings": [
         { "gift_name": "Rose", "min_count": 1, "sound_file": "dragon-studio-pop-402324.mp3", "volume": 0.8, "enabled": True },
         { "gift_name": "Lion", "min_count": 1, "sound_file": "roesisch-applause-01-253125.mp3", "volume": 1.0, "enabled": True }
+    ],
+    "gift_video_mappings": [
+        { "gift_name": "Lion", "min_count": 1, "video_file": "Homelander Looking at a Big Green Screen.mp4", "position": "center", "scale": 1.0, "volume": 1.0, "enabled": True }
     ],
     "widgets_visibility": {
         "tts": True,
@@ -278,7 +283,10 @@ def get_real_gift_icon(gift_name: str) -> str:
     for k, v in GIFT_ICONS_MAP.items():
         if k == name_lower:
             return v
-    return ""
+    for k, v in GIFT_ICONS_MAP.items():
+        if name_lower in k or k in name_lower:
+            return v
+    return REAL_TIKTOK_GIFT_ICONS.get("rose", "")
 
 def filter_tts_text(text: str, blacklisted_words: List[str], max_length: int = 100) -> Optional[str]:
     if not text:
@@ -519,7 +527,7 @@ class TikFinityAuctionState:
             "timestamp": time.strftime("%H:%M:%S")
         })
 
-        top_bidders = self.get_top_bidders(3)
+        top_bidders = self.get_top_bidders(5)
         highest = top_bidders[0] if top_bidders else {"sender": "-", "coins": 0, "profile_picture": ""}
 
         target_reached = False
@@ -544,7 +552,7 @@ class TikFinityAuctionState:
             "remaining_seconds": self.remaining_seconds
         }
 
-    def get_top_bidders(self, count: int = 3) -> List[dict]:
+    def get_top_bidders(self, count: int = 5) -> List[dict]:
         sorted_bids = sorted(self.bids.items(), key=lambda x: x[1], reverse=True)
         return [
             {
@@ -589,7 +597,7 @@ class TikFinityAuctionState:
         self.last_extended = False
 
     def to_dict(self) -> dict:
-        top_bidders = self.get_top_bidders(3)
+        top_bidders = self.get_top_bidders(5)
         highest = top_bidders[0] if top_bidders else {"sender": "-", "coins": 0, "profile_picture": ""}
         return {
             "title": self.title,
@@ -1017,9 +1025,81 @@ async def handle_delete_sound(request: web.Request) -> web.Response:
     except Exception as e:
         return web.json_response({"ok": False, "error": str(e)}, status=500)
 
+async def handle_list_videos(request: web.Request) -> web.Response:
+    videos = []
+    if VIDEO_DIR.exists():
+        for p in VIDEO_DIR.glob("*.*"):
+            if p.suffix.lower() in [".mp4", ".webm", ".mov"]:
+                videos.append({
+                    "name": p.name,
+                    "url": f"/media/Video/{urllib.parse.quote(p.name)}",
+                    "size_mb": round(p.stat().st_size / (1024 * 1024), 2)
+                })
+    return web.json_response({"videos": sorted(videos, key=lambda x: x["name"])})
+
+async def handle_upload_video(request: web.Request) -> web.Response:
+    try:
+        reader = await request.multipart()
+        field = await reader.next()
+        if not field or field.name != 'file':
+            return web.json_response({"ok": False, "error": "Missing file field"}, status=400)
+        
+        filename = field.filename
+        if not filename or not any(filename.lower().endswith(ext) for ext in ['.mp4', '.webm', '.mov']):
+            return web.json_response({"ok": False, "error": "Only video files (.mp4, .webm, .mov) are allowed"}, status=400)
+        
+        safe_filename = re.sub(r'[^\w\.-]', '_', filename)
+        file_path = VIDEO_DIR / safe_filename
+        
+        size = 0
+        with open(file_path, 'wb') as f:
+            while True:
+                chunk = await field.read_chunk()
+                if not chunk:
+                    break
+                size += len(chunk)
+                f.write(chunk)
+                
+        log.info("Uploaded custom video: %s (%d bytes)", safe_filename, size)
+        return web.json_response({
+            "ok": True, 
+            "message": f"Successfully uploaded {safe_filename}", 
+            "filename": safe_filename,
+            "url": f"/media/Video/{urllib.parse.quote(safe_filename)}"
+        })
+    except Exception as e:
+        log.error("Upload video error: %s", e)
+        return web.json_response({"ok": False, "error": str(e)}, status=500)
+
+async def handle_delete_video(request: web.Request) -> web.Response:
+    try:
+        filename = request.query.get("filename", "").strip()
+        if not filename:
+            return web.json_response({"ok": False, "error": "Missing filename"}, status=400)
+        
+        safe_filename = Path(filename).name
+        target = VIDEO_DIR / safe_filename
+        if target.exists() and target.is_file():
+            target.unlink()
+            log.info("Deleted video file: %s", safe_filename)
+            return web.json_response({"ok": True, "message": f"Deleted {safe_filename}"})
+        else:
+            return web.json_response({"ok": False, "error": "File not found"}, status=404)
+    except Exception as e:
+        return web.json_response({"ok": False, "error": str(e)}, status=500)
+
+async def handle_overlay_video(request: web.Request) -> web.Response:
+    path = BASE_DIR / "overlay_video.html"
+    if path.exists():
+        with open(path, "r", encoding="utf-8") as f:
+            return web.Response(text=f.read(), content_type="text/html")
+    return web.Response(status=404, text="overlay_video.html not found")
+
 async def handle_tts_audio(request: web.Request) -> web.Response:
     text = request.query.get("text", "").strip()
     voice = request.query.get("voice", "th-TH-PremwadeeNeural")
+    if "nawat" in voice.lower() or "niwat" in voice.lower():
+        voice = "th-TH-PremwadeeNeural"
     speed = request.query.get("speed", "+0%").strip()
 
     if not text:
@@ -1127,16 +1207,10 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                 added_seconds = calculate_timer_gift_addition(gift_name, count, timer_mappings)
 
                 if added_seconds != 0:
-                    max_cap = int(timer_cfg.get("max_seconds_cap") or timer_cfg.get("max_seconds") or 86400)
-                    timer_state.max_seconds = max_cap
                     if timer_state.mode == "countdown":
-                        timer_state.seconds += added_seconds
-                        if timer_state.seconds > max_cap:
-                            timer_state.seconds = max_cap
-                        if timer_state.seconds < 0:
-                            timer_state.seconds = 0
+                        timer_state.seconds = max(0, timer_state.seconds + added_seconds)
                     else:
-                        timer_state.seconds = max(0, min(max_cap, timer_state.seconds - added_seconds))
+                        timer_state.seconds = max(0, timer_state.seconds - added_seconds)
                     log_entry = timer_state.record_change(sender, gift_name, count, added_seconds, timer_state.seconds, icon_url)
                     log.info("⏱️ Timer updated by '%s': added=%ds, new_total=%ds", gift_name, added_seconds, timer_state.seconds)
                     await broadcast({
@@ -1181,12 +1255,10 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                 sec_delta = parse_time_delta_seconds(winner_item)
                 winner_label = winner_item.get("text", "") if isinstance(winner_item, dict) else str(winner_item)
                 if sec_delta is not None:
-                    max_cap = int(timer_cfg.get("max_seconds_cap") or timer_cfg.get("max_seconds") or 86400)
-                    timer_state.max_seconds = max_cap
                     if timer_state.mode == "countdown":
-                        timer_state.seconds = max(0, min(max_cap, timer_state.seconds + sec_delta))
+                        timer_state.seconds = max(0, timer_state.seconds + sec_delta)
                     else:
-                        timer_state.seconds = max(0, min(max_cap, timer_state.seconds - sec_delta))
+                        timer_state.seconds = max(0, timer_state.seconds - sec_delta)
                     gacha_log_entry = timer_state.record_change(
                         sender,
                         f"🎰 CS:GO Gacha ({winner_label})",
@@ -1245,6 +1317,23 @@ async def handle_mock_event(request: web.Request) -> web.Response:
             if not gacha_sound_url:
                 gacha_sound_url = "/soundeffect/dragon-studio-pop-402324.mp3"
 
+            # User Configured Per-Gift Video Mapping Lookup
+            video_mappings = cfg.get("gift_video_mappings", [])
+            video_alert_data = None
+            for vm in video_mappings:
+                if vm.get("enabled", True) and vm.get("gift_name", "").strip().lower() == gift_name.strip().lower():
+                    if count >= int(vm.get("min_count", 1)):
+                        v_file = vm.get("video_file")
+                        if v_file:
+                            video_alert_data = {
+                                "url": f"/media/Video/{urllib.parse.quote(v_file)}",
+                                "video_file": v_file,
+                                "position": vm.get("position", "center"),
+                                "scale": float(vm.get("scale", 1.0)),
+                                "volume": float(vm.get("volume", 1.0))
+                            }
+                            break
+
             payload = {
                 "type": "gift",
                 "target_widget": target_widget,
@@ -1258,6 +1347,7 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                 "jar_total_coins": jar_state.total_coins,
                 "sound_effect": gacha_sound_url,
                 "sound_volume": sound_vol,
+                "video_effect": video_alert_data,
                 "added_seconds": added_seconds,
                 "timer_seconds": timer_state.seconds,
                 "timer_stats": timer_state.get_stats(),
@@ -1661,6 +1751,7 @@ async def handle_connect_tiktok(request: web.Request) -> web.Response:
         log.info("Connecting to real TikTok LIVE for @%s...", username)
         await spawn_tiktok_process(username)
         await broadcast({"type": "tiktok_status_update", "connection": tiktok_connection_state})
+        await broadcast({"type": "refresh_overlays"})
         return web.json_response({
             "ok": True,
             "message": f"Connecting to TikTok LIVE (@{username})...",
@@ -1697,6 +1788,7 @@ async def handle_tiktok_event(request: web.Request) -> web.Response:
             tiktok_connection_state["status"] = "connected"
             tiktok_connection_state["room_id"] = data.get("roomId")
             await broadcast({"type": "tiktok_status_update", "connection": tiktok_connection_state})
+            await broadcast({"type": "refresh_overlays"})
             return web.json_response({"ok": True})
 
         elif event_type == "live_error":
@@ -1761,6 +1853,7 @@ def build_app() -> web.Application:
     app.router.add_get("/overlay_auction.html", handle_overlay_auction)
     app.router.add_get("/overlay_gacha.html", handle_overlay_gacha)
     app.router.add_get("/overlay_vfx.html", handle_overlay_vfx)
+    app.router.add_get("/overlay_video.html", handle_overlay_video)
 
     app.router.add_get("/overlay/jar", handle_overlay_jar)
     app.router.add_get("/overlay/timer", handle_overlay_timer)
@@ -1769,6 +1862,7 @@ def build_app() -> web.Application:
     app.router.add_get("/overlay/auction", handle_overlay_auction)
     app.router.add_get("/overlay/gacha", handle_overlay_gacha)
     app.router.add_get("/overlay/vfx", handle_overlay_vfx)
+    app.router.add_get("/overlay/video", handle_overlay_video)
 
     app.router.add_get("/api/gift-catalog", handle_get_gift_catalog)
     app.router.add_post("/api/connect-tiktok", handle_connect_tiktok)
@@ -1782,10 +1876,13 @@ def build_app() -> web.Application:
     app.router.add_get("/api/timer-history", handle_get_timer_history)
     app.router.add_post("/api/timer-history/clear", handle_clear_timer_history)
     app.router.add_get("/api/sounds", handle_list_sounds)
+    app.router.add_get("/api/videos", handle_list_videos)
     app.router.add_get("/api/gift-icon", handle_gift_icon_proxy)
     app.router.add_get("/api/avatar-proxy", handle_avatar_proxy)
     app.router.add_post("/api/upload-sound", handle_upload_sound)
     app.router.add_delete("/api/delete-sound", handle_delete_sound)
+    app.router.add_post("/api/upload-video", handle_upload_video)
+    app.router.add_delete("/api/delete-video", handle_delete_video)
     app.router.add_get("/api/tts", handle_tts_audio)
     app.router.add_post("/api/mock-event", handle_mock_event)
     app.router.add_static("/media/", path=MEDIA_DIR, show_index=False)

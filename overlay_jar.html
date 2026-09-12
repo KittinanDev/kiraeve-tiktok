@@ -277,6 +277,41 @@
   let giftBodies = [];
   const MAX_BODIES = 800; // Large capacity: holds full jar + deep overflow mounds without deleting
 
+  function spawnSingleGift(giftImg, profileImg, itemRadius, name) {
+    if (giftBodies.length >= MAX_BODIES) {
+      let removeIdx = 0;
+      const outsideIdx = giftBodies.findIndex(b => b.position.x < INNER_LEFT || b.position.x > INNER_RIGHT);
+      if (outsideIdx !== -1) removeIdx = outsideIdx;
+      const [oldest] = giftBodies.splice(removeIdx, 1);
+      World.remove(engine.world, oldest);
+    }
+
+    const spawnX = JAR_CENTER_X + (Math.random() - 0.5) * 40;
+    const spawnY = 25 + (Math.random() - 0.5) * 15;
+
+    const body = Bodies.circle(spawnX, spawnY, itemRadius, {
+      restitution: 0.12,   // Low bounce for rock-solid settling
+      friction: 0.35,      // Good friction against sliding
+      frictionAir: 0.015,
+      density: 0.002,
+      sleepThreshold: 15,  // Anti-jitter: Sleep when resting!
+      label: 'gift_body'
+    });
+
+    body.giftImg = giftImg;
+    body.profileImg = profileImg;
+    body.giftRadius = itemRadius;
+    body.giftName = name;
+
+    Body.setVelocity(body, {
+      x: (Math.random() - 0.5) * 2.0,
+      y: 2.0 + Math.random() * 1.5
+    });
+
+    giftBodies.push(body);
+    World.add(engine.world, body);
+  }
+
   function spawnGiftItems(name, iconUrl, count, coins, sender, profilePic) {
     const giftImg = loadGiftIconImage(iconUrl, name);
     const profileImg = loadProfileImage(profilePic);
@@ -287,41 +322,18 @@
       showSenderToast(sender, name, count, profilePic || iconUrl);
     }
 
-    const spawnCount = Math.min(count || 1, 15);
+    const totalToSpawn = Math.max(1, count || 1);
+    const spawnCount = Math.min(totalToSpawn, 30);
+    const intervalMs = spawnCount > 1 ? Math.max(60, Math.min(140, 1500 / spawnCount)) : 0;
+
     for (let i = 0; i < spawnCount; i++) {
-      if (giftBodies.length >= MAX_BODIES) {
-        // Recycle oldest body from outside mounds first so jar inside never collapses
-        let removeIdx = 0;
-        const outsideIdx = giftBodies.findIndex(b => b.position.x < INNER_LEFT || b.position.x > INNER_RIGHT);
-        if (outsideIdx !== -1) removeIdx = outsideIdx;
-        const [oldest] = giftBodies.splice(removeIdx, 1);
-        World.remove(engine.world, oldest);
+      if (i === 0) {
+        spawnSingleGift(giftImg, profileImg, itemRadius, name);
+      } else {
+        setTimeout(() => {
+          spawnSingleGift(giftImg, profileImg, itemRadius, name);
+        }, i * intervalMs);
       }
-
-      const spawnX = JAR_CENTER_X + (Math.random() - 0.5) * 40;
-      const spawnY = 25 + (Math.random() - 0.5) * 15;
-
-      const body = Bodies.circle(spawnX, spawnY, itemRadius, {
-        restitution: 0.12,   // Low bounce for rock-solid settling
-        friction: 0.35,      // Good friction against sliding
-        frictionAir: 0.015,
-        density: 0.002,
-        sleepThreshold: 15,  // Anti-jitter: Sleep when resting!
-        label: 'gift_body'
-      });
-
-      body.giftImg = giftImg;
-      body.profileImg = profileImg;
-      body.giftRadius = itemRadius;
-      body.giftName = name;
-
-      Body.setVelocity(body, {
-        x: (Math.random() - 0.5) * 2.0,
-        y: 2.0 + Math.random() * 1.5
-      });
-
-      giftBodies.push(body);
-      World.add(engine.world, body);
     }
   }
 
@@ -423,24 +435,88 @@
   }
   requestAnimationFrame(render);
 
-  let currentAudio = null;
+  class SequentialSoundQueue {
+    constructor() {
+      this.queue = [];
+      this.isPlaying = false;
+      this.currentAudio = null;
+    }
+
+    enqueue(soundUrl, volume = 1.0, times = 1) {
+      if (!soundUrl) return;
+      const count = Math.min(times || 1, 20);
+      for (let i = 0; i < count; i++) {
+        this.queue.push({ soundUrl, volume });
+      }
+      if (!this.isPlaying) {
+        this.playNext();
+      }
+    }
+
+    playNext() {
+      if (this.queue.length === 0) {
+        this.isPlaying = false;
+        this.currentAudio = null;
+        return;
+      }
+
+      this.isPlaying = true;
+      const item = this.queue.shift();
+      try {
+        const audio = new Audio(item.soundUrl);
+        audio.volume = item.volume !== undefined ? Math.max(0, Math.min(1, item.volume)) : 1.0;
+        this.currentAudio = audio;
+
+        let finished = false;
+        const done = () => {
+          if (finished) return;
+          finished = true;
+          setTimeout(() => this.playNext(), 60);
+        };
+
+        audio.onended = done;
+        audio.onerror = done;
+        setTimeout(() => {
+          if (!finished && this.currentAudio === audio) done();
+        }, 12000);
+
+        audio.play().catch(e => {
+          done();
+        });
+      } catch(e) {
+        this.playNext();
+      }
+    }
+
+    stopAll() {
+      this.queue = [];
+      if (this.currentAudio) {
+        try { this.currentAudio.pause(); } catch(e){}
+        this.currentAudio = null;
+      }
+      this.isPlaying = false;
+    }
+  }
+
+  const soundQueue = new SequentialSoundQueue();
 
   ws.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
+      if (data.type === 'refresh_overlays') {
+        window.location.reload();
+        return;
+      }
       if (data.type === 'gift') {
         spawnGiftItems(data.gift_name, data.gift_icon, data.count, data.coins, data.sender, data.profile_picture);
         if (!isPreview && data.sound_effect) {
-          if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
-          currentAudio = new Audio(data.sound_effect);
-          currentAudio.volume = data.sound_volume !== undefined ? data.sound_volume : 1.0;
-          currentAudio.play().catch(e => {});
+          soundQueue.enqueue(data.sound_effect, data.sound_volume, data.count || 1);
         }
       } else if (data.type === 'jar_reset') {
         giftBodies.forEach(b => World.remove(engine.world, b));
         giftBodies = [];
       } else if (data.type === 'stop_audio') {
-        if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+        soundQueue.stopAll();
       }
     } catch(e) {}
   };
