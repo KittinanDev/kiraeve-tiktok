@@ -863,6 +863,11 @@ tailwind.config = {
               <span class="material-symbols-outlined text-[16px]">cleaning_services</span>
               <span>ล้างแชท</span>
             </button>
+            <!-- ปุ่มหยุดเสียงอ่านแชท -->
+            <button onclick="stopTTSAudio()" title="หยุดเสียงอ่าน Siri บน Overlay ทันที" class="bg-tik-card hover:bg-red-950/30 text-red-400 border border-red-500/30 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all">
+              <span class="material-symbols-outlined text-[16px]">stop_circle</span>
+              <span>หยุดเสียง</span>
+            </button>
           </div>
         </div>
       </div>
@@ -938,99 +943,6 @@ tailwind.config = {
                 <label class="font-bold text-white text-xs block">📏 จำกัดความยาวข้อความ:</label>
                 <input type="number" id="tts-max-len-input" class="w-full bg-tik-card border border-tik-card-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tik-pink mt-1" value="100">
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Card 3: Live Siri TTS Interactive Tester & Preview -->
-      <div class="bg-tik-card border border-tik-card-border rounded-xl p-6 space-y-5">
-        <div class="flex justify-between items-center pb-3 border-b border-tik-card-border">
-          <h3 class="text-base font-bold text-white flex items-center gap-2">
-            <span class="material-symbols-outlined text-tik-purple text-lg">record_voice_over</span>
-            <span>🧪 กล่องทดสอบอ่านเสียง Siri (Live Siri TTS Tester)</span>
-          </h3>
-          <span class="text-[11px] font-mono text-tik-cyan font-bold bg-tik-bg px-2.5 py-1 rounded-full border border-tik-card-border flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-tik-emerald animate-pulse"></span>
-            Edge Neural Voice
-          </span>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <!-- Left: Test Inputs & Quick Prompts (7 cols) -->
-          <div class="lg:col-span-7 space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div class="space-y-1 sm:col-span-1">
-                <label class="text-xs text-on-surface-variant font-bold">ชื่อคนพิมพ์ (Sender):</label>
-                <input type="text" id="tts-test-sender" value="น้องบ็อบ" class="w-full bg-tik-bg border border-tik-card-border rounded-lg px-3 py-2 text-xs text-white font-semibold focus:outline-none focus:border-tik-pink">
-              </div>
-              <div class="space-y-1 sm:col-span-2">
-                <label class="text-xs text-on-surface-variant font-bold">ข้อความแชท (Chat Message):</label>
-                <input type="text" id="tts-test-text" value="สวัสดีครับคุณสตรีมเมอร์ ขอเพลงเพราะๆ ฟังชิลล์ๆ สัก 1 เพลงครับ" class="w-full bg-tik-bg border border-tik-card-border rounded-lg px-3 py-2 text-xs text-white font-semibold focus:outline-none focus:border-tik-purple">
-              </div>
-            </div>
-
-            <!-- Quick Template Chips -->
-            <div class="space-y-1.5">
-              <span class="text-[11px] text-on-surface-variant font-bold">💡 ข้อความตัวอย่างกดลองได้ทันที:</span>
-              <div class="flex flex-wrap gap-1.5">
-                <button type="button" onclick="setTTSTestText('สวัสดีครับคุณสตรีมเมอร์ ยินดีที่ได้รู้จักครับ!', 'น้องแพรว')" class="bg-tik-bg hover:bg-purple-950/40 text-purple-300 border border-purple-500/30 px-2.5 py-1 rounded-lg text-xs font-medium transition-all">
-                  👋 สวัสดีทักทาย
-                </button>
-                <button type="button" onclick="setTTSTestText('ขอเพลงเพราะๆ สัก 1 เพลงได้ไหมครับสตรีมเมอร์', 'DJ_Kaneo')" class="bg-tik-bg hover:bg-cyan-950/40 text-cyan-300 border border-cyan-500/30 px-2.5 py-1 rounded-lg text-xs font-medium transition-all">
-                  🎵 ขอเพลง
-                </button>
-                <button type="button" onclick="setTTSTestText('Hello streamer! Amazing stream today, keep it up!', 'Alex_UK')" class="bg-tik-bg hover:bg-emerald-950/40 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-lg text-xs font-medium transition-all">
-                  🇬🇧 English Chat
-                </button>
-                <button type="button" onclick="setTTSTestText('สู้ๆ นะครับเป็นกำลังใจให้เสมอเลย', 'SuperFan_01')" class="bg-tik-bg hover:bg-amber-950/40 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-lg text-xs font-medium transition-all">
-                  ❤️ ให้กำลังใจ
-                </button>
-                <button type="button" onclick="setTTSTestText('ข้อความนี้มี คำหยาบ1 และมี คำหยาบ2 กรองทิ้งด้วยนะ', 'Bad_User')" class="bg-tik-bg hover:bg-red-950/40 text-red-300 border border-red-500/30 px-2.5 py-1 rounded-lg text-xs font-medium transition-all">
-                  🛑 ลองกรองคำหยาบ
-                </button>
-              </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex flex-wrap gap-2.5 pt-2">
-              <button type="button" onclick="testDirectTTS(false)" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold px-4 py-2.5 rounded-lg text-xs flex items-center gap-2 shadow-lg transition-transform hover:scale-105">
-                <span class="material-symbols-outlined text-[18px]">volume_up</span>
-                <span>🔊 กดฟังเสียง Siri ในเบราว์เซอร์</span>
-              </button>
-              <button type="button" onclick="testDirectTTS(true)" class="bg-tik-card hover:bg-tik-sidebar text-white border border-tik-card-border font-bold px-4 py-2.5 rounded-lg text-xs flex items-center gap-2 transition-all">
-                <span class="material-symbols-outlined text-tik-cyan text-[18px]">cast</span>
-                <span>📡 ยิงขึ้น Overlay (OBS)</span>
-              </button>
-              <button type="button" id="btn-live-toggle-tts" onclick="toggleTTSOverlayVisibility()" class="bg-tik-card hover:bg-tik-sidebar text-white border border-tik-card-border font-bold px-3.5 py-2.5 rounded-lg text-xs flex items-center gap-1.5 transition-all">
-                <span id="live-tts-vis-icon" class="material-symbols-outlined text-tik-emerald text-[18px]">visibility</span>
-                <span id="live-tts-vis-text">ปิด/ซ่อน Overlay</span>
-              </button>
-              <button type="button" onclick="clearTTSOverlayChats()" class="bg-tik-card hover:bg-tik-sidebar text-on-surface-variant hover:text-white border border-tik-card-border font-bold px-3 py-2.5 rounded-lg text-xs flex items-center gap-1.5 transition-all" title="ล้างแชทที่ค้างบนหน้าจอ Overlay ทั้งหมด">
-                <span class="material-symbols-outlined text-[18px]">cleaning_services</span>
-                <span>🧹 ล้างแชท</span>
-              </button>
-              <button type="button" onclick="stopTTSAudio()" class="bg-tik-card hover:bg-red-950/30 text-red-400 border border-red-500/30 font-bold px-3.5 py-2.5 rounded-lg text-xs flex items-center gap-1.5 transition-all">
-                <span class="material-symbols-outlined text-[18px]">stop_circle</span>
-                <span>⏹️ หยุดเสียง</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Right: Live Widget Preview Frame (5 cols) -->
-          <div class="lg:col-span-5 space-y-2">
-            <div class="flex justify-between items-center text-xs text-on-surface-variant">
-              <span class="font-bold flex items-center gap-1 text-white">
-                <span class="w-2 h-2 rounded-full bg-tik-emerald animate-pulse"></span>
-                <span>Live Siri Widget Preview</span>
-              </span>
-              <a href="http://localhost:8765/overlay_tts.html" target="_blank" class="text-tik-cyan hover:underline flex items-center gap-0.5 text-xs font-semibold">
-                <span>เปิดหน้าต่างแยก (มีเสียง)</span>
-                <span class="material-symbols-outlined text-[14px]">open_in_new</span>
-              </a>
-            </div>
-            <div class="relative bg-tik-bg rounded-xl border border-tik-card-border overflow-hidden h-[240px] flex items-center justify-center obs-checkerboard-bg">
-              <iframe id="tts-preview-frame" src="http://localhost:8765/overlay_tts.html?preview=true&demo=speaking" class="w-full h-full border-0"></iframe>
             </div>
           </div>
         </div>
@@ -2620,6 +2532,11 @@ tailwind.config = {
         document.getElementById('modal-current-version').innerText = v || '1.0.0';
         document.getElementById('sidebar-app-version').innerText = v || '1.0.0';
       });
+    }
+    // หากยังไม่เคยเช็กหรืออยู่ในหน้า idle ให้เริ่มเช็กอัปเดตอัตโนมัติทันที
+    const idleEl = document.getElementById('upd-state-idle');
+    if (idleEl && !idleEl.classList.contains('hidden')) {
+      startCheckUpdate();
     }
   }
 
@@ -4949,53 +4866,7 @@ tailwind.config = {
     triggerMockGift(name, count, coins, sender);
   }
 
-  let currentTTSAudio = null;
-
-  function setTTSTestText(text, sender) {
-    const textEl = document.getElementById('tts-test-text');
-    const senderEl = document.getElementById('tts-test-sender');
-    if (textEl) textEl.value = text;
-    if (senderEl && sender) senderEl.value = sender;
-  }
-
-  async function testDirectTTS(broadcastOnly) {
-    const senderEl = document.getElementById('tts-test-sender');
-    const textEl = document.getElementById('tts-test-text');
-    const sender = senderEl ? senderEl.value.trim() : 'น้องบ็อบ';
-    const text = textEl ? textEl.value.trim() : 'สวัสดีครับคุณสตรีมเมอร์';
-    
-    if (!text) return;
-
-    appendLog(`🔊 ทดสอบอ่านแชท Siri จาก "${sender}": "${text}"`);
-
-    try {
-      const res = await fetch('/api/mock-event', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event_type: 'chat', sender, text })
-      });
-      const data = await res.json();
-      
-      if (!broadcastOnly && data.ok && data.broadcast && data.broadcast.audio_url) {
-        if (currentTTSAudio) {
-          currentTTSAudio.pause();
-          currentTTSAudio.currentTime = 0;
-        }
-        currentTTSAudio = new Audio(data.broadcast.audio_url);
-        const volumeInput = document.getElementById('tts-volume-input');
-        if (volumeInput) currentTTSAudio.volume = parseFloat(volumeInput.value);
-        currentTTSAudio.play().then(() => {
-          appendLog('▶️ กำลังเล่นเสียงอ่าน Siri ในเบราว์เซอร์...');
-        }).catch(e => {
-          appendLog('⚠️ ไม่สามารถเล่นเสียงอัตโนมัติได้: ' + e);
-        });
-      } else if (broadcastOnly) {
-        appendLog('📡 ส่งข้อความแชทไปยัง Overlay (OBS) เรียบร้อยแล้ว');
-      }
-    } catch (e) {
-      appendLog('❌ เกิดข้อผิดพลาดในการอ่านแชท TTS: ' + e);
-    }
-  }
+  // Siri TTS controls
 
   async function triggerMockChat() {
     const senderEl = document.getElementById('sim-sender');
@@ -5003,7 +4874,7 @@ tailwind.config = {
     const sender = senderEl ? senderEl.value : 'Viewer_007';
     const text = textEl ? textEl.value : 'สวัสดีครับ ขอเพลงเพราะๆ 1 เพลงครับ';
     
-    appendLog(`🔊 ทดสอบอ่านแชทจาก "${sender}": "${text}"`);
+    appendLog(`🔊 ส่งข้อความจำลองจาก "${sender}": "${text}" ไปยัง Overlay`);
 
     try {
       const res = await fetch('/api/mock-event', {
@@ -5012,16 +4883,11 @@ tailwind.config = {
         body: JSON.stringify({ event_type: 'chat', sender, text })
       });
       const data = await res.json();
-      if (data.ok && data.broadcast && data.broadcast.audio_url) {
-        if (currentTTSAudio) {
-          currentTTSAudio.pause();
-          currentTTSAudio.currentTime = 0;
-        }
-        currentTTSAudio = new Audio(data.broadcast.audio_url);
-        currentTTSAudio.play().catch(e => appendLog('⚠️ ไม่สามารถเล่นเสียงในเบราว์เซอร์ได้: ' + e));
+      if (data.ok) {
+        appendLog('📡 ส่งข้อความแชทไปยัง Overlay (OBS) เรียบร้อยแล้ว (เสียงจะดังเฉพาะใน Overlay)');
       }
     } catch (e) {
-      appendLog('❌ เกิดข้อผิดพลาดในการอ่านแชท TTS: ' + e);
+      appendLog('❌ เกิดข้อผิดพลาดในการส่งแชท TTS: ' + e);
     }
   }
 
@@ -5092,16 +4958,12 @@ tailwind.config = {
   }
 
   async function stopTTSAudio() {
-    if (currentTTSAudio) {
-      currentTTSAudio.pause();
-      currentTTSAudio.currentTime = 0;
-    }
     await fetch('/api/mock-event', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ event_type: 'stop_audio' })
     });
-    appendLog('⏹️ สั่งหยุดเสียงอ่านแชทเรียบร้อยแล้ว');
+    appendLog('⏹️ สั่งหยุดเสียงอ่านแชทบน Overlay เรียบร้อยแล้ว');
   }
 
   const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
@@ -5158,17 +5020,8 @@ tailwind.config = {
           renderTimerMappingsTable();
         }
       } else if (data.type === 'tts_chat') {
-        if (!ttsCurrentConfig.audio_muted && data.audio_url) {
-          if (currentTTSAudio) {
-            currentTTSAudio.pause();
-            currentTTSAudio.currentTime = 0;
-          }
-          currentTTSAudio = new Audio(data.audio_url);
-          const volumeInput = document.getElementById('tts-volume-input');
-          if (volumeInput) currentTTSAudio.volume = parseFloat(volumeInput.value);
-          else if (ttsCurrentConfig.volume !== undefined) currentTTSAudio.volume = ttsCurrentConfig.volume;
-          currentTTSAudio.play().catch(e => console.warn('TTS Autoplay prevented or failed:', e));
-        }
+        // ให้เสียงอ่าน Siri ดังเฉพาะใน Overlay (OBS Browser Source) เท่านั้น ไม่เล่นเสียงใน Dashboard
+      }
       } else if (data.type === 'tts_visibility') {
         updateTTSVisibilityUI(data.visible);
       } else if (data.type === 'gacha_spin') {

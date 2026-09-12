@@ -284,12 +284,29 @@ def filter_tts_text(text: str, blacklisted_words: List[str], max_length: int = 1
     if not text:
         return None
     cleaned = text.strip()
+    
+    # 1. ลบ URLs / Links
+    cleaned = re.sub(r'https?://\S+|www\.\S+', '', cleaned)
+    
+    # 2. ลบ Emojis / Symbols ที่ Edge TTS มักอ่านออกเสียงแปลกๆ หรือสะกดชื่ออีโมจิยาวๆ
+    cleaned = re.sub(r'[\U00010000-\U0010ffff]', '', cleaned)
+    cleaned = re.sub(r'[\u2600-\u27BF\uE000-\uF8FF]', '', cleaned)
+
+    # 3. ตัดคำซ้ำอักขระยาวๆ เช่น "5555555555555", "กกกกกกกก", "ฮ่าๆๆๆๆๆๆๆๆๆๆ" ให้เหลือสั้นๆ
+    cleaned = re.sub(r'(.)\1{3,}', r'\1\1', cleaned)
+
+    # 4. กรองคำต้องห้าม
     for word in blacklisted_words:
         if word:
             pattern = re.escape(word)
             cleaned = re.sub(pattern, "***", cleaned, flags=re.IGNORECASE)
+    
+    cleaned = cleaned.strip()
+    if not cleaned:
+        return None
+
     if len(cleaned) > max_length:
-        cleaned = cleaned[:max_length] + "..."
+        cleaned = cleaned[:max_length]
     return cleaned
 
 # In-Memory States
