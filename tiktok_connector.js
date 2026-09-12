@@ -2,39 +2,55 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 
-function getTikTokLiveClass() {
+let TikTokLiveClass = null;
+
+async function getTikTokLiveClass() {
+    if (TikTokLiveClass) return TikTokLiveClass;
+
+    // 1. Try legacy export from ES module
     try {
-        const mod = require('tiktok-live-connector');
-        const cls = (mod && mod.TikTokLiveConnection) || (mod && mod.WebcastPushConnection) || (typeof mod === 'function' ? mod : null);
-        if (cls) return cls;
+        const legacyMod = await import('tiktok-live-connector/legacy');
+        if (legacyMod && (legacyMod.WebcastPushConnection || legacyMod.default)) {
+            TikTokLiveClass = legacyMod.WebcastPushConnection || legacyMod.default;
+            return TikTokLiveClass;
+        }
     } catch (e) {}
 
+    // 2. Try main export
+    try {
+        const mainMod = await import('tiktok-live-connector');
+        if (mainMod && (mainMod.WebcastPushConnection || mainMod.TikTokLiveConnection || mainMod.default)) {
+            TikTokLiveClass = mainMod.WebcastPushConnection || mainMod.TikTokLiveConnection || mainMod.default;
+            return TikTokLiveClass;
+        }
+    } catch (e) {}
+
+    // 3. Try candidates
     const candidates = [
-        path.join(__dirname, 'node_modules', 'tiktok-live-connector'),
-        path.join(__dirname, '..', 'node_modules', 'tiktok-live-connector'),
-        path.join(__dirname, '..', 'app.asar', 'node_modules', 'tiktok-live-connector'),
-        path.join(process.cwd(), 'node_modules', 'tiktok-live-connector'),
-        path.join(process.cwd(), 'resources', 'app', 'node_modules', 'tiktok-live-connector'),
-        path.join(__dirname, 'python_embed', 'node_modules', 'tiktok-live-connector')
+        path.join(__dirname, 'node_modules', 'tiktok-live-connector', 'dist', 'legacy.js'),
+        path.join(__dirname, 'node_modules', 'tiktok-live-connector', 'dist', 'index.js'),
+        path.join(__dirname, '..', 'node_modules', 'tiktok-live-connector', 'dist', 'legacy.js'),
+        path.join(__dirname, '..', 'node_modules', 'tiktok-live-connector', 'dist', 'index.js'),
+        path.join(process.cwd(), 'node_modules', 'tiktok-live-connector', 'dist', 'legacy.js'),
+        path.join(process.cwd(), 'resources', 'app', 'node_modules', 'tiktok-live-connector', 'dist', 'legacy.js'),
+        path.join(__dirname, 'python_embed', 'node_modules', 'tiktok-live-connector', 'dist', 'legacy.js')
     ];
 
     for (const cand of candidates) {
         try {
             if (fs.existsSync(cand)) {
-                const mod = require(cand);
-                const cls = (mod && mod.TikTokLiveConnection) || (mod && mod.WebcastPushConnection) || (typeof mod === 'function' ? mod : null);
-                if (cls) return cls;
+                const fileUrl = 'file:///' + cand.replace(/\\/g, '/');
+                const mod = await import(fileUrl);
+                const cls = (mod && mod.WebcastPushConnection) || (mod && mod.TikTokLiveConnection) || (mod && mod.default);
+                if (cls) {
+                    TikTokLiveClass = cls;
+                    return cls;
+                }
             }
         } catch (e) {}
     }
     return null;
 }
-
-const TikTokLiveConnection = getTikTokLiveClass();
-if (!TikTokLiveConnection) {
-    console.error('[TikTok-Live-Connector] CRITICAL: TikTokLiveConnection could not be loaded from any path!');
-}
-
 
 const username = (process.argv[2] || 'tiktok').replace('@', '').trim();
 console.log('[TikTok-Live-Connector] Starting connector manager for @' + username + '...');
@@ -141,18 +157,21 @@ function extractAvatarUrl(data) {
     return '';
 }
 
+const streakMap = new Map();
+
 async function tryConnect() {
     if (isConnected || isPolling) return;
     isPolling = true;
 
     try {
-        if (!TikTokLiveConnection) {
+        const ConnClass = await getTikTokLiveClass();
+        if (!ConnClass) {
             throw new Error("tiktok-live-connector is not installed in the app environment. Please run install-prereqs.bat as Administrator.");
         }
 
-        tiktokLiveConnection = new TikTokLiveConnection(username, {
+        tiktokLiveConnection = new ConnClass(username, {
             processInitialData: false,
-            enableExtendedGiftInfo: false
+            enableExtendedGiftInfo: true
         });
 
         tiktokLiveConnection.on('chat', data => {
@@ -168,28 +187,38 @@ async function tryConnect() {
         });
 
         tiktokLiveConnection.on('gift', data => {
-            // Streak handling: If repeatEnd is 0 or false, it's an in-progress streak tap.
-            // Wait for repeatEnd = 1 / true so we process the final count once without duplicates.
-            if (data.repeatEnd === 0 || data.repeatEnd === false) {
-                return;
+            const sender = (data.user && (data.user.nickname || data.user.displayId || data.user.uniqueId)) || data.nickname || data.uniqueId || 'ผู้สนับสนุน';
+            const giftId = data.giftId || (data.gift && data.gift.gift_id) || 1;
+            const streakKey = `${sender}_${giftId}`;
+            const repeatCount = data.repeatCount || data.count || 1;
+            const isStreakEnd = data.repeatEnd === 1 || data.repeatEnd === true;
+
+            // Calculate delta count so every tap drops into the jar immediately
+            let spawnCount = repeatCount;
+            if (streakMap.has(streakKey)) {
+                const prev = streakMap.get(streakKey);
+                spawnCount = Math.max(1, repeatCount - prev);
+            }
+            if (isStreakEnd) {
+                streakMap.delete(streakKey);
+            } else {
+                streakMap.set(streakKey, repeatCount);
+                setTimeout(() => streakMap.delete(streakKey), 15000);
             }
 
-            const giftId = data.giftId || (data.gift && data.gift.gift_id);
             const cached = giftCatalogById[giftId] || giftCatalogById[String(giftId)] || giftCatalogById[Number(giftId)];
-
-            const sender = (data.user && (data.user.nickname || data.user.displayId || data.user.uniqueId)) || data.nickname || data.uniqueId || 'ผู้สนับสนุน';
             const giftName = (cached && cached.name) || data.giftName || (data.giftDetails && data.giftDetails.giftName) || data.describe || 'Gift';
-            const count = data.repeatCount || data.count || 1;
-            const coins = (data.diamondCount || (cached && (cached.diamond_count || cached.coins)) || 1) * count;
+            const unitCoins = (data.diamondCount || (cached && (cached.diamond_count || cached.coins)) || 1);
+            const coins = unitCoins * spawnCount;
             const iconUrl = (cached && (cached.icon || cached.image_url)) || data.giftPictureUrl || extractGiftIcon(data) || '';
             const profilePic = extractAvatarUrl(data);
 
-            console.log(`[Gift Received] ${sender} sent ${giftName} (ID: ${giftId}) x${count} (${coins} coins) [Avatar: ${profilePic ? 'Found' : 'None'}]`);
+            console.log(`[Gift Received] ${sender} sent ${giftName} (ID: ${giftId}) x${spawnCount} (${coins} coins)`);
             postEventToServer('gift', {
                 gift_id: giftId,
                 sender: sender,
                 gift_name: giftName,
-                count: count,
+                count: spawnCount,
                 coins: coins,
                 gift_icon: iconUrl,
                 profile_picture: profilePic

@@ -14,3 +14,10 @@ scratch_search.py
 
 # Large media files (>50MB exceeds GitHub limit)
 media/Background/*.mp4
+
+# Temporary build & embed files
+python_embed/
+python_embed.zip
+server.exe
+server.spec
+get-pip.py

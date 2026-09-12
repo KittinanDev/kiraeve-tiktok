@@ -863,11 +863,6 @@ tailwind.config = {
               <span class="material-symbols-outlined text-[16px]">cleaning_services</span>
               <span>ล้างแชท</span>
             </button>
-            <!-- ปุ่มหยุดเสียงอ่านแชท -->
-            <button onclick="stopTTSAudio()" title="หยุดเสียงอ่าน Siri บน Overlay ทันที" class="bg-tik-card hover:bg-red-950/30 text-red-400 border border-red-500/30 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all">
-              <span class="material-symbols-outlined text-[16px]">stop_circle</span>
-              <span>หยุดเสียง</span>
-            </button>
           </div>
         </div>
       </div>
@@ -943,6 +938,99 @@ tailwind.config = {
                 <label class="font-bold text-white text-xs block">📏 จำกัดความยาวข้อความ:</label>
                 <input type="number" id="tts-max-len-input" class="w-full bg-tik-card border border-tik-card-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tik-pink mt-1" value="100">
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Live Siri TTS Interactive Tester & Preview -->
+      <div class="bg-tik-card border border-tik-card-border rounded-xl p-6 space-y-5">
+        <div class="flex justify-between items-center pb-3 border-b border-tik-card-border">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <span class="material-symbols-outlined text-tik-purple text-lg">record_voice_over</span>
+            <span>🧪 กล่องทดสอบอ่านเสียง Siri (Live Siri TTS Tester)</span>
+          </h3>
+          <span class="text-[11px] font-mono text-tik-cyan font-bold bg-tik-bg px-2.5 py-1 rounded-full border border-tik-card-border flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-tik-emerald animate-pulse"></span>
+            Edge Neural Voice
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <!-- Left: Test Inputs & Quick Prompts (7 cols) -->
+          <div class="lg:col-span-7 space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="space-y-1 sm:col-span-1">
+                <label class="text-xs text-on-surface-variant font-bold">ชื่อคนพิมพ์ (Sender):</label>
+                <input type="text" id="tts-test-sender" value="น้องบ็อบ" class="w-full bg-tik-bg border border-tik-card-border rounded-lg px-3 py-2 text-xs text-white font-semibold focus:outline-none focus:border-tik-pink">
+              </div>
+              <div class="space-y-1 sm:col-span-2">
+                <label class="text-xs text-on-surface-variant font-bold">ข้อความแชท (Chat Message):</label>
+                <input type="text" id="tts-test-text" value="สวัสดีครับคุณสตรีมเมอร์ ขอเพลงเพราะๆ ฟังชิลล์ๆ สัก 1 เพลงครับ" class="w-full bg-tik-bg border border-tik-card-border rounded-lg px-3 py-2 text-xs text-white font-semibold focus:outline-none focus:border-tik-purple">
+              </div>
+            </div>
+
+            <!-- Quick Template Chips -->
+            <div class="space-y-1.5">
+              <span class="text-[11px] text-on-surface-variant font-bold">💡 ข้อความตัวอย่างกดลองได้ทันที:</span>
+              <div class="flex flex-wrap gap-1.5">
+                <button type="button" onclick="setTTSTestText('สวัสดีครับคุณสตรีมเมอร์ ยินดีที่ได้รู้จักครับ!', 'น้องแพรว')" class="bg-tik-bg hover:bg-purple-950/40 text-purple-300 border border-purple-500/30 px-2.5 py-1 rounded-lg text-xs font-medium transition-all">
+                  👋 สวัสดีทักทาย
+                </button>
+                <button type="button" onclick="setTTSTestText('ขอเพลงเพราะๆ สัก 1 เพลงได้ไหมครับสตรีมเมอร์', 'DJ_Kaneo')" class="bg-tik-bg hover:bg-cyan-950/40 text-cyan-300 border border-cyan-500/30 px-2.5 py-1 rounded-lg text-xs font-medium transition-all">
+                  🎵 ขอเพลง
+                </button>
+                <button type="button" onclick="setTTSTestText('Hello streamer! Amazing stream today, keep it up!', 'Alex_UK')" class="bg-tik-bg hover:bg-emerald-950/40 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-lg text-xs font-medium transition-all">
+                  🇬🇧 English Chat
+                </button>
+                <button type="button" onclick="setTTSTestText('สู้ๆ นะครับเป็นกำลังใจให้เสมอเลย', 'SuperFan_01')" class="bg-tik-bg hover:bg-amber-950/40 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-lg text-xs font-medium transition-all">
+                  ❤️ ให้กำลังใจ
+                </button>
+                <button type="button" onclick="setTTSTestText('ข้อความนี้มี คำหยาบ1 และมี คำหยาบ2 กรองทิ้งด้วยนะ', 'Bad_User')" class="bg-tik-bg hover:bg-red-950/40 text-red-300 border border-red-500/30 px-2.5 py-1 rounded-lg text-xs font-medium transition-all">
+                  🛑 ลองกรองคำหยาบ
+                </button>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-2.5 pt-2">
+              <button type="button" onclick="testDirectTTS(false)" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold px-4 py-2.5 rounded-lg text-xs flex items-center gap-2 shadow-lg transition-transform hover:scale-105">
+                <span class="material-symbols-outlined text-[18px]">volume_up</span>
+                <span>🔊 กดฟังเสียง Siri ในเบราว์เซอร์</span>
+              </button>
+              <button type="button" onclick="testDirectTTS(true)" class="bg-tik-card hover:bg-tik-sidebar text-white border border-tik-card-border font-bold px-4 py-2.5 rounded-lg text-xs flex items-center gap-2 transition-all">
+                <span class="material-symbols-outlined text-tik-cyan text-[18px]">cast</span>
+                <span>📡 ยิงขึ้น Overlay (OBS)</span>
+              </button>
+              <button type="button" id="btn-live-toggle-tts" onclick="toggleTTSOverlayVisibility()" class="bg-tik-card hover:bg-tik-sidebar text-white border border-tik-card-border font-bold px-3.5 py-2.5 rounded-lg text-xs flex items-center gap-1.5 transition-all">
+                <span id="live-tts-vis-icon" class="material-symbols-outlined text-tik-emerald text-[18px]">visibility</span>
+                <span id="live-tts-vis-text">ปิด/ซ่อน Overlay</span>
+              </button>
+              <button type="button" onclick="clearTTSOverlayChats()" class="bg-tik-card hover:bg-tik-sidebar text-on-surface-variant hover:text-white border border-tik-card-border font-bold px-3 py-2.5 rounded-lg text-xs flex items-center gap-1.5 transition-all" title="ล้างแชทที่ค้างบนหน้าจอ Overlay ทั้งหมด">
+                <span class="material-symbols-outlined text-[18px]">cleaning_services</span>
+                <span>🧹 ล้างแชท</span>
+              </button>
+              <button type="button" onclick="stopTTSAudio()" class="bg-tik-card hover:bg-red-950/30 text-red-400 border border-red-500/30 font-bold px-3.5 py-2.5 rounded-lg text-xs flex items-center gap-1.5 transition-all">
+                <span class="material-symbols-outlined text-[18px]">stop_circle</span>
+                <span>⏹️ หยุดเสียง</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: Live Widget Preview Frame (5 cols) -->
+          <div class="lg:col-span-5 space-y-2">
+            <div class="flex justify-between items-center text-xs text-on-surface-variant">
+              <span class="font-bold flex items-center gap-1 text-white">
+                <span class="w-2 h-2 rounded-full bg-tik-emerald animate-pulse"></span>
+                <span>Live Siri Widget Preview</span>
+              </span>
+              <a href="http://localhost:8765/overlay_tts.html" target="_blank" class="text-tik-cyan hover:underline flex items-center gap-0.5 text-xs font-semibold">
+                <span>เปิดหน้าต่างแยก (มีเสียง)</span>
+                <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+              </a>
+            </div>
+            <div class="relative bg-tik-bg rounded-xl border border-tik-card-border overflow-hidden h-[240px] flex items-center justify-center obs-checkerboard-bg">
+              <iframe id="tts-preview-frame" src="http://localhost:8765/overlay_tts.html?preview=true&demo=speaking" class="w-full h-full border-0"></iframe>
             </div>
           </div>
         </div>
@@ -1795,9 +1883,10 @@ tailwind.config = {
             <button type="button" onclick="quickAddGachaItem('+300', 'legendary', '#f59e0b', '')" class="bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-mono font-bold">+5m</button>
             <button type="button" onclick="quickAddGachaItem('-30', 'hazard', '#f87171', '')" class="bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-mono font-bold">-30s</button>
             <button type="button" onclick="quickAddGachaItem('-60', 'hazard', '#ef4444', '')" class="bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-mono font-bold">-1m</button>
-            <button type="button" onclick="quickAddGachaItem('วิดพื้น 10 ครั้ง', 'hazard', '#f87171', 'ทำโทษ')" class="bg-red-500/10 hover:bg-red-500/25 text-red-300 border border-red-500/30 px-2 py-0.5 rounded text-[10px]">🏋️ วิดพื้น 10</button>
-            <button type="button" onclick="quickAddGachaItem('ดื่มน้ำ 1 แก้ว', 'rare', '#06b6d4', 'ภารกิจ')" class="bg-cyan-500/10 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded text-[10px]">🥤 ดื่มน้ำ</button>
-            <button type="button" onclick="quickAddGachaItem('แจก VIP 1 เดือน', 'custom', '#ec4899', 'SSR+ 👑')" class="bg-pink-500/10 hover:bg-pink-500/25 text-pink-300 border border-pink-500/30 px-2 py-0.5 rounded text-[10px]">👑 แจก VIP</button>
+            <button type="button" onclick="quickAddGachaGift('Rose', '🌹 Rose', 'legendary', '#fbbf24')" class="bg-rose-500/15 hover:bg-rose-500/30 text-rose-300 border border-rose-500/35 px-2.5 py-0.5 rounded text-[10px] font-bold" title="สุ่มได้จะตกลงใน Jar พร้อมเสียงของขวัญ">🌹 Rose (ลงโหล)</button>
+            <button type="button" onclick="quickAddGachaGift('Finger Heart', '🫰 Finger Heart', 'epic', '#c084fc')" class="bg-purple-500/15 hover:bg-purple-500/30 text-purple-300 border border-purple-500/35 px-2.5 py-0.5 rounded text-[10px] font-bold" title="สุ่มได้จะตกลงใน Jar พร้อมเสียงของขวัญ">🫰 Heart (ลงโหล)</button>
+            <button type="button" onclick="quickAddGachaGift('Doughnut', '🍩 Doughnut', 'epic', '#f472b6')" class="bg-pink-500/15 hover:bg-pink-500/30 text-pink-300 border border-pink-500/35 px-2.5 py-0.5 rounded text-[10px] font-bold" title="สุ่มได้จะตกลงใน Jar พร้อมเสียงของขวัญ">🍩 Doughnut (ลงโหล)</button>
+            <button type="button" onclick="quickAddGachaGift('Lion', '🦁 Lion', 'legendary', '#f59e0b')" class="bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 border border-amber-500/35 px-2.5 py-0.5 rounded text-[10px] font-bold" title="สุ่มได้จะตกลงใน Jar พร้อมเสียงของขวัญ">🦁 Lion (ลงโหล)</button>
           </div>
         </div>
       </div>
@@ -2576,11 +2665,23 @@ tailwind.config = {
 
   function installUpdate() {
     if (window.kiraeveUpdater) {
+      try {
+        const btn = document.querySelector('#upd-state-downloaded button');
+        if (btn) {
+          btn.disabled = true;
+          btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin" style="animation: spin 1s linear infinite;">sync</span><span>กำลังปิดระบบและเริ่มติดตั้ง... (กรุณารอสักครู่)</span>';
+        }
+      } catch(_) {}
+      appendLog('🔄 กำลังปิดโปรแกรมและติดตั้งอัปเดตเวอร์ชันใหม่...');
       window.kiraeveUpdater.install();
     } else {
       alert('ฟังก์ชันนี้ใช้งานได้เฉพาะในโหมด Electron (.exe) เท่านั้น');
     }
   }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeUpdateModal();
+  });
 
   // รับ Event จาก Electron Main Process (เมื่อ packaged)
   if (window.kiraeveUpdater) {
@@ -2644,7 +2745,73 @@ tailwind.config = {
   const style = document.createElement('style');
   style.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
   document.head.appendChild(style);
+
   // ============================================================
+  // Global Auto-Save System (บันทึกอัตโนมัติทุกแท็บ)
+  // ============================================================
+  let autoSaveTimers = {};
+  function triggerAutoSave(section) {
+    if (autoSaveTimers[section]) clearTimeout(autoSaveTimers[section]);
+    autoSaveTimers[section] = setTimeout(async () => {
+      try {
+        if (section === 'jar' && typeof saveJarConfig === 'function') await saveJarConfig();
+        else if (section === 'timer' && typeof saveTimerConfig === 'function') await saveTimerConfig();
+        else if (section === 'tts' && typeof saveTTSSettings === 'function') await saveTTSSettings();
+        else if (section === 'leaderboard' && typeof saveLeaderboardConfig === 'function') await saveLeaderboardConfig();
+        else if (section === 'auction' && typeof saveAuctionConfig === 'function') await saveAuctionConfig();
+        else if (section === 'gacha' && typeof saveGachaConfig === 'function') await saveGachaConfig();
+        else if (section === 'gift_mappings' && typeof saveGiftMappings === 'function') await saveGiftMappings();
+        else if (section === 'timer_mappings' && typeof saveTimerMappings === 'function') await saveTimerMappings();
+        else if (section === 'tiktok' && typeof saveTikTokAutoConnectSetting === 'function') await saveTikTokAutoConnectSetting();
+        showAutoSaveIndicator();
+      } catch (err) {
+        console.warn('Auto-save error:', err);
+      }
+    }, 600);
+  }
+
+  function showAutoSaveIndicator() {
+    let el = document.getElementById('auto-save-pill');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'auto-save-pill';
+      el.className = 'fixed bottom-4 right-4 bg-emerald-500/90 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 transition-all duration-300 z-50 pointer-events-none opacity-0';
+      el.innerHTML = '<span class="material-symbols-outlined text-[14px]">cloud_done</span><span>บันทึกอัตโนมัติแล้ว</span>';
+      document.body.appendChild(el);
+    }
+    el.style.opacity = '1';
+    el.style.transform = 'translateY(0)';
+    setTimeout(() => {
+      if (el) {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(6px)';
+      }
+    }, 1800);
+  }
+
+  document.addEventListener('input', (e) => {
+    const target = e.target;
+    if (!target) return;
+    if (target.closest('#tab-jar')) triggerAutoSave('jar');
+    else if (target.closest('#tab-timer')) triggerAutoSave('timer');
+    else if (target.closest('#tab-tts')) triggerAutoSave('tts');
+    else if (target.closest('#tab-leaderboard')) triggerAutoSave('leaderboard');
+    else if (target.closest('#tab-auction')) triggerAutoSave('auction');
+    else if (target.closest('#tab-gacha')) triggerAutoSave('gacha');
+  });
+
+  document.addEventListener('change', (e) => {
+    const target = e.target;
+    if (!target) return;
+    if (target.closest('#tab-jar')) triggerAutoSave('jar');
+    else if (target.closest('#tab-timer')) triggerAutoSave('timer');
+    else if (target.closest('#tab-tts')) triggerAutoSave('tts');
+    else if (target.closest('#tab-leaderboard')) triggerAutoSave('leaderboard');
+    else if (target.closest('#tab-auction')) triggerAutoSave('auction');
+    else if (target.closest('#tab-gacha')) triggerAutoSave('gacha');
+    else if (target.closest('#tab-sounds')) triggerAutoSave('gift_mappings');
+    else if (target.closest('#tab-tiktok')) triggerAutoSave('tiktok');
+  });
 
   function escapeHtml(str) {
     if (str === null || str === undefined) return '';
@@ -3144,7 +3311,7 @@ tailwind.config = {
         <tr class="hover:bg-tik-bg/40">
           <td class="py-2.5 px-2">
             <div class="flex items-center gap-2.5">
-              <img src="/api/gift-icon?name=${encodeURIComponent(m.gift_name || 'Rose')}" id="gift-icon-preview-${idx}" referrerpolicy="no-referrer" class="w-8 h-8 object-contain rounded-lg bg-tik-bg p-1 border border-tik-card-border shrink-0 shadow" alt="Gift Icon">
+              <img src="/api/gift-icon?name=${encodeURIComponent(m.gift_name || 'Rose')}" id="gift-icon-preview-${idx}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='/api/gift-icon?name=Rose';" class="w-8 h-8 object-contain rounded-lg bg-tik-bg p-1 border border-tik-card-border shrink-0 shadow" alt="Gift Icon">
               <div class="flex flex-col gap-1">
                 <select onchange="handleGiftDropdownChange(${idx}, this.value)" class="bg-tik-bg border border-tik-card-border rounded px-2 py-1 text-xs text-white font-bold w-48 focus:outline-none focus:border-tik-pink">
                   ${giftOptionsHtml}
@@ -3205,6 +3372,7 @@ tailwind.config = {
   function updateMappingField(idx, field, value) {
     if (currentGiftMappings[idx]) {
       currentGiftMappings[idx][field] = value;
+      triggerAutoSave('gift_mappings');
     }
   }
 
@@ -3218,11 +3386,13 @@ tailwind.config = {
       enabled: true
     });
     renderGiftMappingsTable();
+    triggerAutoSave('gift_mappings');
   }
 
   function removeGiftMappingRow(idx) {
     currentGiftMappings.splice(idx, 1);
     renderGiftMappingsTable();
+    triggerAutoSave('gift_mappings');
   }
 
   async function saveGiftMappings() {
@@ -3255,7 +3425,7 @@ tailwind.config = {
         <tr class="hover:bg-tik-bg/40">
           <td class="py-2.5 px-2">
             <div class="flex items-center gap-2.5">
-              <img src="/api/gift-icon?name=${encodeURIComponent(m.gift_name || 'Rose')}" id="timer-gift-icon-preview-${idx}" referrerpolicy="no-referrer" class="w-8 h-8 object-contain rounded-lg bg-tik-bg p-1 border border-tik-card-border shrink-0 shadow" alt="Gift Icon">
+              <img src="/api/gift-icon?name=${encodeURIComponent(m.gift_name || 'Rose')}" id="timer-gift-icon-preview-${idx}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='/api/gift-icon?name=Rose';" class="w-8 h-8 object-contain rounded-lg bg-tik-bg p-1 border border-tik-card-border shrink-0 shadow" alt="Gift Icon">
               <div class="flex flex-col gap-1">
                 <select onchange="handleTimerGiftDropdownChange(${idx}, this.value)" class="bg-tik-bg border border-tik-card-border rounded px-2 py-1 text-xs text-white font-bold w-48 focus:outline-none focus:border-tik-pink">
                   ${giftOptionsHtml}
@@ -3307,6 +3477,7 @@ tailwind.config = {
     if (currentTimerMappings[idx]) {
       currentTimerMappings[idx][field] = value;
       if (field === 'action') renderTimerMappingsTable();
+      triggerAutoSave('timer_mappings');
     }
   }
 
@@ -3318,11 +3489,13 @@ tailwind.config = {
       enabled: true
     });
     renderTimerMappingsTable();
+    triggerAutoSave('timer_mappings');
   }
 
   function removeTimerMappingRow(idx) {
     currentTimerMappings.splice(idx, 1);
     renderTimerMappingsTable();
+    triggerAutoSave('timer_mappings');
   }
 
   async function saveTimerMappings() {
@@ -4124,7 +4297,23 @@ tailwind.config = {
   function quickAddGachaItem(text, tier = 'auto', color = '', rarity_name = '') {
     currentGachaItems.push({ text, tier, rarity_name, color });
     renderGachaItemsList();
+    if (typeof triggerAutoSave === 'function') triggerAutoSave('gacha');
     appendLog(`➕ เพิ่มรางวัล "${text}" [${rarity_name || tier.toUpperCase()}] ในวงล้อ Gacha (รวม ${currentGachaItems.length} รายการ)`);
+  }
+
+  function quickAddGachaGift(giftName, label, tier = 'legendary', color = '#fbbf24') {
+    currentGachaItems.push({
+      text: giftName,
+      type: 'gift',
+      gift_name: giftName,
+      tier: tier,
+      rarity_name: '🎁 ของขวัญ',
+      color: color,
+      is_gift: true
+    });
+    renderGachaItemsList();
+    if (typeof triggerAutoSave === 'function') triggerAutoSave('gacha');
+    appendLog(`🎁 เพิ่มของขวัญ "${giftName}" ในวงล้อ Gacha (สุ่มได้จะตกลงขวดโหลและเล่นเสียงของขวัญ)`);
   }
 
   function updateGachaItemText(idx, newText) {
@@ -4866,7 +5055,40 @@ tailwind.config = {
     triggerMockGift(name, count, coins, sender);
   }
 
-  // Siri TTS controls
+  let currentTTSAudio = null;
+
+  function setTTSTestText(text, sender) {
+    const textEl = document.getElementById('tts-test-text');
+    const senderEl = document.getElementById('tts-test-sender');
+    if (textEl) textEl.value = text;
+    if (senderEl && sender) senderEl.value = sender;
+  }
+
+  async function testDirectTTS(broadcastOnly) {
+    const senderEl = document.getElementById('tts-test-sender');
+    const textEl = document.getElementById('tts-test-text');
+    const sender = senderEl ? senderEl.value.trim() : 'น้องบ็อบ';
+    const text = textEl ? textEl.value.trim() : 'สวัสดีครับคุณสตรีมเมอร์';
+    
+    if (!text) return;
+
+    appendLog(`🔊 ทดสอบอ่านแชท Siri จาก "${sender}": "${text}"`);
+
+    try {
+      const res = await fetch('/api/mock-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_type: 'chat', sender, text })
+      });
+      const data = await res.json();
+      
+      if (data.ok) {
+        appendLog('📡 ส่งข้อความแชทไปยัง Overlay (OBS) เรียบร้อยแล้ว (เสียงจะเล่นเฉพาะใน OBS Overlay)');
+      }
+    } catch (e) {
+      appendLog('❌ เกิดข้อผิดพลาดในการอ่านแชท TTS: ' + e);
+    }
+  }
 
   async function triggerMockChat() {
     const senderEl = document.getElementById('sim-sender');
@@ -4874,7 +5096,7 @@ tailwind.config = {
     const sender = senderEl ? senderEl.value : 'Viewer_007';
     const text = textEl ? textEl.value : 'สวัสดีครับ ขอเพลงเพราะๆ 1 เพลงครับ';
     
-    appendLog(`🔊 ส่งข้อความจำลองจาก "${sender}": "${text}" ไปยัง Overlay`);
+    appendLog(`🔊 ทดสอบอ่านแชทจาก "${sender}": "${text}" ➔ ส่งไปยัง Overlay (OBS)`);
 
     try {
       const res = await fetch('/api/mock-event', {
@@ -4884,10 +5106,10 @@ tailwind.config = {
       });
       const data = await res.json();
       if (data.ok) {
-        appendLog('📡 ส่งข้อความแชทไปยัง Overlay (OBS) เรียบร้อยแล้ว (เสียงจะดังเฉพาะใน Overlay)');
+        appendLog('✅ ส่งข้อความจำลองไปยัง Overlay (OBS) เรียบร้อยแล้ว');
       }
     } catch (e) {
-      appendLog('❌ เกิดข้อผิดพลาดในการส่งแชท TTS: ' + e);
+      appendLog('❌ เกิดข้อผิดพลาดในการอ่านแชท TTS: ' + e);
     }
   }
 
@@ -4958,12 +5180,16 @@ tailwind.config = {
   }
 
   async function stopTTSAudio() {
+    if (currentTTSAudio) {
+      currentTTSAudio.pause();
+      currentTTSAudio.currentTime = 0;
+    }
     await fetch('/api/mock-event', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ event_type: 'stop_audio' })
     });
-    appendLog('⏹️ สั่งหยุดเสียงอ่านแชทบน Overlay เรียบร้อยแล้ว');
+    appendLog('⏹️ สั่งหยุดเสียงอ่านแชทเรียบร้อยแล้ว');
   }
 
   const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
@@ -5020,8 +5246,8 @@ tailwind.config = {
           renderTimerMappingsTable();
         }
       } else if (data.type === 'tts_chat') {
-        // ให้เสียงอ่าน Siri ดังเฉพาะใน Overlay (OBS Browser Source) เท่านั้น ไม่เล่นเสียงใน Dashboard
-      }
+        // Siri TTS only plays in the OBS overlay (overlay_tts.html), muted inside dashboard app
+        appendLog(`🗣️ [Siri TTS] อ่านแชทจาก "${data.sender}": "${data.text}" ➔ OBS Overlay`);
       } else if (data.type === 'tts_visibility') {
         updateTTSVisibilityUI(data.visible);
       } else if (data.type === 'gacha_spin') {

@@ -364,16 +364,8 @@
       } else if (data.type === 'tts_chat') {
         appendChatMessage(data.sender, data.text);
         if (ttsConfig.enabled && !ttsConfig.audio_muted) {
-          // เคลียร์คิวเก่าทั้งหมด ให้อ่านเฉพาะข้อความล่าสุดเท่านั้น
-          ttsQueue.length = 0;
           ttsQueue.push(data);
-          // ตัดเสียงพูดข้อความเก่าทันทีถ้ากำลังอ่านอยู่ เพื่อเริ่มอ่านข้อความใหม่ล่าสุด
-          if (ttsAudio) {
-            ttsAudio.pause();
-            ttsAudio.currentTime = 0;
-          }
-          isTTSSpeaking = false;
-          processTTSQueue();
+          if (!isTTSSpeaking) processTTSQueue();
         }
       } else if (data.type === 'stop_audio') {
         ttsQueue.length = 0;

@@ -746,11 +746,22 @@
         const winnerText = (typeof winnerItem === 'object' && winnerItem !== null) ? (winnerItem.text || winnerItem.name || '') : String(winnerItem);
         const displayWinner = (typeof winnerText === 'string' && winnerText.startsWith('+')) ? winnerText : (!isNaN(Number(winnerText)) && Number(winnerText) > 0 ? `+${winnerText}` : winnerText);
         const isSec = !isNaN(parseInt(winnerText));
-        resultTextEl.innerText = `${displayWinner} ${isSec ? 'วินาที' : ''}`;
-        if (isSec) {
+        const wonGift = data.won_gift || (typeof winnerItem === 'object' && (winnerItem.type === 'gift' || winnerItem.is_gift) ? { name: winnerItem.gift_name || winnerItem.text } : null);
+
+        if (wonGift) {
+          resultTextEl.innerText = `🎁 ${wonGift.name}`;
+          resultSyncTagEl.innerText = '🫙 ส่งเข้า Jar สำเร็จ';
+          resultSyncTagEl.className = 'text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-bold';
           resultSyncTagEl.style.display = 'inline-block';
         } else {
-          resultSyncTagEl.style.display = 'none';
+          resultTextEl.innerText = `${displayWinner} ${isSec ? 'วินาที' : ''}`;
+          if (isSec) {
+            resultSyncTagEl.innerText = '⏱️ ซิงค์ Subathon สำเร็จ';
+            resultSyncTagEl.className = 'text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold';
+            resultSyncTagEl.style.display = 'inline-block';
+          } else {
+            resultSyncTagEl.style.display = 'none';
+          }
         }
         resultBannerEl.style.opacity = '1';
 

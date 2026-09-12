@@ -19,40 +19,34 @@
     display: flex;
   }
   body.obs-mode {
-    align-items: flex-start;
-    justify-content: flex-end;
-    padding: 24px;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
   }
   body.preview-mode {
     align-items: center;
     justify-content: center;
   }
-  .obsidian-panel {
-    background: rgba(15, 15, 20, 0.88);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(168, 85, 247, 0.15);
-  }
   .timer-glow-normal {
-    text-shadow: 0 0 16px rgba(208, 188, 255, 0.5), 0 0 32px rgba(168, 85, 247, 0.3);
+    text-shadow: 0 0 20px rgba(208, 188, 255, 0.6), 0 0 40px rgba(168, 85, 247, 0.4);
   }
   .timer-glow-danger {
     color: #f87171 !important;
-    text-shadow: 0 0 16px rgba(239, 68, 68, 0.8), 0 0 32px rgba(239, 68, 68, 0.4);
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.9), 0 0 40px rgba(239, 68, 68, 0.5);
     animation: dangerPulse 1s ease-in-out infinite;
   }
   @keyframes dangerPulse {
     0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.03); opacity: 0.85; }
+    50% { transform: scale(1.04); opacity: 0.85; }
   }
 
   /* Time modifier badges */
   .time-boost-badge {
     position: absolute;
-    top: -14px; right: -12px;
-    font-size: 13px;
-    font-weight: 800;
-    padding: 3px 10px;
+    top: -16px; right: -12px;
+    font-size: 14px;
+    font-weight: 900;
+    padding: 3px 12px;
     border-radius: 9999px;
     pointer-events: none;
     z-index: 50;
@@ -86,25 +80,15 @@
 </head>
 <body id="body-el" class="obs-mode">
 
-  <div id="timer-widget" class="obsidian-panel rounded-2xl px-6 py-4 flex flex-col items-center gap-1.5 shadow-2xl min-w-[240px] relative">
-    
-    <!-- Top Status Header -->
-    <div class="w-full flex items-center justify-between gap-2 pb-0.5">
-      <div class="flex items-center gap-2">
-        <span id="timer-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(78,222,163,0.8)]"></span>
-        <span id="timer-status-text" class="font-bold text-[11px] text-purple-300 uppercase tracking-widest font-mono">SUBATHON TIMER</span>
-      </div>
-      <span id="timer-mode-badge" class="text-[10px] font-mono bg-white/10 px-2 py-0.5 rounded text-white/70">COUNTDOWN</span>
-    </div>
-
+  <div id="timer-widget" class="flex flex-col items-center gap-1.5 min-w-[240px] relative select-none">
     <!-- Central Clock Display -->
-    <div id="timer-clock" class="font-mono font-bold text-4xl text-white tracking-tight timer-glow-normal py-1">
+    <div id="timer-clock" class="font-mono font-black text-5xl text-white tracking-tight timer-glow-normal py-1">
       01:00:00
     </div>
 
     <!-- Progress Bar -->
-    <div class="w-full h-1.5 bg-gray-800/80 rounded-full overflow-hidden mt-0.5 border border-white/5">
-      <div id="timer-progress-fill" class="h-full bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full" style="width: 100%;"></div>
+    <div class="w-full max-w-[280px] h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/15 shadow-inner">
+      <div id="timer-progress-fill" class="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-400 rounded-full" style="width: 100%;"></div>
     </div>
   </div>
 
@@ -143,14 +127,16 @@
 
     // Warning state when under 60 seconds
     if (timerMode === 'countdown' && sec <= 60 && sec > 0) {
-      timerClockEl.className = 'font-mono font-bold text-4xl tracking-tight py-1 timer-glow-danger';
+      timerClockEl.className = 'font-mono font-black text-5xl tracking-tight py-1 timer-glow-danger';
     } else if (timerMode === 'countdown' && sec === 0) {
-      timerClockEl.className = 'font-mono font-bold text-4xl tracking-tight py-1 text-red-500';
-      timerStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-red-500 animate-ping';
-      timerStatusText.innerText = "TIME'S UP";
-      timerStatusText.className = 'font-bold text-[11px] text-red-400 uppercase tracking-widest font-mono';
+      timerClockEl.className = 'font-mono font-black text-5xl tracking-tight py-1 text-red-500';
+      if (timerStatusDot) timerStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-red-500 animate-ping';
+      if (timerStatusText) {
+        timerStatusText.innerText = "TIME'S UP";
+        timerStatusText.className = 'font-bold text-[11px] text-red-400 uppercase tracking-widest font-mono';
+      }
     } else {
-      timerClockEl.className = 'font-mono font-bold text-4xl text-white tracking-tight timer-glow-normal py-1';
+      timerClockEl.className = 'font-mono font-black text-5xl text-white tracking-tight timer-glow-normal py-1';
     }
 
     // Update Progress Bar
@@ -163,7 +149,7 @@
     } else if (pct < 35) {
       timerProgressFill.className = 'h-full bg-gradient-to-r from-amber-500 to-orange-400 rounded-full';
     } else {
-      timerProgressFill.className = 'h-full bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full';
+      timerProgressFill.className = 'h-full bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-400 rounded-full';
     }
   }
 
@@ -171,19 +157,23 @@
     isRunning = running;
     if (mode) {
       timerMode = mode;
-      timerModeBadge.innerText = mode.toUpperCase();
+      if (timerModeBadge) timerModeBadge.innerText = mode.toUpperCase();
     }
 
     if (currentSeconds === 0) return;
 
     if (running) {
-      timerStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(78,222,163,0.8)]';
-      timerStatusText.innerText = 'SUBATHON TIMER';
-      timerStatusText.className = 'font-bold text-[11px] text-purple-300 uppercase tracking-widest font-mono';
+      if (timerStatusDot) timerStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(78,222,163,0.8)]';
+      if (timerStatusText) {
+        timerStatusText.innerText = 'SUBATHON TIMER';
+        timerStatusText.className = 'font-bold text-[11px] text-purple-300 uppercase tracking-widest font-mono';
+      }
     } else {
-      timerStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
-      timerStatusText.innerText = 'TIMER PAUSED';
-      timerStatusText.className = 'font-bold text-[11px] text-amber-300 uppercase tracking-widest font-mono';
+      if (timerStatusDot) timerStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
+      if (timerStatusText) {
+        timerStatusText.innerText = 'TIMER PAUSED';
+        timerStatusText.className = 'font-bold text-[11px] text-amber-300 uppercase tracking-widest font-mono';
+      }
     }
   }
 

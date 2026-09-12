@@ -124,7 +124,29 @@ ipcMain.handle("updater:download", async () => {
 
 ipcMain.handle("updater:install", () => {
   quitting = true;
-  autoUpdater.quitAndInstall(false, true);
+  console.log("[updater] Preparing to quit and install: cleaning up child processes...");
+  if (tray) {
+    try { tray.destroy(); } catch (_) {}
+    tray = null;
+  }
+  if (pyProc) {
+    try {
+      if (process.platform === "win32") {
+        execSync(`taskkill /F /T /PID ${pyProc.pid}`, { windowsHide: true });
+      } else {
+        pyProc.kill("SIGKILL");
+      }
+    } catch (_) {}
+    pyProc = null;
+  }
+  killPortOccupant(PORT);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    try { mainWindow.destroy(); } catch (_) {}
+    mainWindow = null;
+  }
+  setTimeout(() => {
+    autoUpdater.quitAndInstall(false, true);
+  }, 500);
 });
 
 ipcMain.handle("updater:get-version", () => {
@@ -337,7 +359,19 @@ app.on("window-all-closed", () => {
 
 app.on("before-quit", () => {
   quitting = true;
-  if (pyProc) {
-    pyProc.kill();
+  if (tray) {
+    try { tray.destroy(); } catch (_) {}
+    tray = null;
   }
+  if (pyProc) {
+    try {
+      if (process.platform === "win32") {
+        execSync(`taskkill /F /T /PID ${pyProc.pid}`, { windowsHide: true });
+      } else {
+        pyProc.kill("SIGKILL");
+      }
+    } catch (_) {}
+    pyProc = null;
+  }
+  killPortOccupant(PORT);
 });

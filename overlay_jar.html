@@ -25,9 +25,9 @@
     display: flex;
   }
   body.obs-mode {
-    align-items: flex-end;
-    justify-content: flex-end;
-    padding: 20px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
   }
   body.preview-mode {
     align-items: center;
@@ -211,12 +211,23 @@
   World.add(engine.world, staticBodies);
 
   const giftIconsCache = {};
-  function loadGiftIconImage(iconUrl) {
-    if (!iconUrl) iconUrl = "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp";
-    if (giftIconsCache[iconUrl]) return giftIconsCache[iconUrl];
+  function loadGiftIconImage(iconUrl, giftName) {
+    let resolvedUrl = iconUrl;
+    if (!resolvedUrl && giftName) {
+      resolvedUrl = `/api/gift-icon?name=${encodeURIComponent(giftName)}`;
+    }
+    if (!resolvedUrl) {
+      resolvedUrl = "/api/gift-icon?name=rose";
+    }
+    if (giftIconsCache[resolvedUrl]) return giftIconsCache[resolvedUrl];
     const img = new Image();
-    img.src = iconUrl;
-    giftIconsCache[iconUrl] = img;
+    img.src = resolvedUrl;
+    img.onerror = () => {
+      if (!img.src.includes('/api/gift-icon?name=rose')) {
+        img.src = "/api/gift-icon?name=rose";
+      }
+    };
+    giftIconsCache[resolvedUrl] = img;
     return img;
   }
 
@@ -267,7 +278,7 @@
   const MAX_BODIES = 800; // Large capacity: holds full jar + deep overflow mounds without deleting
 
   function spawnGiftItems(name, iconUrl, count, coins, sender, profilePic) {
-    const giftImg = loadGiftIconImage(iconUrl);
+    const giftImg = loadGiftIconImage(iconUrl, name);
     const profileImg = loadProfileImage(profilePic);
     const itemRadius = getRadiusByCoins(coins);
 
@@ -413,17 +424,11 @@
   requestAnimationFrame(render);
 
   let currentAudio = null;
-  const recentGiftsCache = new Set();
 
   ws.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
       if (data.type === 'gift') {
-        const giftKey = `${data.sender}_${data.gift_name}_${data.count}_${data.coins}_${Math.floor(Date.now() / 800)}`;
-        if (recentGiftsCache.has(giftKey)) return;
-        recentGiftsCache.add(giftKey);
-        setTimeout(() => recentGiftsCache.delete(giftKey), 2000);
-
         spawnGiftItems(data.gift_name, data.gift_icon, data.count, data.coins, data.sender, data.profile_picture);
         if (!isPreview && data.sound_effect) {
           if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }

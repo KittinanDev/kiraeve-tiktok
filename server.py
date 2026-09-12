@@ -284,29 +284,12 @@ def filter_tts_text(text: str, blacklisted_words: List[str], max_length: int = 1
     if not text:
         return None
     cleaned = text.strip()
-    
-    # 1. ลบ URLs / Links
-    cleaned = re.sub(r'https?://\S+|www\.\S+', '', cleaned)
-    
-    # 2. ลบ Emojis / Symbols ที่ Edge TTS มักอ่านออกเสียงแปลกๆ หรือสะกดชื่ออีโมจิยาวๆ
-    cleaned = re.sub(r'[\U00010000-\U0010ffff]', '', cleaned)
-    cleaned = re.sub(r'[\u2600-\u27BF\uE000-\uF8FF]', '', cleaned)
-
-    # 3. ตัดคำซ้ำอักขระยาวๆ เช่น "5555555555555", "กกกกกกกก", "ฮ่าๆๆๆๆๆๆๆๆๆๆ" ให้เหลือสั้นๆ
-    cleaned = re.sub(r'(.)\1{3,}', r'\1\1', cleaned)
-
-    # 4. กรองคำต้องห้าม
     for word in blacklisted_words:
         if word:
             pattern = re.escape(word)
             cleaned = re.sub(pattern, "***", cleaned, flags=re.IGNORECASE)
-    
-    cleaned = cleaned.strip()
-    if not cleaned:
-        return None
-
     if len(cleaned) > max_length:
-        cleaned = cleaned[:max_length]
+        cleaned = cleaned[:max_length] + "..."
     return cleaned
 
 # In-Memory States
@@ -547,10 +530,7 @@ class TikFinityAuctionState:
                 trigger_winner_announcement()
 
         extended = False
-        if not target_reached and self.remaining_seconds <= 15 and self.auto_extend_sec > 0:
-            self.remaining_seconds += self.auto_extend_sec
-            extended = True
-            self.last_extended = True
+        self.last_extended = False
 
         return {
             "accepted": True,
@@ -728,6 +708,75 @@ def generate_gacha_reel_sequence(pool_items: List[str], winner_item: str, reel_l
     reel[winner_index] = winner_item
     return reel, winner_index
 
+def resolve_gacha_gift_reward(winner_item: any, cfg: dict) -> Optional[dict]:
+    if not winner_item:
+        return None
+    g_name = ""
+    g_count = 1
+    if isinstance(winner_item, dict):
+        if winner_item.get("type") == "gift" or winner_item.get("is_gift") or winner_item.get("gift_name"):
+            g_name = winner_item.get("gift_name") or winner_item.get("text") or winner_item.get("name") or ""
+            g_count = int(winner_item.get("count") or 1)
+        else:
+            g_name = str(winner_item.get("text") or winner_item.get("name") or "").strip()
+    else:
+        g_name = str(winner_item).strip()
+
+    if not g_name:
+        return None
+
+    if parse_time_delta_seconds(g_name) is not None:
+        return None
+
+    cleaned = re.sub(r'^(gift|ของขวัญ|ไอเทม|🎁)\s*[:\-]?\s*', '', g_name, flags=re.IGNORECASE).strip()
+    lower = cleaned.lower()
+
+    if lower in GIFT_ICONS_MAP or lower in REAL_TIKTOK_GIFT_ICONS:
+        return {"name": cleaned, "count": g_count}
+
+    for m in cfg.get("gift_sound_mappings", []):
+        if m.get("gift_name", "").strip().lower() == lower:
+            return {"name": cleaned, "count": g_count}
+
+    return None
+
+async def schedule_gacha_gift_drop(delay: float, gift_info: dict, sender: str, profile_pic: str, cfg: dict):
+    await asyncio.sleep(delay)
+    g_name = gift_info["name"]
+    g_count = gift_info.get("count", 1)
+    s_url = None
+    s_vol = 1.0
+    for m in cfg.get("gift_sound_mappings", []):
+        if m.get("enabled", True) and m.get("gift_name", "").strip().lower() == g_name.strip().lower():
+            sf = m.get("sound_file")
+            if sf:
+                s_url = f"/soundeffect/{sf}"
+                s_vol = float(m.get("volume", 1.0))
+                break
+    if not s_url:
+        s_url = "/soundeffect/dragon-studio-pop-402324.mp3"
+
+    g_icon = get_real_gift_icon(g_name) or f"/api/gift-icon?name={urllib.parse.quote(g_name)}"
+
+    jar_state.item_count += g_count
+    jar_state.total_coins += 50 * g_count
+
+    log.info("🎰 CS:GO Gacha Won Gift Dropping into Jar: '%s' x%d for %s (sound=%s)", g_name, g_count, sender, s_url)
+    await broadcast({
+        "type": "gift",
+        "gift_name": g_name,
+        "gift_icon": g_icon,
+        "count": g_count,
+        "coins": 50 * g_count,
+        "sender": f"🎰 Gacha ({sender})",
+        "profile_picture": profile_pic,
+        "sound_effect": s_url,
+        "sound_volume": s_vol,
+        "jar_count": jar_state.item_count,
+        "jar_total_coins": jar_state.total_coins,
+        "is_gacha_reward": True
+    })
+
 # HTTP Handlers
 async def handle_dashboard(request: web.Request) -> web.FileResponse:
     return web.FileResponse(BASE_DIR / "dashboard.html", headers={"Cache-Control": "no-store"})
@@ -880,21 +929,31 @@ async def handle_gift_icon_proxy(request: web.Request) -> web.Response:
         safe_name = re.sub(r'[^\w\.-]', '_', gift_name)
         cached_file = ICON_CACHE_DIR / f"{safe_name}.webp"
 
-    if cached_file.exists():
+    if cached_file.exists() and cached_file.stat().st_size > 0:
         with open(cached_file, "rb") as f:
             return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
 
-    try:
-        req_headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
-        async with aiohttp.ClientSession() as session:
-            async with session.get(icon_url, headers=req_headers, ssl=False, timeout=aiohttp.ClientTimeout(total=8)) as resp:
-                if resp.status == 200:
-                    data = await resp.read()
-                    with open(cached_file, "wb") as f:
-                        f.write(data)
-                    return web.Response(body=data, content_type=resp.headers.get("Content-Type", "image/webp"), headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
-    except Exception as e:
-        log.warning("Could not fetch CDN icon for %s: %s", gift_name, e)
+    if not icon_url or not icon_url.startswith("http"):
+        icon_url = get_real_gift_icon("rose")
+
+    if icon_url and icon_url.startswith("http"):
+        try:
+            req_headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+            async with aiohttp.ClientSession() as session:
+                async with session.get(icon_url, headers=req_headers, ssl=False, timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                    if resp.status == 200:
+                        data = await resp.read()
+                        if len(data) > 0:
+                            with open(cached_file, "wb") as f:
+                                f.write(data)
+                            return web.Response(body=data, content_type=resp.headers.get("Content-Type", "image/webp"), headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+        except Exception as e:
+            log.warning("Could not fetch CDN icon for %s (%s): %s", gift_name, icon_url, e)
+
+    rose_fallback = ICON_CACHE_DIR / "rose.webp"
+    if rose_fallback.exists() and rose_fallback.stat().st_size > 0:
+        with open(rose_fallback, "rb") as f:
+            return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
 
     svg_content = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <defs>
@@ -1163,6 +1222,10 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                     "time_delta_seconds": sec_delta,
                     "config": gacha_cfg
                 }
+                won_gift = resolve_gacha_gift_reward(winner_item, cfg)
+                if won_gift:
+                    gacha_spin_data["won_gift"] = won_gift
+                    asyncio.create_task(schedule_gacha_gift_drop(duration, won_gift, sender, profile_picture, cfg))
                 await broadcast(gacha_spin_data)
 
             # User Configured Per-Gift Sound Mapping Lookup
@@ -1439,6 +1502,10 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                 "config": gacha_cfg,
                 "is_mock": True
             }
+            won_gift = resolve_gacha_gift_reward(winner_item, cfg)
+            if won_gift:
+                payload["won_gift"] = won_gift
+                asyncio.create_task(schedule_gacha_gift_drop(duration, won_gift, sender, sender_avatar, cfg))
             await broadcast(payload)
             return web.json_response({"ok": True, "broadcast": payload})
 

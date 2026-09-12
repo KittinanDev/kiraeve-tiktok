@@ -967,15 +967,8 @@ tailwind.config = {
         jarBodies = [];
       } else if (data.type === 'tts_chat') {
         if (!isJarMode && !isTimerMode && !isLeaderboardMode && !isAuctionMode && !isGachaMode) {
-          // เคลียร์คิวเก่าทั้งหมด ให้อ่านเฉพาะข้อความล่าสุดเท่านั้น
-          ttsQueue.length = 0;
           ttsQueue.push(data);
-          if (ttsAudio) {
-            ttsAudio.pause();
-            ttsAudio.currentTime = 0;
-          }
-          isTTSSpeaking = false;
-          processTTSQueue();
+          if (!isTTSSpeaking) processTTSQueue();
         }
       }
     } catch (e) {}

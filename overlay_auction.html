@@ -28,9 +28,9 @@
   }
 
   body.obs-mode {
-    align-items: flex-start;
-    justify-content: flex-start;
-    padding: 24px;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
   }
 
   body.preview-mode {
@@ -41,8 +41,13 @@
 
   /* Scalable Container for Crisp High-DPI Rendering */
   #scale-wrapper {
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
     transform: scale(var(--overlay-scale));
-    transform-origin: top left;
+    transform-origin: center center;
     transition: transform 0.25s ease-out;
   }
 
@@ -230,7 +235,7 @@
               05:00
             </div>
             <span id="auc-timer-subtext" class="text-[10px] font-semibold text-gray-400 mt-0.5">
-              +15s on last bid
+              AUCTION
             </span>
 
             <!-- Urgent pulse overlay -->
@@ -280,12 +285,6 @@
           </div>
         </div>
 
-      </div>
-
-      <!-- Anti-Sniping Alert Floating Toast -->
-      <div id="sniping-toast" class="hidden absolute top-4 left-1/2 -translate-x-1/2 bg-amber-400 text-black px-4 py-1.5 rounded-full font-black text-xs shadow-2xl flex items-center gap-1.5 z-40 whitespace-nowrap">
-        <span>🛡️</span>
-        <span>ANTI-SNIPING! เวลาต่อเพิ่ม +15 วินาที</span>
       </div>
 
       <!-- Grand Winner Celebration Screen (Overlay takeover) -->
@@ -506,20 +505,16 @@
       timerUrgentGlow.classList.remove('hidden');
     } else if (rem <= 60 && auc.is_active) {
       aucTimerEl.className = 'font-mono text-3xl font-black text-amber-400 tracking-tight leading-tight';
-      aucTimerSubtext.innerText = '+15s เมื่อมีบิดใหม่';
+      aucTimerSubtext.innerText = 'นับถอยหลัง';
       aucTimerSubtext.className = 'text-[10px] font-semibold text-gray-400 mt-0.5';
       timerUrgentGlow.classList.add('hidden');
     } else {
       aucTimerEl.className = 'font-mono text-3xl font-black text-emerald-400 tracking-tight leading-tight';
-      aucTimerSubtext.innerText = '+15s เมื่อมีบิดใหม่';
+      aucTimerSubtext.innerText = 'เวลาที่เหลือ';
       aucTimerSubtext.className = 'text-[10px] font-semibold text-gray-400 mt-0.5';
       timerUrgentGlow.classList.add('hidden');
     }
 
-    // Anti-Sniping Toast
-    if (auc.last_extended && prevRemainingSec > 0 && rem > prevRemainingSec) {
-      showAntiSnipingToast();
-    }
     prevRemainingSec = rem;
 
     // Highest Bidder Card
