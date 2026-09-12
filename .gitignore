@@ -1,0 +1,16 @@
+# ไฟล์ที่ไม่ต้องการให้ Git ติดตาม
+node_modules/
+dist/
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.log
+gift_cache.json
+gift_catalog_cache.json
+scratch/
+scratch_match.py
+scratch_search.py
+
+# Large media files (>50MB exceeds GitHub limit)
+media/Background/*.mp4

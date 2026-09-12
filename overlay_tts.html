@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Siri TTS Chat Overlay</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#4edea3",
+                        "surface-dim": "#131313",
+                        "on-secondary-container": "#00311f",
+                        "primary-fixed-dim": "#d0bcff",
+                        "surface-container-high": "#2a2a2a",
+                        "tertiary-container": "#ca801e",
+                        "error-container": "#93000a",
+                        "surface-container-low": "#1c1b1b",
+                        "inverse-primary": "#6d3bd7",
+                        "primary": "#d0bcff",
+                        "on-primary": "#3c0091",
+                        "on-tertiary-fixed": "#2c1700",
+                        "tertiary-fixed-dim": "#ffb869",
+                        "surface": "#131313",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-secondary-fixed": "#002113",
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-error": "#690005",
+                        "outline": "#958ea0",
+                        "primary-fixed": "#e9ddff",
+                        "on-surface": "#e5e2e1",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-secondary": "#003824",
+                        "on-background": "#e5e2e1",
+                        "surface-container-highest": "#353534",
+                        "secondary-container": "#00a572",
+                        "inverse-surface": "#e5e2e1",
+                        "surface-container": "#201f1f",
+                        "outline-variant": "#494454",
+                        "on-tertiary": "#482900",
+                        "surface-tint": "#d0bcff",
+                        "error": "#ffb4ab",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-tertiary-container": "#3f2300",
+                        "on-tertiary-fixed-variant": "#673d00",
+                        "surface-variant": "#353534",
+                        "on-primary-fixed-variant": "#5516be",
+                        "on-primary-fixed": "#23005c",
+                        "surface-bright": "#393939",
+                        "background": "#131313",
+                        "on-error-container": "#ffdad6",
+                        "tertiary": "#ffb869",
+                        "tertiary-fixed": "#ffdcbb",
+                        "primary-container": "#a078ff",
+                        "inverse-on-surface": "#313030",
+                        "on-surface-variant": "#cbc3d7",
+                        "on-primary-container": "#340080"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "stack-md": "8px",
+                        "container-padding": "12px",
+                        "stack-sm": "4px",
+                        "stack-lg": "16px",
+                        "gutter": "8px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter", "Kanit", "sans-serif"],
+                        "label-md": ["Inter", "Kanit", "sans-serif"],
+                        "headline-md": ["Inter", "Kanit", "sans-serif"],
+                        "body-md": ["Inter", "Kanit", "sans-serif"],
+                        "mono-label": ["JetBrains Mono", "monospace"],
+                        "headline-lg": ["Inter", "Kanit", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "mono-label": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+                    },
+                    "animation": {
+                        'slide-up-fade': 'slideUpFade 0.5s ease-out forwards',
+                        'wave': 'wave 1.2s infinite ease-in-out',
+                    },
+                    "keyframes": {
+                        slideUpFade: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        wave: {
+                            '0%, 100%': { height: '6px' },
+                            '50%': { height: '16px' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        html, body {
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            background-color: transparent !important;
+            overflow: hidden;
+            font-family: 'Inter', 'Kanit', sans-serif;
+            display: flex;
+        }
+        body.obs-mode {
+            align-items: flex-end;
+            justify-content: flex-start;
+            padding: 24px;
+        }
+        body.preview-mode {
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .wave-bar {
+            width: 3px;
+            background-color: #d0bcff;
+            border-radius: 9999px;
+            animation: wave 1.2s infinite ease-in-out;
+        }
+        .wave-bar.speaking {
+            animation-play-state: running;
+        }
+        .wave-bar.idle {
+            animation-play-state: paused;
+            height: 6px !important;
+        }
+        
+        .wave-bar:nth-child(2) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.4s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.6s; }
+
+        #tts-widget {
+            transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #tts-widget.widget-hidden {
+            animation: none !important;
+            opacity: 0 !important;
+            transform: translateY(24px) scale(0.95) !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
+    </style>
+</head>
+<body id="body-el" class="obs-mode">
+
+<!-- Siri TTS Chat Widget (User Template) -->
+<div id="tts-widget" class="animate-slide-up-fade w-[400px] bg-surface-container-low/90 backdrop-blur-md border border-primary/30 shadow-2xl rounded-lg overflow-hidden flex flex-col relative before:absolute before:inset-0 before:border-l-4 before:border-primary before:z-10">
+  
+  <!-- Header with Siri Wave Animation -->
+  <div class="bg-surface-container/50 px-container-padding py-stack-sm flex items-center justify-between border-b border-outline-variant/30">
+    <div class="flex items-center gap-stack-sm">
+      <div class="flex items-end h-4 gap-[2px]">
+        <div id="w1" class="wave-bar idle h-2"></div>
+        <div id="w2" class="wave-bar idle h-3"></div>
+        <div id="w3" class="wave-bar idle h-4"></div>
+        <div id="w4" class="wave-bar idle h-2"></div>
+      </div>
+      <span id="tts-status-badge" class="font-label-md text-label-md text-primary uppercase">Siri TTS Active</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span id="tts-audio-icon" class="material-symbols-outlined text-outline text-[16px]">volume_up</span>
+      <!-- Close Overlay Button -->
+      <button id="btn-close-tts-overlay" onclick="closeTTSOverlay(event)" title="ปิด / ซ่อน Overlay นี้ (Close Overlay)" class="w-6 h-6 flex items-center justify-center rounded bg-surface-container-high/90 hover:bg-error-container hover:text-white text-outline transition-all cursor-pointer">
+        <span class="material-symbols-outlined text-[15px]">close</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Dynamic Chat List Content -->
+  <div id="chat-list-container" class="p-container-padding flex flex-col gap-1.5 max-h-[340px] overflow-y-auto">
+    <!-- Default Sample Chat Stream -->
+    <div class="flex items-baseline gap-2">
+      <span class="font-mono-label text-mono-label text-[#ff79c6] shrink-0">CyberElite:</span>
+      <span class="font-body-sm text-on-surface">Dropping elixir like it's hot!</span>
+    </div>
+    <div class="flex items-baseline gap-2">
+      <span class="font-mono-label text-mono-label text-[#ffb86c] shrink-0">TrevorKnight45:</span>
+      <span class="font-body-sm text-on-surface">Support the stream with some elixir!</span>
+    </div>
+    <div class="flex items-baseline gap-2">
+      <span class="font-mono-label text-mono-label text-[#ff5555] shrink-0">@Misty:</span>
+      <span class="font-body-sm text-on-surface">you always think that...</span>
+    </div>
+    <div class="flex items-baseline gap-2">
+      <span class="font-mono-label text-mono-label text-[#8be9fd] shrink-0">RetroGamer:</span>
+      <span class="font-body-sm text-on-surface">Chat moving too fast!</span>
+    </div>
+    <div class="flex items-baseline gap-2">
+      <span class="font-mono-label text-mono-label text-[#f1fa8c] shrink-0">RealTimeTweets24:</span>
+      <span class="font-body-sm text-on-surface">Who else is glued to their screen right now?</span>
+    </div>
+  </div>
+</div>
+
+<!-- Reopen Button (when hidden) -->
+<div id="tts-reopen-container" class="hidden fixed bottom-6 left-6 z-50 animate-slide-up-fade">
+  <button onclick="openTTSOverlay()" class="bg-surface-container-low/95 hover:bg-primary/20 text-primary border border-primary/40 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-xl transition-all backdrop-blur-md cursor-pointer">
+    <span class="material-symbols-outlined text-[16px]">visibility</span>
+    <span>เปิดแสดง Siri Overlay</span>
+  </button>
+</div>
+
+<audio id="tts-audio-player" preload="auto"></audio>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const isPreview = urlParams.get('preview') === 'true';
+  const bodyEl = document.getElementById('body-el');
+  const chatContainer = document.getElementById('chat-list-container');
+  const ttsAudio = document.getElementById('tts-audio-player');
+  const audioIcon = document.getElementById('tts-audio-icon');
+  const statusBadge = document.getElementById('tts-status-badge');
+  const waveBars = document.querySelectorAll('.wave-bar');
+
+  if (isPreview) {
+    bodyEl.className = 'preview-mode';
+  }
+
+  const userColors = ['#ff79c6', '#ffb86c', '#ff5555', '#8be9fd', '#f1fa8c', '#50fa7b', '#d0bcff', '#6ffbbe'];
+  function getRandomUserColor(sender) {
+    let hash = 0;
+    for (let i = 0; i < sender.length; i++) hash += sender.charCodeAt(i);
+    return userColors[Math.abs(hash) % userColors.length];
+  }
+
+  let ttsConfig = {
+    enabled: true,
+    audio_muted: false,
+    speed: "+0%",
+    volume: 1.0,
+    voice: "th-TH-PremwadeeNeural",
+    max_history: 8
+  };
+
+  function setSpeakingAnimation(isSpeaking) {
+    waveBars.forEach(bar => {
+      if (isSpeaking) {
+        bar.classList.remove('idle');
+        bar.classList.add('speaking');
+      } else {
+        bar.classList.remove('speaking');
+        bar.classList.add('idle');
+      }
+    });
+  }
+
+  function appendChatMessage(sender, text) {
+    const color = getRandomUserColor(sender);
+    const div = document.createElement('div');
+    div.className = 'flex items-baseline gap-2 animate-slide-up-fade';
+    div.innerHTML = `
+      <span class="font-mono-label text-mono-label shrink-0" style="color: ${color}">${sender}:</span>
+      <span class="font-body-sm text-on-surface">${text}</span>
+    `;
+    chatContainer.appendChild(div);
+
+    const maxHistory = ttsConfig.max_history || 8;
+    while (chatContainer.children.length > maxHistory) {
+      chatContainer.removeChild(chatContainer.firstChild);
+    }
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  const ttsQueue = [];
+  let isTTSSpeaking = false;
+
+  const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
+  const ws = new WebSocket(WS_URL);
+
+  let isWidgetVisible = true;
+
+  function closeTTSOverlay(e) {
+    if (e) e.stopPropagation();
+    hideTTSWidget(false);
+    fetch('/api/mock-event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_type: 'tts_control', action: 'hide' })
+    }).catch(()=>{});
+  }
+
+  function openTTSOverlay() {
+    showTTSWidget();
+    fetch('/api/mock-event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_type: 'tts_control', action: 'show' })
+    }).catch(()=>{});
+  }
+
+  function hideTTSWidget(stopAudio = false) {
+    isWidgetVisible = false;
+    const widget = document.getElementById('tts-widget');
+    if (widget) widget.classList.add('widget-hidden');
+    const reopen = document.getElementById('tts-reopen-container');
+    if (reopen) reopen.classList.remove('hidden');
+
+    if (stopAudio) {
+      if (ttsAudio) {
+        ttsAudio.pause();
+        ttsAudio.currentTime = 0;
+      }
+      ttsQueue.length = 0;
+      isTTSSpeaking = false;
+      setSpeakingAnimation(false);
+    }
+  }
+
+  function showTTSWidget() {
+    isWidgetVisible = true;
+    const widget = document.getElementById('tts-widget');
+    if (widget) widget.classList.remove('widget-hidden');
+    const reopen = document.getElementById('tts-reopen-container');
+    if (reopen) reopen.classList.add('hidden');
+  }
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === 'init' && data.config) {
+        if (data.config.tts_config) {
+          ttsConfig = { ...ttsConfig, ...data.config.tts_config };
+          updateAudioState();
+        }
+        if (data.config.widgets_visibility && data.config.widgets_visibility.tts !== undefined) {
+          if (!data.config.widgets_visibility.tts) hideTTSWidget(false);
+          else showTTSWidget();
+        }
+      } else if (data.type === 'config_updated' && data.config) {
+        if (data.config.tts_config) {
+          ttsConfig = { ...ttsConfig, ...data.config.tts_config };
+          updateAudioState();
+        }
+        if (data.config.widgets_visibility && data.config.widgets_visibility.tts !== undefined) {
+          if (!data.config.widgets_visibility.tts) hideTTSWidget(false);
+          else showTTSWidget();
+        }
+      } else if (data.type === 'tts_visibility') {
+        if (data.visible) showTTSWidget();
+        else hideTTSWidget(false);
+      } else if (data.type === 'tts_clear') {
+        chatContainer.innerHTML = '';
+      } else if (data.type === 'tts_chat') {
+        appendChatMessage(data.sender, data.text);
+        if (ttsConfig.enabled && !ttsConfig.audio_muted) {
+          ttsQueue.push(data);
+          if (!isTTSSpeaking) processTTSQueue();
+        }
+      } else if (data.type === 'stop_audio') {
+        ttsQueue.length = 0;
+        if (ttsAudio) {
+          ttsAudio.pause();
+          ttsAudio.currentTime = 0;
+        }
+        isTTSSpeaking = false;
+        setSpeakingAnimation(false);
+      }
+    } catch(e) {}
+  };
+
+  function updateAudioState() {
+    if (ttsConfig.audio_muted || !ttsConfig.enabled) {
+      audioIcon.innerText = "volume_off";
+      statusBadge.innerText = "Siri TTS (Muted)";
+      statusBadge.classList.remove("text-primary");
+      statusBadge.classList.add("text-outline");
+    } else {
+      audioIcon.innerText = "volume_up";
+      statusBadge.innerText = "Siri TTS Active";
+      statusBadge.classList.remove("text-outline");
+      statusBadge.classList.add("text-primary");
+    }
+    if (ttsAudio) {
+      ttsAudio.volume = ttsConfig.volume !== undefined ? ttsConfig.volume : 1.0;
+    }
+  }
+
+  function processTTSQueue() {
+    if (ttsQueue.length === 0) {
+      isTTSSpeaking = false;
+      setSpeakingAnimation(false);
+      return;
+    }
+
+    isTTSSpeaking = true;
+    setSpeakingAnimation(true);
+    const current = ttsQueue.shift();
+
+    if (isPreview) {
+      setTimeout(() => {
+        setSpeakingAnimation(false);
+        setTimeout(processTTSQueue, 1500);
+      }, 3000);
+      return;
+    }
+
+    const speed = ttsConfig.speed || "+0%";
+    const voice = ttsConfig.voice || "th-TH-PremwadeeNeural";
+    const audioUrl = `/api/tts?text=${encodeURIComponent(current.text)}&voice=${encodeURIComponent(voice)}&speed=${encodeURIComponent(speed)}`;
+    
+    ttsAudio.src = audioUrl;
+    ttsAudio.volume = ttsConfig.volume !== undefined ? ttsConfig.volume : 1.0;
+
+    ttsAudio.play().then(() => {
+      ttsAudio.onended = () => {
+        setSpeakingAnimation(false);
+        setTimeout(processTTSQueue, 300);
+      };
+      ttsAudio.onerror = () => {
+        setSpeakingAnimation(false);
+        setTimeout(processTTSQueue, 300);
+      };
+    }).catch(err => {
+      setSpeakingAnimation(false);
+      setTimeout(processTTSQueue, 1500);
+    });
+  }
+
+  const demoParam = urlParams.get('demo');
+  if (demoParam === 'thai' || demoParam === 'speaking') {
+    chatContainer.innerHTML = '';
+    appendChatMessage('น้องแพรว', 'สวัสดีครับคุณสตรีมเมอร์ ยินดีที่ได้รู้จักครับ! 🎉');
+    appendChatMessage('DJ_Kaneo', 'ขอเพลงเพราะๆ สัก 1 เพลงได้ไหมครับ 🎵');
+    appendChatMessage('น้องบ็อบ', 'สวัสดีครับคุณสตรีมเมอร์ สู้ๆ นะครับเป็นกำลังใจให้เสมอเลย ❤️');
+    if (demoParam === 'speaking') {
+      setSpeakingAnimation(true);
+    }
+  }
+
+  if (urlParams.get('hidden') === 'true') {
+    hideTTSWidget(false);
+  }
+</script>
+</body>
+</html>

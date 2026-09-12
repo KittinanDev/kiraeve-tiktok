@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 700" width="500" height="700">
+  <defs>
+    <!-- Left Glass Specular Gradient -->
+    <linearGradient id="leftSpec" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="25%" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="70%" stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Right Glass Specular Gradient -->
+    <linearGradient id="rightSpec" x1="100%" y1="0%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.5"/>
+      <stop offset="35%" stop-color="#ffffff" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Bottom Base Gradient -->
+    <linearGradient id="bottomSpec" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.5"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Rim Gradient -->
+    <linearGradient id="rimGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#aaaaaa" stop-opacity="0.4"/>
+      <stop offset="15%" stop-color="#ffffff" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#dddddd" stop-opacity="0.3"/>
+      <stop offset="85%" stop-color="#ffffff" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#aaaaaa" stop-opacity="0.4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Glass Jar Outer Outline -->
+  <path d="M 140,80 
+           L 360,80
+           A 6,6 0 0 1 366,86
+           L 366,110
+           A 4,4 0 0 1 362,114
+           L 345,114
+           Q 345,130 355,145
+           L 410,210
+           Q 430,235 430,265
+           L 430,600
+           Q 430,660 370,660
+           L 130,660
+           Q 70,660 70,600
+           L 70,265
+           Q 70,235 90,210
+           L 145,145
+           Q 155,130 155,114
+           L 138,114
+           A 4,4 0 0 1 134,110
+           L 134,86
+           A 6,6 0 0 1 140,80 Z"
+        fill="none" 
+        stroke="#ffffff" 
+        stroke-width="2.5" 
+        stroke-opacity="0.65" />
+
+  <!-- Outer subtle refraction shadow -->
+  <path d="M 140,80 
+           L 360,80
+           A 6,6 0 0 1 366,86
+           L 366,110
+           A 4,4 0 0 1 362,114
+           L 345,114
+           Q 345,130 355,145
+           L 410,210
+           Q 430,235 430,265
+           L 430,600
+           Q 430,660 370,660
+           L 130,660
+           Q 70,660 70,600
+           L 70,265
+           Q 70,235 90,210
+           L 145,145
+           Q 155,130 155,114
+           L 138,114
+           A 4,4 0 0 1 134,110
+           L 134,86
+           A 6,6 0 0 1 140,80 Z"
+        fill="none" 
+        stroke="#666666" 
+        stroke-width="1.0" 
+        stroke-opacity="0.3" />
+
+  <!-- Screw Threads -->
+  <rect x="130" y="88" width="240" height="8" rx="4" fill="url(#rimGrad)" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.5"/>
+  <rect x="130" y="102" width="240" height="8" rx="4" fill="url(#rimGrad)" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.5"/>
+  <rect x="136" y="76" width="228" height="6" rx="3" fill="url(#rimGrad)" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.6"/>
+
+  <!-- Left Glass Highlight Sheen -->
+  <path d="M 72,265 L 72,600 Q 72,656 126,658 L 126,265 Z" fill="url(#leftSpec)" opacity="0.75"/>
+
+  <!-- Right Glass Highlight Sheen -->
+  <path d="M 428,265 L 428,600 Q 428,656 374,658 L 374,265 Z" fill="url(#rightSpec)" opacity="0.65"/>
+
+  <!-- Shoulder Highlights -->
+  <path d="M 90,210 L 145,145 Q 155,130 155,116 L 165,116 Q 165,135 152,150 L 98,218 Z" fill="#ffffff" opacity="0.35"/>
+  <path d="M 410,210 L 355,145 Q 345,130 345,116 L 335,116 Q 335,135 348,150 L 402,218 Z" fill="#ffffff" opacity="0.25"/>
+
+  <!-- Bottom Glass Floor Reflection -->
+  <path d="M 90,620 Q 250,655 410,620 L 410,640 Q 250,670 90,640 Z" fill="url(#bottomSpec)" opacity="0.6"/>
+  <!-- Inner Bottom Curve Line -->
+  <path d="M 85,615 Q 250,652 415,615" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-opacity="0.45"/>
+  <path d="M 95,622 Q 250,656 405,622" fill="none" stroke="#888888" stroke-width="1.0" stroke-opacity="0.3"/>
+</svg>

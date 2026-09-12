@@ -1,0 +1,94 @@
+{
+  "type": "bubble",
+  "header": {
+    "type": "box",
+    "layout": "vertical",
+    "backgroundColor": "#1DB446",
+    "contents": [
+      {
+        "type": "text",
+        "text": "🛵 มีงานส่งอาหารใหม่!",
+        "color": "#FFFFFF",
+        "weight": "bold",
+        "size": "lg"
+      },
+      {
+        "type": "text",
+        "text": "ค่าตอบแทนไรเดอร์: ฿35.00",
+        "color": "#FFFFFF",
+        "weight": "bold",
+        "size": "sm"
+      }
+    ]
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "text",
+        "text": "📍 จุดรับอาหาร: ร้านก๋วยเตี๋ยวเรือนายเอก",
+        "weight": "bold",
+        "size": "xs",
+        "color": "#333333"
+      },
+      {
+        "type": "text",
+        "text": "🏠 ที่อยู่จัดส่งลูกค้า: 123/45 คอนโดสุขุมวิทวิลล์ ซอย 21 ถนนสุขุมวิท กทม.",
+        "weight": "bold",
+        "size": "xs",
+        "color": "#1DB446",
+        "wrap": true,
+        "margin": "xs"
+      },
+      {
+        "type": "separator",
+        "margin": "md"
+      },
+      {
+        "type": "text",
+        "text": "การชำระเงิน: COD (เก็บเงินสดจากลูกค้า ฿165)",
+        "size": "xs",
+        "color": "#E53935",
+        "margin": "sm",
+        "weight": "bold"
+      }
+    ]
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "spacing": "sm",
+    "contents": [
+      {
+        "type": "button",
+        "style": "primary",
+        "color": "#1DB446",
+        "action": {
+          "type": "postback",
+          "label": "⚡ กดรับงานนี้",
+          "data": "action=RIDER_ACCEPT&orderId=ORD-20260824-001"
+        }
+      },
+      {
+        "type": "button",
+        "style": "secondary",
+        "action": {
+          "type": "postback",
+          "label": "📦 รับอาหารแล้ว (กำลังไปส่งลูกค้า)",
+          "data": "action=RIDER_PICKED_UP&orderId=ORD-20260824-001"
+        }
+      },
+      {
+        "type": "button",
+        "style": "primary",
+        "color": "#007BFF",
+        "action": {
+          "type": "postback",
+          "label": "🎉 ส่งถึงลูกค้าเรียบร้อยแล้ว",
+          "data": "action=RIDER_DELIVERED&orderId=ORD-20260824-001"
+        }
+      }
+    ]
+  }
+}

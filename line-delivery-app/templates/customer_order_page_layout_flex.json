@@ -1,0 +1,314 @@
+{
+  "type": "bubble",
+  "size": "mega",
+  "hero": {
+    "type": "image",
+    "url": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&auto=format&fit=crop",
+    "size": "full",
+    "aspectRatio": "20:10",
+    "aspectMode": "cover"
+  },
+  "header": {
+    "type": "box",
+    "layout": "vertical",
+    "backgroundColor": "#FFFFFF",
+    "contents": [
+      {
+        "type": "text",
+        "text": "ร้านก๋วยเตี๋ยวเรือ & กะเพราถาดนายเอก",
+        "weight": "bold",
+        "size": "md",
+        "color": "#111111"
+      },
+      {
+        "type": "text",
+        "text": "⭐️ 4.8 (120+ รีวิว) • เปิด 09:00 - 20:00 น.",
+        "size": "xs",
+        "color": "#777777",
+        "margin": "xs"
+      },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "backgroundColor": "#E8F5E9",
+        "cornerRadius": "md",
+        "paddingAll": "xs",
+        "margin": "sm",
+        "contents": [
+          {
+            "type": "text",
+            "text": "📍 จัดส่งไปที่: 123/45 คอนโดสุขุมวิทวิลล์ ซอย 21",
+            "size": "xs",
+            "color": "#1DB446",
+            "weight": "bold"
+          }
+        ]
+      }
+    ]
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "spacing": "md",
+    "contents": [
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "spacing": "xs",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#1DB446",
+            "cornerRadius": "lg",
+            "paddingAll": "sm",
+            "contents": [
+              {
+                "type": "text",
+                "text": "🍜 ก๋วยเตี๋ยว",
+                "color": "#FFFFFF",
+                "weight": "bold",
+                "size": "xs",
+                "align": "center"
+              }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#F1F5F9",
+            "cornerRadius": "lg",
+            "paddingAll": "sm",
+            "contents": [
+              {
+                "type": "text",
+                "text": "🍚 เมนูข้าว",
+                "color": "#64748B",
+                "size": "xs",
+                "align": "center"
+              }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#F1F5F9",
+            "cornerRadius": "lg",
+            "paddingAll": "sm",
+            "contents": [
+              {
+                "type": "text",
+                "text": "🥟 ทานเล่น",
+                "color": "#64748B",
+                "size": "xs",
+                "align": "center"
+              }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#F1F5F9",
+            "cornerRadius": "lg",
+            "paddingAll": "sm",
+            "contents": [
+              {
+                "type": "text",
+                "text": "🥤 เครื่องดื่ม",
+                "color": "#64748B",
+                "size": "xs",
+                "align": "center"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "image",
+            "url": "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&auto=format&fit=crop",
+            "size": "xs",
+            "aspectRatio": "1:1",
+            "aspectMode": "cover",
+            "flex": 2
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "flex": 4,
+            "contents": [
+              {
+                "type": "text",
+                "text": "ก๋วยเตี๋ยวหมูน้ำตกพิเศษ",
+                "weight": "bold",
+                "size": "xs",
+                "color": "#111111"
+              },
+              {
+                "type": "text",
+                "text": "฿60",
+                "weight": "bold",
+                "size": "sm",
+                "color": "#1DB446"
+              },
+              {
+                "type": "text",
+                "text": "คลังเหลือ: 25 ชิ้น",
+                "size": "xs",
+                "color": "#666666"
+              }
+            ]
+          },
+          {
+            "type": "button",
+            "style": "primary",
+            "color": "#1DB446",
+            "height": "sm",
+            "flex": 2,
+            "action": {
+              "type": "uri",
+              "label": "+ สั่งซื้อ",
+              "uri": "https://liff.line.me/YOUR_LIFF_ID?add=p1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "image",
+            "url": "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&auto=format&fit=crop",
+            "size": "xs",
+            "aspectRatio": "1:1",
+            "aspectMode": "cover",
+            "flex": 2
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "flex": 4,
+            "contents": [
+              {
+                "type": "text",
+                "text": "ข้าวผัดกะเพราหมูกรอบไข่ดาว",
+                "weight": "bold",
+                "size": "xs",
+                "color": "#111111"
+              },
+              {
+                "type": "text",
+                "text": "฿70",
+                "weight": "bold",
+                "size": "sm",
+                "color": "#1DB446"
+              },
+              {
+                "type": "text",
+                "text": "คลังเหลือ: 15 ชิ้น",
+                "size": "xs",
+                "color": "#666666"
+              }
+            ]
+          },
+          {
+            "type": "button",
+            "style": "primary",
+            "color": "#1DB446",
+            "height": "sm",
+            "flex": 2,
+            "action": {
+              "type": "uri",
+              "label": "+ สั่งซื้อ",
+              "uri": "https://liff.line.me/YOUR_LIFF_ID?add=p2"
+            }
+          }
+        ]
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "image",
+            "url": "https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?w=400&auto=format&fit=crop",
+            "size": "xs",
+            "aspectRatio": "1:1",
+            "aspectMode": "cover",
+            "flex": 2
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "flex": 4,
+            "contents": [
+              {
+                "type": "text",
+                "text": "เกี๊ยวหมูทอดกรอบ",
+                "weight": "bold",
+                "size": "xs",
+                "color": "#888888"
+              },
+              {
+                "type": "text",
+                "text": "฿35",
+                "weight": "bold",
+                "size": "sm",
+                "color": "#888888"
+              },
+              {
+                "type": "text",
+                "text": "🔴 สินค้าหมดสต็อก",
+                "size": "xs",
+                "color": "#E53935",
+                "weight": "bold"
+              }
+            ]
+          },
+          {
+            "type": "button",
+            "style": "secondary",
+            "height": "sm",
+            "flex": 2,
+            "action": {
+              "type": "uri",
+              "label": "หมด",
+              "uri": "https://liff.line.me/YOUR_LIFF_ID"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "backgroundColor": "#1DB446",
+    "contents": [
+      {
+        "type": "button",
+        "style": "primary",
+        "color": "#1DB446",
+        "height": "sm",
+        "action": {
+          "type": "uri",
+          "label": "🛍️ ดูตะกร้าสินค้า (2 รายการ) • ฿155",
+          "uri": "https://liff.line.me/YOUR_LIFF_ID?view=cart"
+        }
+      }
+    ]
+  }
+}

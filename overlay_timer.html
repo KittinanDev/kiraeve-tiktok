@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subathon Timer Overlay</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    width: 100vw; height: 100vh;
+    background: transparent;
+    font-family: 'Inter', 'Kanit', sans-serif;
+    color: #e5e2e1;
+    overflow: hidden;
+    display: flex;
+  }
+  body.obs-mode {
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 24px;
+  }
+  body.preview-mode {
+    align-items: center;
+    justify-content: center;
+  }
+  .obsidian-panel {
+    background: rgba(15, 15, 20, 0.88);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(168, 85, 247, 0.15);
+  }
+  .timer-glow-normal {
+    text-shadow: 0 0 16px rgba(208, 188, 255, 0.5), 0 0 32px rgba(168, 85, 247, 0.3);
+  }
+  .timer-glow-danger {
+    color: #f87171 !important;
+    text-shadow: 0 0 16px rgba(239, 68, 68, 0.8), 0 0 32px rgba(239, 68, 68, 0.4);
+    animation: dangerPulse 1s ease-in-out infinite;
+  }
+  @keyframes dangerPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.03); opacity: 0.85; }
+  }
+
+  /* Time modifier badges */
+  .time-boost-badge {
+    position: absolute;
+    top: -14px; right: -12px;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    pointer-events: none;
+    z-index: 50;
+    white-space: nowrap;
+    animation: floatUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .time-boost-badge.positive {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.6);
+    border: 1px solid rgba(110, 231, 183, 0.5);
+  }
+  .time-boost-badge.negative {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.6);
+    border: 1px solid rgba(252, 165, 165, 0.5);
+  }
+  @keyframes floatUp {
+    0% { opacity: 0; transform: translateY(10px) scale(0.8); }
+    20% { opacity: 1; transform: translateY(-5px) scale(1.1); }
+    80% { opacity: 1; transform: translateY(-25px) scale(1); }
+    100% { opacity: 0; transform: translateY(-40px) scale(0.9); }
+  }
+
+  /* Progress fill smooth transitions */
+  #timer-progress-fill {
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s ease;
+  }
+</style>
+</head>
+<body id="body-el" class="obs-mode">
+
+  <div id="timer-widget" class="obsidian-panel rounded-2xl px-6 py-4 flex flex-col items-center gap-1.5 shadow-2xl min-w-[240px] relative">
+    
+    <!-- Top Status Header -->
+    <div class="w-full flex items-center justify-between gap-2 pb-0.5">
+      <div class="flex items-center gap-2">
+        <span id="timer-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(78,222,163,0.8)]"></span>
+        <span id="timer-status-text" class="font-bold text-[11px] text-purple-300 uppercase tracking-widest font-mono">SUBATHON TIMER</span>
+      </div>
+      <span id="timer-mode-badge" class="text-[10px] font-mono bg-white/10 px-2 py-0.5 rounded text-white/70">COUNTDOWN</span>
+    </div>
+
+    <!-- Central Clock Display -->
+    <div id="timer-clock" class="font-mono font-bold text-4xl text-white tracking-tight timer-glow-normal py-1">
+      01:00:00
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="w-full h-1.5 bg-gray-800/80 rounded-full overflow-hidden mt-0.5 border border-white/5">
+      <div id="timer-progress-fill" class="h-full bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full" style="width: 100%;"></div>
+    </div>
+  </div>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const isPreview = urlParams.get('preview') === 'true';
+  const bodyEl = document.getElementById('body-el');
+  const timerWidgetEl = document.getElementById('timer-widget');
+  const timerClockEl = document.getElementById('timer-clock');
+  const timerStatusDot = document.getElementById('timer-status-dot');
+  const timerStatusText = document.getElementById('timer-status-text');
+  const timerModeBadge = document.getElementById('timer-mode-badge');
+  const timerProgressFill = document.getElementById('timer-progress-fill');
+
+  let currentSeconds = 3600;
+  let maxSeconds = 86400;
+  let initialSeconds = 3600;
+  let isRunning = false;
+  let timerMode = 'countdown';
+
+  if (isPreview) {
+    bodyEl.className = 'preview-mode';
+  }
+
+  function formatTime(totalSec) {
+    if (totalSec < 0) totalSec = 0;
+    const h = Math.floor(totalSec / 3600).toString().padStart(2, '0');
+    const m = Math.floor((totalSec % 3600) / 60).toString().padStart(2, '0');
+    const s = (totalSec % 60).toString().padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  }
+
+  function updateClockDisplay(sec) {
+    currentSeconds = sec;
+    timerClockEl.innerText = formatTime(sec);
+
+    // Warning state when under 60 seconds
+    if (timerMode === 'countdown' && sec <= 60 && sec > 0) {
+      timerClockEl.className = 'font-mono font-bold text-4xl tracking-tight py-1 timer-glow-danger';
+    } else if (timerMode === 'countdown' && sec === 0) {
+      timerClockEl.className = 'font-mono font-bold text-4xl tracking-tight py-1 text-red-500';
+      timerStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-red-500 animate-ping';
+      timerStatusText.innerText = "TIME'S UP";
+      timerStatusText.className = 'font-bold text-[11px] text-red-400 uppercase tracking-widest font-mono';
+    } else {
+      timerClockEl.className = 'font-mono font-bold text-4xl text-white tracking-tight timer-glow-normal py-1';
+    }
+
+    // Update Progress Bar
+    const baseline = Math.max(initialSeconds, 3600);
+    const pct = Math.min(100, Math.max(0, (sec / baseline) * 100));
+    timerProgressFill.style.width = pct + '%';
+
+    if (pct < 15) {
+      timerProgressFill.className = 'h-full bg-gradient-to-r from-red-600 to-rose-500 rounded-full';
+    } else if (pct < 35) {
+      timerProgressFill.className = 'h-full bg-gradient-to-r from-amber-500 to-orange-400 rounded-full';
+    } else {
+      timerProgressFill.className = 'h-full bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full';
+    }
+  }
+
+  function updateStatus(running, mode) {
+    isRunning = running;
+    if (mode) {
+      timerMode = mode;
+      timerModeBadge.innerText = mode.toUpperCase();
+    }
+
+    if (currentSeconds === 0) return;
+
+    if (running) {
+      timerStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(78,222,163,0.8)]';
+      timerStatusText.innerText = 'SUBATHON TIMER';
+      timerStatusText.className = 'font-bold text-[11px] text-purple-300 uppercase tracking-widest font-mono';
+    } else {
+      timerStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
+      timerStatusText.innerText = 'TIMER PAUSED';
+      timerStatusText.className = 'font-bold text-[11px] text-amber-300 uppercase tracking-widest font-mono';
+    }
+  }
+
+  function triggerTimeBoostAnimation(addedSec) {
+    if (!addedSec || addedSec === 0) return;
+    const badge = document.createElement('div');
+    const isPositive = addedSec > 0;
+    badge.className = `time-boost-badge ${isPositive ? 'positive' : 'negative'}`;
+    badge.innerText = isPositive ? `+${addedSec}s` : `${addedSec}s`;
+    timerWidgetEl.appendChild(badge);
+    setTimeout(() => badge.remove(), 1200);
+  }
+
+  const isBoost = urlParams.get('boost') === 'true';
+  const isPenalty = urlParams.get('penalty') === 'true';
+  const isWarning = urlParams.get('warning') === 'true';
+
+  // Pre-seed mock animations in preview mode if requested
+  if (isPreview) {
+    if (isWarning) {
+      updateClockDisplay(45);
+      updateStatus(true, 'countdown');
+    } else {
+      updateClockDisplay(3600);
+      updateStatus(true, 'countdown');
+    }
+
+    if (isBoost) {
+      setTimeout(() => triggerTimeBoostAnimation(60), 300);
+    } else if (isPenalty) {
+      setTimeout(() => triggerTimeBoostAnimation(-30), 300);
+    }
+  }
+
+  let ws = null;
+  function connectWebSocket() {
+    const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
+    ws = new WebSocket(WS_URL);
+
+    ws.onmessage = (event) => {
+      if (isWarning) return; // Keep static warning demo state intact
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'init') {
+          if (data.timer_initial_seconds) initialSeconds = data.timer_initial_seconds;
+          if (data.timer_max_seconds) maxSeconds = data.timer_max_seconds;
+          if (data.timer_seconds !== undefined) updateClockDisplay(data.timer_seconds);
+          if (data.timer_running !== undefined) updateStatus(data.timer_running, data.timer_mode);
+        } else if (data.type === 'timer_tick' || data.type === 'timer_update') {
+          if (data.initial_seconds) initialSeconds = data.initial_seconds;
+          if (data.max_seconds) maxSeconds = data.max_seconds;
+          if (data.seconds !== undefined) updateClockDisplay(data.seconds);
+          if (data.is_running !== undefined) updateStatus(data.is_running, data.mode);
+        } else if (data.type === 'gift' || data.type === 'gacha_spin') {
+          if (data.added_seconds !== undefined && data.added_seconds !== 0) {
+            triggerTimeBoostAnimation(data.added_seconds);
+          }
+          if (data.timer_seconds !== undefined) updateClockDisplay(data.timer_seconds);
+        }
+      } catch(e) {}
+    };
+
+    ws.onclose = () => {
+      if (!isPreview) {
+        setTimeout(connectWebSocket, 1500);
+      }
+    };
+
+    ws.onerror = () => {
+      try { ws.close(); } catch(e) {}
+    };
+  }
+
+  connectWebSocket();
+</script>
+</body>
+</html>

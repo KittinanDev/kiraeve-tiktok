@@ -1,0 +1,90 @@
+{
+  "type": "bubble",
+  "header": {
+    "type": "box",
+    "layout": "vertical",
+    "backgroundColor": "#007BFF",
+    "contents": [
+      {
+        "type": "text",
+        "text": "🛵 แผงคุมงานไรเดอร์ #ORD-20260824-001",
+        "color": "#FFFFFF",
+        "weight": "bold",
+        "size": "sm"
+      },
+      {
+        "type": "text",
+        "text": "สถานะงาน: กำลังนำส่งอาหารหาลูกค้า",
+        "color": "#FFFFFF",
+        "size": "xs",
+        "margin": "xs"
+      }
+    ]
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "spacing": "sm",
+    "contents": [
+      {
+        "type": "text",
+        "text": "📍 จุดรับอาหาร: ร้านก๋วยเตี๋ยวเรือนายเอก",
+        "weight": "bold",
+        "size": "xs",
+        "color": "#333333"
+      },
+      {
+        "type": "text",
+        "text": "🏠 ที่อยู่จัดส่งลูกค้า: 123/45 คอนโดสุขุมวิทวิลล์ ซอย 21 ถนนสุขุมวิท กทม.",
+        "weight": "bold",
+        "size": "xs",
+        "color": "#1DB446",
+        "wrap": true
+      },
+      {
+        "type": "text",
+        "text": "📞 เบอร์โทรลูกค้า: 081-234-5678",
+        "size": "xs",
+        "color": "#007BFF",
+        "weight": "bold"
+      },
+      { "type": "separator", "margin": "md" },
+      {
+        "type": "text",
+        "text": "การชำระเงิน: COD (เก็บเงินสดลูกค้า ฿165)",
+        "size": "xs",
+        "color": "#E53935",
+        "weight": "bold",
+        "margin": "sm"
+      }
+    ]
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "spacing": "sm",
+    "contents": [
+      {
+        "type": "button",
+        "style": "primary",
+        "color": "#1DB446",
+        "height": "sm",
+        "action": {
+          "type": "postback",
+          "label": "🎉 จัดส่งสำเร็จแล้ว (จบงาน)",
+          "data": "action=RIDER_DELIVERED&orderId=ORD-20260824-001"
+        }
+      },
+      {
+        "type": "button",
+        "style": "secondary",
+        "height": "sm",
+        "action": {
+          "type": "uri",
+          "label": "🗺️ นำทางไปที่อยู่ลูกค้า (Google Maps)",
+          "uri": "https://www.google.com/maps/search/?api=1&query=123/45+คอนโดสุขุมวิทวิลล์+ซอย21"
+        }
+      }
+    ]
+  }
+}

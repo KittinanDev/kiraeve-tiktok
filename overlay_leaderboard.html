@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Top Supporters Leaderboard Overlay</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Kanit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --overlay-scale: 1.0;
+  }
+
+  html, body {
+    margin: 0; padding: 0;
+    width: 100vw; height: 100vh;
+    background: transparent;
+    font-family: 'Inter', 'Kanit', sans-serif;
+    color: #e5e2e1;
+    overflow: hidden;
+    display: flex;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body.obs-mode {
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 24px;
+  }
+
+  body.preview-mode {
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  /* Scalable Container - renders vectors & fonts at native crisp resolution */
+  #scale-wrapper {
+    transform: scale(var(--overlay-scale));
+    transform-origin: top left;
+    transition: transform 0.25s ease-out;
+  }
+
+  body.preview-mode #scale-wrapper {
+    transform-origin: center center;
+    transform: scale(calc(var(--overlay-scale) * 0.78));
+  }
+
+  /* Obsidian Glass Panel (Generous 460px default width) */
+  .obsidian-panel {
+    background: rgba(14, 14, 18, 0.94);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  }
+
+  /* Gradient Rank Badges */
+  .rank-gradient-1 {
+    background: linear-gradient(135deg, #FFE066 0%, #F59E0B 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .rank-gradient-2 {
+    background: linear-gradient(135deg, #F8FAFC 0%, #94A3B8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .rank-gradient-3 {
+    background: linear-gradient(135deg, #FED7AA 0%, #EA580C 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Top 1 Golden Glow Card */
+  .rank-card-1 {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.16) 0%, rgba(18, 18, 24, 0.88) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    box-shadow: 0 0 24px rgba(245, 158, 11, 0.15);
+  }
+
+  /* Top 2 Silver Card */
+  .rank-card-2 {
+    background: linear-gradient(90deg, rgba(148, 163, 184, 0.12) 0%, rgba(18, 18, 24, 0.88) 100%);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+  }
+
+  /* Top 3 Bronze Card */
+  .rank-card-3 {
+    background: linear-gradient(90deg, rgba(234, 88, 12, 0.12) 0%, rgba(18, 18, 24, 0.88) 100%);
+    border: 1px solid rgba(234, 88, 12, 0.3);
+  }
+
+  /* Rank 4+ Standard Card */
+  .rank-card-normal {
+    background: rgba(24, 24, 30, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Update / Coin Pop Animation */
+  @keyframes coinBump {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.04); filter: brightness(1.25); }
+    100% { transform: scale(1); filter: brightness(1); }
+  }
+  .animate-coin-bump {
+    animation: coinBump 0.5s ease-out;
+  }
+
+  /* Shimmer line on header */
+  .header-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.4), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 3s infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+</style>
+</head>
+<body id="body-el" class="obs-mode">
+
+  <div id="scale-wrapper">
+    <div id="leaderboard-widget" class="obsidian-panel w-[460px] max-w-[95vw] rounded-2xl p-5 flex flex-col gap-3.5 shadow-2xl transition-all duration-300">
+      
+      <!-- Leaderboard Header with Live Indicator -->
+      <div class="flex items-center justify-between pb-3 border-b border-white/10 relative overflow-hidden">
+        <div class="flex items-center gap-2.5 z-10">
+          <div class="w-9 h-9 rounded-xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-md">
+            <span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">stars</span>
+          </div>
+          <div>
+            <h2 id="lead-header-title" class="font-extrabold text-sm sm:text-base text-white tracking-wider uppercase font-sans">
+              👑 Top Supporters Today
+            </h2>
+            <span class="text-[11px] text-gray-400 font-mono flex items-center gap-1.5 mt-0.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span class="tracking-wider">LIVE RANKING</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="z-10 bg-black/50 border border-white/15 px-2.5 py-1 rounded-full text-xs font-mono font-bold text-amber-300 flex items-center gap-1 shadow-inner">
+          <span id="lead-count-badge">Top 5</span>
+        </div>
+
+        <div class="absolute bottom-0 left-0 right-0 h-[1.5px] header-shimmer"></div>
+      </div>
+
+      <!-- Leaderboard Rows Container -->
+      <div id="leaderboard-list" class="flex flex-col gap-2.5">
+        <!-- Loading Placeholder -->
+        <div class="py-8 text-center text-xs text-gray-400 flex flex-col items-center gap-2">
+          <span class="material-symbols-outlined text-gray-500 animate-spin text-2xl">sync</span>
+          <span class="font-medium">กำลังซิงก์ข้อมูลอันดับ...</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const isPreview = urlParams.get('preview') === 'true';
+  const bodyEl = document.getElementById('body-el');
+  const scaleWrapperEl = document.getElementById('scale-wrapper');
+  const leaderListEl = document.getElementById('leaderboard-list');
+  const headerTitleEl = document.getElementById('lead-header-title');
+  const countBadgeEl = document.getElementById('lead-count-badge');
+
+  if (isPreview) {
+    bodyEl.className = 'preview-mode';
+  }
+
+  // Base scale from URL query parameter (e.g. ?scale=1.5)
+  let currentScale = parseFloat(urlParams.get('scale')) || 1.0;
+  let currentTopCount = 5;
+  let currentHeaderTitle = '👑 Top Supporters Today';
+  let prevScores = {};
+
+  function setScale(scaleVal) {
+    const s = parseFloat(scaleVal) || 1.0;
+    currentScale = s;
+    document.documentElement.style.setProperty('--overlay-scale', s);
+  }
+
+  setScale(currentScale);
+
+  const AVATAR_GRADIENTS = [
+    'from-amber-500 to-red-600',
+    'from-blue-500 to-indigo-700',
+    'from-purple-500 to-pink-600',
+    'from-emerald-500 to-teal-700',
+    'from-orange-500 to-amber-700',
+    'from-cyan-500 to-blue-600',
+    'from-rose-500 to-purple-600'
+  ];
+
+  function getAvatarUrl(rawUrl) {
+    if (!rawUrl || typeof rawUrl !== 'string' || !rawUrl.startsWith('http')) return '';
+    // Proxy through server to bypass CORS & Referer hotlinking protection
+    return `/api/avatar-proxy?url=${encodeURIComponent(rawUrl)}`;
+  }
+
+  function renderLeaderboard(gifters) {
+    if (!gifters || gifters.length === 0) {
+      leaderListEl.innerHTML = `
+        <div class="py-8 text-center text-xs text-gray-400 flex flex-col items-center gap-2 bg-black/25 rounded-2xl border border-white/5 p-4">
+          <span class="material-symbols-outlined text-amber-400/70 text-3xl">workspace_premium</span>
+          <span class="font-bold text-sm text-gray-200">ยังไม่มีข้อมูลผู้สนับสนุนในรอบนี้</span>
+          <span class="text-xs text-gray-400">ส่งของขวัญเพื่อขึ้นเป็นอันดับ 1 บนหน้าจอไลฟ์!</span>
+        </div>
+      `;
+      return;
+    }
+
+    const displayed = gifters.slice(0, currentTopCount);
+    if (countBadgeEl) {
+      countBadgeEl.innerText = `Top ${displayed.length > currentTopCount ? displayed.length : currentTopCount}`;
+    }
+
+    leaderListEl.innerHTML = displayed.map((g, idx) => {
+      const rank = idx + 1;
+      let cardClass = 'rank-card-normal';
+      let rankTextClass = 'text-gray-400 font-bold';
+      let rankBadge = `${rank}`;
+
+      if (rank === 1) {
+        cardClass = 'rank-card-1';
+        rankTextClass = 'rank-gradient-1 text-2xl font-black';
+        rankBadge = '👑';
+      } else if (rank === 2) {
+        cardClass = 'rank-card-2';
+        rankTextClass = 'rank-gradient-2 text-xl font-extrabold';
+        rankBadge = '🥈';
+      } else if (rank === 3) {
+        cardClass = 'rank-card-3';
+        rankTextClass = 'rank-gradient-3 text-xl font-extrabold';
+        rankBadge = '🥉';
+      } else {
+        rankTextClass = 'text-gray-400 font-bold text-lg';
+      }
+
+      // Check for score increase to trigger bump animation
+      const prevCoin = prevScores[g.sender] || 0;
+      const isBumped = prevCoin > 0 && g.coins > prevCoin;
+      prevScores[g.sender] = g.coins;
+      const bumpAnim = isBumped ? 'animate-coin-bump' : '';
+
+      // Avatar generation with multi-stage fallback (Proxy -> Direct -> Gradient Letter)
+      const firstLetter = (g.sender || 'U').trim().charAt(0).toUpperCase();
+      const gradClass = AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length];
+      const directPic = g.profile_picture || '';
+      const proxyPic = getAvatarUrl(directPic);
+
+      let avatarHtml = '';
+      if (proxyPic) {
+        avatarHtml = `
+          <img src="${proxyPic}" 
+               referrerpolicy="no-referrer"
+               crossorigin="anonymous"
+               class="w-12 h-12 rounded-full object-cover border-2 ${rank === 1 ? 'border-amber-400 shadow-amber-500/30' : rank === 2 ? 'border-slate-300' : rank === 3 ? 'border-orange-400' : 'border-white/20'} shadow-md shrink-0" 
+               onerror="if (this.src.includes('/api/avatar-proxy')) { this.src='${escapeHtml(directPic)}'; } else { this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-12 h-12 rounded-full bg-gradient-to-br ${gradClass} flex items-center justify-center text-base font-black text-white border-2 border-white/20 shadow-md shrink-0\\'>${firstLetter}</div>'; }">
+        `;
+      } else {
+        avatarHtml = `
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br ${gradClass} flex items-center justify-center text-base font-black text-white border-2 ${rank === 1 ? 'border-amber-400 shadow-amber-500/30' : 'border-white/20'} shadow-md shrink-0">
+            ${firstLetter}
+          </div>
+        `;
+      }
+
+      // Last gift icon preview
+      let giftPreviewHtml = '';
+      if (g.gift_icon && g.gift_icon.startsWith('http')) {
+        giftPreviewHtml = `
+          <img src="${g.gift_icon}" class="w-5 h-5 object-contain inline-block shrink-0" title="${g.last_gift || ''}" onerror="this.style.display='none'">
+        `;
+      }
+
+      return `
+        <div class="${cardClass} ${bumpAnim} rounded-2xl p-3 flex items-center justify-between transition-all duration-300">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-7 text-center ${rankTextClass} shrink-0 leading-none">
+              ${rank <= 3 ? rankBadge : rank}
+            </div>
+            
+            <div class="relative shrink-0">
+              ${avatarHtml}
+              ${rank === 1 ? '<span class="absolute -bottom-1 -right-1 text-xs bg-black/80 rounded-full p-0.5 leading-none">⭐</span>' : ''}
+            </div>
+
+            <div class="flex flex-col min-w-0">
+              <span class="text-sm sm:text-base font-bold text-white truncate max-w-[220px] sm:max-w-[250px] leading-tight font-sans">
+                ${escapeHtml(g.sender)}
+              </span>
+              <div class="flex items-center gap-1.5 text-xs text-gray-400 mt-1 truncate">
+                ${giftPreviewHtml}
+                <span class="truncate font-medium">${escapeHtml(g.last_gift || 'Gift')}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5 bg-black/50 px-3 py-1.5 rounded-xl border border-white/10 shadow-inner shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-amber-400" style="font-variation-settings: 'FILL' 1;">toll</span>
+            <span class="font-mono text-sm sm:text-base font-extrabold text-emerald-400 tracking-tight">
+              ${(g.coins || 0).toLocaleString()}
+            </span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function applyConfig(cfg) {
+    if (!cfg) return;
+    if (cfg.leaderboard_config) {
+      const lc = cfg.leaderboard_config;
+      if (lc.top_count) currentTopCount = parseInt(lc.top_count) || 5;
+      if (lc.title) {
+        currentHeaderTitle = lc.title;
+        if (headerTitleEl) headerTitleEl.innerText = lc.title;
+      }
+      if (lc.scale && !urlParams.get('scale')) {
+        setScale(lc.scale);
+      }
+    }
+  }
+
+  function escapeHtml(str) {
+    return (str || '').replace(/[&<>"']/g, function(m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  }
+
+  // WebSocket Connection with Auto-reconnect
+  let ws = null;
+  function connectWS() {
+    const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
+    ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      console.log('Leaderboard Overlay WebSocket Connected');
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'init') {
+          if (data.config) applyConfig(data.config);
+          if (data.top_gifters) renderLeaderboard(data.top_gifters);
+        } else if (data.type === 'gift' || data.type === 'leaderboard_update') {
+          if (data.top_gifters) renderLeaderboard(data.top_gifters);
+        } else if (data.type === 'config_updated') {
+          if (data.config) applyConfig(data.config);
+        }
+      } catch(e) {
+        console.error('Error parsing WS message', e);
+      }
+    };
+
+    ws.onclose = () => {
+      console.warn('Leaderboard WebSocket disconnected. Reconnecting in 1.5s...');
+      setTimeout(connectWS, 1500);
+    };
+
+    ws.onerror = () => {
+      try { ws.close(); } catch(e) {}
+    };
+  }
+
+  connectWS();
+</script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+{
+  "type": "bubble",
+  "header": {
+    "type": "box",
+    "layout": "vertical",
+    "backgroundColor": "#1DB446",
+    "contents": [
+      {
+        "type": "text",
+        "text": "🛍️ ตะกร้าสินค้าของคุณ",
+        "color": "#FFFFFF",
+        "weight": "bold",
+        "size": "md"
+      },
+      {
+        "type": "text",
+        "text": "สามารถกดปุ่ม [❌ ลบ] รายการที่ไม่ต้องการได้เลยครับ",
+        "color": "#E8F5E9",
+        "size": "xs"
+      }
+    ]
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "margin": "sm",
+        "contents": [
+          {
+            "type": "text",
+            "text": "ก๋วยเตี๋ยวหมูน้ำตกพิเศษ (x1)",
+            "size": "xs",
+            "color": "#333333",
+            "flex": 4,
+            "weight": "bold"
+          },
+          {
+            "type": "text",
+            "text": "฿60",
+            "size": "xs",
+            "color": "#111111",
+            "align": "end",
+            "flex": 2
+          },
+          {
+            "type": "button",
+            "style": "secondary",
+            "height": "sm",
+            "flex": 2,
+            "action": {
+              "type": "postback",
+              "label": "❌ ลบ",
+              "data": "action=REMOVE_ITEM&productId=p1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "margin": "sm",
+        "contents": [
+          {
+            "type": "text",
+            "text": "ข้าวผัดกะเพราหมูกรอบไข่ดาว (x1)",
+            "size": "xs",
+            "color": "#333333",
+            "flex": 4,
+            "weight": "bold"
+          },
+          {
+            "type": "text",
+            "text": "฿70",
+            "size": "xs",
+            "color": "#111111",
+            "align": "end",
+            "flex": 2
+          },
+          {
+            "type": "button",
+            "style": "secondary",
+            "height": "sm",
+            "flex": 2,
+            "action": {
+              "type": "postback",
+              "label": "❌ ลบ",
+              "data": "action=REMOVE_ITEM&productId=p2"
+            }
+          }
+        ]
+      },
+      {
+        "type": "separator",
+        "margin": "md"
+      },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "margin": "sm",
+        "contents": [
+          {
+            "type": "text",
+            "text": "ราคารวมสินค้า",
+            "size": "xs",
+            "color": "#777777"
+          },
+          {
+            "type": "text",
+            "text": "฿130",
+            "size": "xs",
+            "color": "#777777",
+            "align": "end"
+          }
+        ]
+      },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "margin": "xs",
+        "contents": [
+          {
+            "type": "text",
+            "text": "ค่าจัดส่ง",
+            "size": "xs",
+            "color": "#777777"
+          },
+          {
+            "type": "text",
+            "text": "฿25",
+            "size": "xs",
+            "color": "#777777",
+            "align": "end"
+          }
+        ]
+      },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "margin": "sm",
+        "contents": [
+          {
+            "type": "text",
+            "text": "ยอดรวมทั้งสิ้น",
+            "size": "sm",
+            "weight": "bold",
+            "color": "#111111"
+          },
+          {
+            "type": "text",
+            "text": "฿155",
+            "size": "sm",
+            "weight": "bold",
+            "color": "#1DB446",
+            "align": "end"
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "spacing": "sm",
+    "contents": [
+      {
+        "type": "button",
+        "style": "primary",
+        "color": "#1DB446",
+        "action": {
+          "type": "postback",
+          "label": "✅ ยืนยันสั่งซื้อ (ระบุที่อยู่)",
+          "data": "action=CONFIRM_CHECKOUT"
+        }
+      },
+      {
+        "type": "button",
+        "style": "secondary",
+        "action": {
+          "type": "postback",
+          "label": "🗑️ ล้างตะกร้าทั้งหมด",
+          "data": "action=CLEAR_CART"
+        }
+      }
+    ]
+  }
+}

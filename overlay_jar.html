@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Gift Jar Overlay</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="/media/matter.min.js"></script>
+<script>
+  if (typeof Matter === 'undefined') {
+    document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"><\/script>');
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    width: 100vw; height: 100vh;
+    background: transparent;
+    font-family: 'Inter', 'Kanit', sans-serif;
+    color: #e5e2e1;
+    overflow: hidden;
+    display: flex;
+  }
+  body.obs-mode {
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 20px;
+  }
+  body.preview-mode {
+    align-items: center;
+    justify-content: center;
+  }
+  #jar-wrapper {
+    position: relative;
+    width: 560px;
+    height: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  #sender-toast {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(234, 179, 8, 0.5);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+    border-radius: 9999px;
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+    z-index: 50;
+    white-space: nowrap;
+  }
+  #sender-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0px);
+  }
+  #toast-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1.5px solid #eab308;
+  }
+</style>
+</head>
+<body id="body-el" class="obs-mode">
+
+  <div id="jar-wrapper">
+    <div id="sender-toast">
+      <img id="toast-avatar" src="https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp" alt="Avatar">
+      <div id="toast-text" class="text-xs font-semibold text-yellow-300">
+        <span id="toast-sender" class="text-white">@username</span> ส่ง <span id="toast-gift" class="text-yellow-400">Rose x1</span>
+      </div>
+    </div>
+
+    <canvas id="jar-canvas"></canvas>
+  </div>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const isPreview = urlParams.get('preview') === 'true';
+  const bodyEl = document.getElementById('body-el');
+
+  if (isPreview) {
+    bodyEl.className = 'preview-mode';
+  }
+
+  const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
+  const ws = new WebSocket(WS_URL);
+
+  const jarCanvas = document.getElementById('jar-canvas');
+  const jarCtx = jarCanvas.getContext('2d');
+  const CANVAS_W = 560;
+  const CANVAS_H = 420;
+  jarCanvas.width = CANVAS_W;
+  jarCanvas.height = CANVAS_H;
+
+  // Clean crystal-clear transparent jar image
+  const jarImage = new Image();
+  jarImage.src = "/media/jar_clean.png?v=crystal_" + Date.now();
+  let jarImageLoaded = false;
+  jarImage.onload = () => { jarImageLoaded = true; };
+
+  // Setup Matter.js Physics Engine with Anti-Jitter Sleeping & Robust Iterations
+  const { Engine, World, Bodies, Body, Composite } = Matter;
+  const engine = Engine.create({
+    enableSleeping: true,
+    positionIterations: 10,
+    velocityIterations: 8
+  });
+  engine.gravity.y = 1.0;
+
+  // Jar Placement in Canvas (Center: 280)
+  const JAR_CENTER_X = 280;
+  const JAR_DRAW_X = 170;
+  const JAR_DRAW_Y = 105;
+  const JAR_DRAW_W = 220;
+  const JAR_DRAW_H = 280;
+
+  // Jar Inner Boundaries (Aligned with original intact photo jar)
+  const INNER_LEFT = 182;
+  const INNER_RIGHT = 378;
+  const INNER_FLOOR_Y = 364;
+  const SHOULDER_Y = 160;
+  const NECK_TOP_Y = 110;
+  const MOUTH_LEFT = 192;
+  const MOUTH_RIGHT = 368;
+  const EXT_GROUND_Y = 385;
+
+  // Function to create smooth curved floor segments following the 3D bottle contour
+  function createCurvedFloorBodies() {
+    const NUM_SEGS = 16;
+    const segWidth = (INNER_RIGHT - INNER_LEFT) / NUM_SEGS;
+    const R = (INNER_RIGHT - INNER_LEFT) / 2;
+    const segments = [];
+
+    function getFloorY(x) {
+      const dx = (x - JAR_CENTER_X) / R;
+      return 365 - 9 * Math.pow(Math.abs(dx), 2.0);
+    }
+
+    for (let i = 0; i < NUM_SEGS; i++) {
+      const x1 = INNER_LEFT + i * segWidth;
+      const x2 = INNER_LEFT + (i + 1) * segWidth;
+      const y1 = getFloorY(x1);
+      const y2 = getFloorY(x2);
+
+      const midX = (x1 + x2) / 2;
+      const midY = (y1 + y2) / 2;
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      const angle = Math.atan2(dy, dx);
+
+      segments.push(
+        Bodies.rectangle(midX, midY + 10, len + 4, 24, {
+          isStatic: true,
+          angle: angle,
+          friction: 0.6,
+          label: 'jar_floor_seg_' + i
+        })
+      );
+    }
+    return segments;
+  }
+
+  // Static Barrier Bodies (Zero Leaks, Heavy-Duty Bedrock Foundation)
+  const staticBodies = [
+    // Curved Jar Bottom Floor (Thickened 24px)
+    ...createCurvedFloorBodies(),
+    // Solid Foundation Support Block under Jar Base (Prevents any heavy weight tunneling)
+    Bodies.rectangle(JAR_CENTER_X, 396, 210, 30, { isStatic: true, friction: 0.8, label: 'jar_base_foundation' }),
+    // Jar Inner Left Wall
+    Bodies.rectangle(INNER_LEFT - 8, (SHOULDER_Y + 360) / 2, 16, (360 - SHOULDER_Y), { isStatic: true, friction: 0.1, label: 'jar_left_wall' }),
+    // Jar Inner Right Wall
+    Bodies.rectangle(INNER_RIGHT + 8, (SHOULDER_Y + 360) / 2, 16, (360 - SHOULDER_Y), { isStatic: true, friction: 0.1, label: 'jar_right_wall' }),
+    // Left Shoulder Slope (inside)
+    Bodies.rectangle(187, 145, 14, 40, { isStatic: true, angle: 0.35, friction: 0.1, label: 'shoulder_left' }),
+    // Right Shoulder Slope (inside)
+    Bodies.rectangle(373, 145, 14, 40, { isStatic: true, angle: -0.35, friction: 0.1, label: 'shoulder_right' }),
+    // Left Neck Lip Chamfer (Guides overflow out to the left mound)
+    Bodies.rectangle(188, NECK_TOP_Y + 8, 28, 12, { isStatic: true, angle: -0.55, friction: 0.2, label: 'lip_left' }),
+    // Right Neck Lip Chamfer (Guides overflow out to the right mound)
+    Bodies.rectangle(372, NECK_TOP_Y + 8, 28, 12, { isStatic: true, angle: 0.55, friction: 0.2, label: 'lip_right' }),
+
+    // External Left Ground (Mound floor on the left)
+    Bodies.rectangle(85, EXT_GROUND_Y + 15, 170, 30, { isStatic: true, friction: 0.6, label: 'ext_floor_left' }),
+    // External Right Ground (Mound floor on the right)
+    Bodies.rectangle(475, EXT_GROUND_Y + 15, 170, 30, { isStatic: true, friction: 0.6, label: 'ext_floor_right' }),
+
+    // Impenetrable Canvas Bedrock Floor (Prevents any item from ever falling off-canvas)
+    Bodies.rectangle(CANVAS_W / 2, CANVAS_H + 25, CANVAS_W + 200, 50, { isStatic: true, friction: 0.8, label: 'bedrock_floor' }),
+
+    // Leftmost Screen Barrier (Full Height)
+    Bodies.rectangle(0, 200, 20, 420, { isStatic: true, friction: 0.3, label: 'screen_left' }),
+    // Rightmost Screen Barrier (Full Height)
+    Bodies.rectangle(CANVAS_W, 200, 20, 420, { isStatic: true, friction: 0.3, label: 'screen_right' })
+  ];
+  World.add(engine.world, staticBodies);
+
+  const giftIconsCache = {};
+  function loadGiftIconImage(iconUrl) {
+    if (!iconUrl) iconUrl = "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp";
+    if (giftIconsCache[iconUrl]) return giftIconsCache[iconUrl];
+    const img = new Image();
+    img.src = iconUrl;
+    giftIconsCache[iconUrl] = img;
+    return img;
+  }
+
+  const profileIconsCache = {};
+  function loadProfileImage(url) {
+    if (!url) return null;
+    if (profileIconsCache[url]) return profileIconsCache[url];
+    const img = new Image();
+    img.src = url;
+    profileIconsCache[url] = img;
+    return img;
+  }
+
+  function getRadiusByCoins(coins) {
+    if (!coins || coins <= 5) return 8.5;
+    if (coins <= 50) return 10.5;
+    if (coins <= 500) return 13;
+    return 16;
+  }
+
+  const popAudio = new Audio("/soundeffect/dragon-studio-pop-402324.mp3");
+  popAudio.volume = 0.5;
+
+  let toastTimer = null;
+  function showSenderToast(sender, giftName, count, avatarUrl) {
+    const toastEl = document.getElementById('sender-toast');
+    const toastSender = document.getElementById('toast-sender');
+    const toastGift = document.getElementById('toast-gift');
+    const toastAvatar = document.getElementById('toast-avatar');
+
+    toastSender.textContent = sender ? '@' + sender : '@ผู้สนับสนุน';
+    toastGift.textContent = `${giftName || 'Gift'} x${count || 1}`;
+    if (avatarUrl) {
+      toastAvatar.src = avatarUrl;
+      toastAvatar.style.display = 'block';
+    } else {
+      toastAvatar.style.display = 'none';
+    }
+
+    toastEl.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toastEl.classList.remove('show');
+    }, 3000);
+  }
+
+  let giftBodies = [];
+  const MAX_BODIES = 800; // Large capacity: holds full jar + deep overflow mounds without deleting
+
+  function spawnGiftItems(name, iconUrl, count, coins, sender, profilePic) {
+    const giftImg = loadGiftIconImage(iconUrl);
+    const profileImg = loadProfileImage(profilePic);
+    const itemRadius = getRadiusByCoins(coins);
+
+    if (!isPreview) {
+      try { popAudio.cloneNode().play().catch(e=>{}); } catch(e){}
+      showSenderToast(sender, name, count, profilePic || iconUrl);
+    }
+
+    const spawnCount = Math.min(count || 1, 15);
+    for (let i = 0; i < spawnCount; i++) {
+      if (giftBodies.length >= MAX_BODIES) {
+        // Recycle oldest body from outside mounds first so jar inside never collapses
+        let removeIdx = 0;
+        const outsideIdx = giftBodies.findIndex(b => b.position.x < INNER_LEFT || b.position.x > INNER_RIGHT);
+        if (outsideIdx !== -1) removeIdx = outsideIdx;
+        const [oldest] = giftBodies.splice(removeIdx, 1);
+        World.remove(engine.world, oldest);
+      }
+
+      const spawnX = JAR_CENTER_X + (Math.random() - 0.5) * 40;
+      const spawnY = 25 + (Math.random() - 0.5) * 15;
+
+      const body = Bodies.circle(spawnX, spawnY, itemRadius, {
+        restitution: 0.12,   // Low bounce for rock-solid settling
+        friction: 0.35,      // Good friction against sliding
+        frictionAir: 0.015,
+        density: 0.002,
+        sleepThreshold: 15,  // Anti-jitter: Sleep when resting!
+        label: 'gift_body'
+      });
+
+      body.giftImg = giftImg;
+      body.profileImg = profileImg;
+      body.giftRadius = itemRadius;
+      body.giftName = name;
+
+      Body.setVelocity(body, {
+        x: (Math.random() - 0.5) * 2.0,
+        y: 2.0 + Math.random() * 1.5
+      });
+
+      giftBodies.push(body);
+      World.add(engine.world, body);
+    }
+  }
+
+  // Pre-seed gifts in preview mode
+  if (isPreview) {
+    const isOverflow = urlParams.get('overflow') === 'true';
+    const sampleImg = loadGiftIconImage("");
+    if (isOverflow) {
+      // 1. Fill Jar to the brim
+      for (let i = 0; i < 210; i++) {
+        const b = Bodies.circle(INNER_LEFT + 15 + Math.random() * (INNER_RIGHT - INNER_LEFT - 30), 100 + Math.random() * 250, 8.5, {
+          restitution: 0.1, friction: 0.4, sleepThreshold: 15
+        });
+        b.giftImg = sampleImg;
+        b.giftRadius = 8.5;
+        giftBodies.push(b);
+        World.add(engine.world, b);
+      }
+      // 2. Left Overflow Mound
+      for (let i = 0; i < 30; i++) {
+        const b = Bodies.circle(60 + Math.random() * 105, 300 + Math.random() * 75, 8.5, {
+          restitution: 0.1, friction: 0.5, sleepThreshold: 15
+        });
+        b.giftImg = sampleImg;
+        b.giftRadius = 8.5;
+        giftBodies.push(b);
+        World.add(engine.world, b);
+      }
+      // 3. Right Overflow Mound
+      for (let i = 0; i < 30; i++) {
+        const b = Bodies.circle(395 + Math.random() * 105, 300 + Math.random() * 75, 8.5, {
+          restitution: 0.1, friction: 0.5, sleepThreshold: 15
+        });
+        b.giftImg = sampleImg;
+        b.giftRadius = 8.5;
+        giftBodies.push(b);
+        World.add(engine.world, b);
+      }
+    } else {
+      for (let i = 0; i < 35; i++) {
+        const b = Bodies.circle(INNER_LEFT + 15 + Math.random() * (INNER_RIGHT - INNER_LEFT - 30), 200 + Math.random() * 150, 8.5, {
+          restitution: 0.1, friction: 0.4, sleepThreshold: 15
+        });
+        b.giftImg = sampleImg;
+        b.giftRadius = 8.5;
+        giftBodies.push(b);
+        World.add(engine.world, b);
+      }
+    }
+  }
+
+  // Main Render Loop
+  function render() {
+    Engine.update(engine, 1000 / 60);
+    jarCtx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+
+    // 1. Draw Jar in Background (Photographic Glass Jar with 100% intact texture & reflections)
+    if (jarImageLoaded) {
+      jarCtx.drawImage(jarImage, JAR_DRAW_X, JAR_DRAW_Y, JAR_DRAW_W, JAR_DRAW_H);
+    }
+
+    // 2. Draw All Gift Balls ON TOP (Crisp, vibrant, completely visible)
+    for (let i = 0; i < giftBodies.length; i++) {
+      const b = giftBodies[i];
+      const pos = b.position;
+      const r = b.giftRadius;
+
+      jarCtx.save();
+      jarCtx.translate(pos.x, pos.y);
+      jarCtx.rotate(b.angle);
+
+      if (b.giftImg && b.giftImg.complete && b.giftImg.naturalWidth > 0) {
+        jarCtx.drawImage(b.giftImg, -r, -r, r * 2, r * 2);
+      } else {
+        jarCtx.fillStyle = "#eab308";
+        jarCtx.beginPath();
+        jarCtx.arc(0, 0, r, 0, Math.PI * 2);
+        jarCtx.fill();
+      }
+
+      // Small sender avatar badge on larger coin gifts
+      if (r >= 11 && b.profileImg && b.profileImg.complete && b.profileImg.naturalWidth > 0) {
+        const badgeR = Math.max(4, Math.floor(r * 0.42));
+        jarCtx.beginPath();
+        jarCtx.arc(r * 0.5, -r * 0.5, badgeR, 0, Math.PI * 2);
+        jarCtx.fillStyle = "#1e293b";
+        jarCtx.fill();
+        jarCtx.lineWidth = 1.2;
+        jarCtx.strokeStyle = "#eab308";
+        jarCtx.stroke();
+        jarCtx.clip();
+        jarCtx.drawImage(b.profileImg, r * 0.5 - badgeR, -r * 0.5 - badgeR, badgeR * 2, badgeR * 2);
+      }
+
+      jarCtx.restore();
+    }
+
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+
+  let currentAudio = null;
+  const recentGiftsCache = new Set();
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === 'gift') {
+        const giftKey = `${data.sender}_${data.gift_name}_${data.count}_${data.coins}_${Math.floor(Date.now() / 800)}`;
+        if (recentGiftsCache.has(giftKey)) return;
+        recentGiftsCache.add(giftKey);
+        setTimeout(() => recentGiftsCache.delete(giftKey), 2000);
+
+        spawnGiftItems(data.gift_name, data.gift_icon, data.count, data.coins, data.sender, data.profile_picture);
+        if (!isPreview && data.sound_effect) {
+          if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+          currentAudio = new Audio(data.sound_effect);
+          currentAudio.volume = data.sound_volume !== undefined ? data.sound_volume : 1.0;
+          currentAudio.play().catch(e => {});
+        }
+      } else if (data.type === 'jar_reset') {
+        giftBodies.forEach(b => World.remove(engine.world, b));
+        giftBodies = [];
+      } else if (data.type === 'stop_audio') {
+        if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+      }
+    } catch(e) {}
+  };
+</script>
+</body>
+</html>

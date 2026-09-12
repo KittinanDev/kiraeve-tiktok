@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Obsidian OBS Overlay Widgets</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts & Material Symbols -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "tertiary": "#ffb869",
+        "primary": "#d0bcff",
+        "surface-container-high": "#2a2a2a",
+        "surface-container-lowest": "#0e0e0e",
+        "background": "#0a0a0a",
+        "surface": "#131313",
+        "surface-container-low": "#1c1b1b",
+        "surface-container": "#201f1f",
+        "outline-variant": "#494454",
+        "secondary": "#4edea3",
+        "on-surface": "#e5e2e1",
+        "on-surface-variant": "#cbc3d7",
+        "primary-container": "#a078ff"
+      },
+      fontFamily: {
+        "inter": ["Inter", "Kanit", "sans-serif"],
+        "mono": ["JetBrains Mono", "monospace"]
+      }
+    }
+  }
+}
+</script>
+
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    width: 100vw; height: 100vh;
+    background: transparent;
+    font-family: 'Inter', 'Kanit', sans-serif;
+    color: #e5e2e1;
+    overflow: hidden;
+  }
+
+  /* Glassmorphism Panel */
+  .obsidian-panel {
+    background-color: rgba(19, 19, 19, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid #262626;
+  }
+
+  /* Pulse Dot Animation */
+  @keyframes pulse-dot {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .animate-pulse-dot {
+    animation: pulse-dot 2s infinite;
+  }
+
+  /* Leaderboard Rank Gradients */
+  .rank-gradient-1 {
+    background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .rank-gradient-2 {
+    background: linear-gradient(135deg, #C0C0C0 0%, #E5E4E2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .rank-gradient-3 {
+    background: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Subathon Timer Glow */
+  .timer-glow {
+    text-shadow: 0 0 16px rgba(208, 188, 255, 0.4);
+  }
+
+  /* Gacha Roulette Strip Styling */
+  .reel-container {
+    width: 780px;
+    height: 190px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(90deg, #131313 0%, #1c1b1b 50%, #131313 100%);
+    border: 1px solid #262626;
+    border-radius: 0.5rem;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
+  }
+
+  .reel-content {
+    display: flex;
+    gap: 8px;
+    position: absolute;
+    left: 0;
+    top: 10px;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  .prize-card {
+    min-width: 130px;
+    height: 165px;
+    background-color: #171717;
+    border: 1px solid #2a2a2a;
+    border-radius: 0.375rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-sizing: border-box;
+    opacity: 0.6;
+    transition: opacity 0.3s, transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+    flex-shrink: 0;
+  }
+
+  .prize-card.legendary { background: linear-gradient(135deg, #2a1f1a, #3f2300); border-color: #ffb869; }
+  .prize-card.epic { background: linear-gradient(135deg, #1f143a, #340080); border-color: #a078ff; }
+  .prize-card.rare { background: linear-gradient(135deg, #0e2a20, #005236); border-color: #4edea3; }
+  .prize-card.neg { background: linear-gradient(135deg, #3f0d0d, #7f1d1d); border-color: #ef4444; }
+
+  .prize-card.winner-glow {
+    opacity: 1;
+    transform: scale(1.08) translate3d(0, 0, 0);
+    border-color: #d0bcff;
+    box-shadow: 0 0 25px rgba(208, 188, 255, 0.5);
+    z-index: 30;
+  }
+  .prize-card.legendary.winner-glow { box-shadow: 0 0 30px rgba(255, 184, 105, 0.7); }
+
+  .center-marker {
+    position: absolute;
+    top: 0; bottom: 0; left: 50%;
+    width: 3px;
+    background-color: #d0bcff;
+    transform: translateX(-50%);
+    z-index: 25;
+    box-shadow: 0 0 12px #d0bcff;
+  }
+
+  .center-marker::before, .center-marker::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+  }
+  .center-marker::before { top: 0; border-top: 12px solid #d0bcff; }
+  .center-marker::after { bottom: 0; border-bottom: 12px solid #d0bcff; }
+
+  .blur-overlay {
+    position: absolute; top: 0; bottom: 0; width: 140px;
+    pointer-events: none; z-index: 20;
+  }
+  .blur-left { left: 0; background: linear-gradient(90deg, #0A0A0A 0%, rgba(10,10,10,0) 100%); }
+  .blur-right { right: 0; background: linear-gradient(270deg, #0A0A0A 0%, rgba(10,10,10,0) 100%); }
+
+  /* Floating Boost Badge */
+  .time-boost-badge {
+    position: absolute;
+    top: -15px; right: -20px;
+    background: #4edea3;
+    color: #002113;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(78, 222, 163, 0.5);
+    animation: floatUp 1.2s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes floatUp {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-35px) scale(1.3); }
+  }
+
+  /* Auction Winner Card Popup */
+  .auction-winner-card {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: rgba(19, 19, 19, 0.95);
+    border: 2px solid #4edea3;
+    border-radius: 1rem;
+    padding: 28px 40px;
+    box-shadow: 0 0 50px rgba(78, 222, 163, 0.5);
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 100;
+  }
+  .auction-winner-card.active { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+
+  /* PREVIEW MODE STYLES: 100% Dead Center, Perfect Fit & Scaling */
+  body.preview-mode {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  body.preview-mode #leaderboard-widget,
+  body.preview-mode #timer-widget,
+  body.preview-mode #auction-widget,
+  body.preview-mode #gacha-widget,
+  body.preview-mode #jar-wrapper,
+  body.preview-mode #tts-popup {
+    position: relative !important;
+    top: auto !important; bottom: auto !important;
+    left: auto !important; right: auto !important;
+    transform: none !important;
+    margin: auto !important;
+    opacity: 1 !important;
+  }
+  body.preview-mode #gacha-widget {
+    transform: scale(0.7) !important;
+  }
+  body.preview-mode #jar-wrapper {
+    width: 220px !important;
+    height: 270px !important;
+  }
+  body.preview-mode #tts-popup {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Widget 1: Top Gifters Leaderboard Widget (Top-Left) -->
+  <div id="leaderboard-widget" class="absolute top-5 left-5 obsidian-panel w-80 rounded-lg p-3 flex flex-col gap-2 shadow-2xl z-50">
+    <div class="flex items-center gap-2 pb-2 border-b border-outline-variant/40">
+      <span class="material-symbols-outlined text-tertiary text-[20px]" style="font-variation-settings: 'FILL' 1;">stars</span>
+      <h2 class="font-bold text-xs text-on-surface-variant uppercase tracking-widest">TOP SUPPORTERS</h2>
+    </div>
+    <div id="leaderboard-list" class="flex flex-col gap-2">
+      <div class="flex items-center justify-between py-1 border-b border-outline-variant/20">
+        <div class="flex items-center gap-2">
+          <div class="w-5 text-center font-bold text-base rank-gradient-1">1</div>
+          <div class="w-7 h-7 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center text-xs font-bold text-primary">K</div>
+          <span class="text-xs font-semibold text-on-surface truncate max-w-[100px]">King_Gifters</span>
+        </div>
+        <div class="flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded text-secondary border border-secondary/20">
+          <span class="material-symbols-outlined text-[13px]">toll</span>
+          <span class="font-mono text-[11px] font-bold">29,999</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between py-1 border-b border-outline-variant/20">
+        <div class="flex items-center gap-2">
+          <div class="w-5 text-center font-bold text-base rank-gradient-2">2</div>
+          <div class="w-7 h-7 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center text-xs font-bold text-primary">S</div>
+          <span class="text-xs font-semibold text-on-surface truncate max-w-[100px]">Supporter_007</span>
+        </div>
+        <div class="flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded text-secondary border border-secondary/20">
+          <span class="material-symbols-outlined text-[13px]">toll</span>
+          <span class="font-mono text-[11px] font-bold">500</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between py-1">
+        <div class="flex items-center gap-2">
+          <div class="w-5 text-center font-bold text-base rank-gradient-3">3</div>
+          <div class="w-7 h-7 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center text-xs font-bold text-primary">V</div>
+          <span class="text-xs font-semibold text-on-surface truncate max-w-[100px]">Viewer_Rose</span>
+        </div>
+        <div class="flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded text-secondary border border-secondary/20">
+          <span class="material-symbols-outlined text-[13px]">toll</span>
+          <span class="font-mono text-[11px] font-bold">10</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Widget 2: Subathon Timer Widget (Top-Right) -->
+  <div id="timer-widget" class="absolute top-5 right-5 obsidian-panel rounded-lg px-4 py-3 flex flex-col items-center gap-1 shadow-2xl z-50 min-w-[210px]">
+    <div class="font-bold text-xs text-primary uppercase tracking-widest flex items-center gap-2 opacity-90">
+      <span class="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse-dot shadow-[0_0_8px_rgba(78,222,163,0.6)]"></span>
+      SUBATHON TIMER
+    </div>
+    <div id="timer-clock" class="font-mono font-bold text-3xl text-on-surface tracking-tight timer-glow py-1">
+      01:00:00
+    </div>
+    <div class="w-full h-1 bg-surface-container-high rounded-full overflow-hidden">
+      <div id="timer-progress-fill" class="h-full bg-primary transition-all duration-500" style="width: 100%;"></div>
+    </div>
+  </div>
+
+  <!-- Widget 3: Live Auction Widget (Top-Center) -->
+  <div id="auction-widget" class="absolute top-5 left-1/2 -translate-x-1/2 obsidian-panel w-80 rounded-lg overflow-hidden shadow-2xl flex flex-col z-50 border border-outline-variant">
+    <div class="h-[2px] w-full bg-primary"></div>
+    <div class="px-3 py-2 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">gavel</span>
+        <h2 id="auc-title-el" class="font-semibold text-xs text-on-surface uppercase tracking-wider truncate max-w-[160px]">LIVE AUCTION</h2>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <div class="w-2 h-2 rounded-full bg-secondary animate-pulse-dot shadow-[0_0_8px_rgba(78,222,163,0.6)]"></div>
+        <span class="font-mono text-[11px] font-medium text-secondary uppercase tracking-widest">LIVE</span>
+      </div>
+    </div>
+
+    <div class="p-3 flex flex-col gap-2.5">
+      <div class="grid grid-cols-2 gap-2">
+        <div class="flex flex-col gap-1 p-2 bg-surface-container-high rounded border border-outline-variant">
+          <span class="text-[10px] font-semibold text-on-surface-variant uppercase">CURRENT BID</span>
+          <span id="auc-bid-coins" class="font-mono font-bold text-lg text-secondary">0 🪙</span>
+          <span id="auc-highest-bidder" class="text-xs text-on-surface-variant truncate">by @-</span>
+        </div>
+        <div class="flex flex-col gap-1 p-2 bg-surface-container-high rounded border border-outline-variant">
+          <span class="text-[10px] font-semibold text-on-surface-variant uppercase">TIME LEFT</span>
+          <span id="auc-timer-el" class="font-mono font-bold text-lg text-tertiary">05:00</span>
+          <span class="text-[11px] text-on-surface-variant truncate">+15s on bid</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1 mt-1">
+        <div class="flex justify-between items-end text-xs">
+          <span class="text-[11px] font-semibold text-on-surface-variant uppercase">RESERVE GOAL</span>
+          <span id="auc-goal-el" class="font-mono text-[11px] text-on-surface-variant">0 / 300 🪙</span>
+        </div>
+        <div class="h-2 w-full bg-surface-container-lowest rounded-full overflow-hidden border border-outline-variant">
+          <div id="auc-progress-el" class="h-full bg-primary transition-all duration-500 ease-in-out" style="width: 0%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Winner Announcement Popup Card -->
+  <div id="auction-winner-card" class="auction-winner-card">
+    <div class="flex justify-center mb-2">
+      <span class="material-symbols-outlined text-tertiary text-5xl" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+    </div>
+    <div class="text-xs font-bold text-secondary uppercase tracking-widest">WINNER OF THE AUCTION!</div>
+    <div id="winner-name-el" class="text-2xl font-bold text-on-surface mt-1">@Bidder_King</div>
+    <div id="winner-coins-el" class="font-mono text-3xl font-bold text-tertiary mt-1">29,999 🪙</div>
+  </div>
+
+  <!-- Widget 6: Gacha Roulette Reel (Center Screen) -->
+  <div id="gacha-widget" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-50 transition-opacity duration-300">
+    <div class="mb-3 flex items-center gap-2 bg-surface-container px-4 py-1.5 border border-outline-variant rounded-full shadow-lg">
+      <span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">redeem</span>
+      <h2 class="font-bold text-sm text-on-surface uppercase tracking-wider">MYSTERY BOX GACHA</h2>
+      <span class="font-mono text-[11px] text-tertiary bg-tertiary/10 px-2 py-0.5 rounded font-semibold">CS:GO REEL</span>
+    </div>
+
+    <div class="reel-container" id="gacha-viewport">
+      <div class="blur-overlay blur-left"></div>
+      <div class="center-marker"></div>
+      <div class="reel-content" id="gacha-reel-strip">
+        <!-- Sample Initial Cards -->
+        <div class="prize-card rare">
+          <div class="w-11 h-11 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center mb-2"><span class="material-symbols-outlined text-secondary" style="font-size: 24px;">monetization_on</span></div>
+          <span class="font-bold text-sm text-on-surface uppercase">+1</span>
+          <span class="font-mono text-[10px] text-on-surface-variant mt-1 opacity-60 uppercase">RARE</span>
+        </div>
+        <div class="prize-card epic">
+          <div class="w-11 h-11 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center mb-2"><span class="material-symbols-outlined text-primary" style="font-size: 24px;">verified</span></div>
+          <span class="font-bold text-sm text-on-surface uppercase">+15</span>
+          <span class="font-mono text-[10px] text-on-surface-variant mt-1 opacity-60 uppercase">EPIC</span>
+        </div>
+        <div class="prize-card legendary winner-glow">
+          <div class="w-11 h-11 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center mb-2"><span class="material-symbols-outlined text-tertiary" style="font-size: 24px;">workspace_premium</span></div>
+          <span class="font-bold text-sm text-on-surface uppercase">+30</span>
+          <span class="font-mono text-[10px] text-on-surface-variant mt-1 opacity-60 uppercase">LEGENDARY</span>
+        </div>
+        <div class="prize-card neg">
+          <div class="w-11 h-11 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center mb-2"><span class="material-symbols-outlined text-red-400" style="font-size: 24px;">warning</span></div>
+          <span class="font-bold text-sm text-on-surface uppercase">-10</span>
+          <span class="font-mono text-[10px] text-on-surface-variant mt-1 opacity-60 uppercase">HAZARD</span>
+        </div>
+      </div>
+      <div class="blur-overlay blur-right"></div>
+    </div>
+  </div>
+
+  <!-- 2D Canvas Confetti Particles -->
+  <canvas id="vfx-confetti-canvas" class="absolute top-0 left-0 w-full h-full pointer-events-none z-[120]"></canvas>
+
+  <!-- Widget 4: Glass Gift Jar Layer (Bottom-Right) -->
+  <div id="jar-wrapper" class="absolute bottom-5 right-5 w-[280px] h-[350px] z-30 pointer-events-none flex items-center justify-center">
+    <canvas id="jar-canvas"></canvas>
+  </div>
+
+  <!-- Widget 5: Siri TTS Chat Popup Badge (Bottom-Left) -->
+  <div id="tts-popup" class="absolute bottom-6 left-6 obsidian-panel max-w-[380px] rounded-lg p-3.5 border-l-4 border-primary shadow-2xl z-50">
+    <div class="flex items-center gap-2 text-xs font-semibold text-primary">
+      <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">comment</span>
+      <span id="tts-sender">Siri Chat: @Viewer_007</span>
+    </div>
+    <div id="tts-text" class="text-sm text-on-surface mt-1 line-clamp-3">สวัสดีครับ ขอเพลงเพราะๆ 1 เพลงครับ</div>
+  </div>
+
+  <audio id="tts-audio-player" preload="auto"></audio>
+
+<script>
+  // Detect Preview Mode from URL Parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const isPreviewMode = urlParams.get('preview') === 'true';
+
+  if (isPreviewMode) {
+    document.body.classList.add('preview-mode');
+  }
+
+  const popup = document.getElementById('tts-popup');
+  const senderEl = document.getElementById('tts-sender');
+  const textEl = document.getElementById('tts-text');
+  const ttsAudio = document.getElementById('tts-audio-player');
+
+  const timerClockEl = document.getElementById('timer-clock');
+  const timerWidgetEl = document.getElementById('timer-widget');
+  const timerProgressFill = document.getElementById('timer-progress-fill');
+
+  const leaderWidgetEl = document.getElementById('leaderboard-widget');
+  const leaderListEl = document.getElementById('leaderboard-list');
+
+  const jarWrapperEl = document.getElementById('jar-wrapper');
+
+  const auctionWidgetEl = document.getElementById('auction-widget');
+  const aucTitleEl = document.getElementById('auc-title-el');
+  const aucGoalEl = document.getElementById('auc-goal-el');
+  const aucTimerEl = document.getElementById('auc-timer-el');
+  const aucBidCoinsEl = document.getElementById('auc-bid-coins');
+  const aucHighestBidderEl = document.getElementById('auc-highest-bidder');
+  const aucProgressEl = document.getElementById('auc-progress-el');
+
+  const winnerCardEl = document.getElementById('auction-winner-card');
+  const winnerNameEl = document.getElementById('winner-name-el');
+  const winnerCoinsEl = document.getElementById('winner-coins-el');
+
+  const gachaWidgetEl = document.getElementById('gacha-widget');
+  const gachaReelStripEl = document.getElementById('gacha-reel-strip');
+  const gachaViewportEl = document.getElementById('gacha-viewport');
+
+  const vfxCanvas = document.getElementById('vfx-confetti-canvas');
+  const vfxCtx = vfxCanvas.getContext('2d');
+  vfxCanvas.width = window.innerWidth;
+  vfxCanvas.height = window.innerHeight;
+  window.addEventListener('resize', () => {
+    vfxCanvas.width = window.innerWidth;
+    vfxCanvas.height = window.innerHeight;
+  });
+
+  // Confetti Engine
+  let confettiParticles = [];
+  let confettiAnimationFrame = null;
+
+  function launchConfettiBurst() {
+    confettiParticles = [];
+    const colors = ['#ffb869', '#4edea3', '#d0bcff', '#a078ff', '#ef4444', '#6ffbbe'];
+    for (let i = 0; i < 140; i++) {
+      confettiParticles.push({
+        x: vfxCanvas.width / 2 + (Math.random() - 0.5) * 300,
+        y: vfxCanvas.height / 2 - 100,
+        vx: (Math.random() - 0.5) * 16,
+        vy: (Math.random() - 0.8) * 18,
+        size: 8 + Math.random() * 10,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * Math.PI * 2,
+        vRot: (Math.random() - 0.5) * 0.2,
+        opacity: 1
+      });
+    }
+    if (confettiAnimationFrame) cancelAnimationFrame(confettiAnimationFrame);
+
+    function step() {
+      vfxCtx.clearRect(0, 0, vfxCanvas.width, vfxCanvas.height);
+      let alive = false;
+
+      for (let p of confettiParticles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.4;
+        p.vx *= 0.98;
+        p.rotation += p.vRot;
+        p.opacity -= 0.008;
+
+        if (p.opacity > 0 && p.y < vfxCanvas.height + 50) {
+          alive = true;
+          vfxCtx.save();
+          vfxCtx.globalAlpha = Math.max(0, p.opacity);
+          vfxCtx.translate(p.x, p.y);
+          vfxCtx.rotate(p.rotation);
+          vfxCtx.fillStyle = p.color;
+          vfxCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+          vfxCtx.restore();
+        }
+      }
+
+      if (alive) confettiAnimationFrame = requestAnimationFrame(step);
+      else vfxCtx.clearRect(0, 0, vfxCanvas.width, vfxCanvas.height);
+    }
+    step();
+  }
+
+  // Audio Optimization
+  const popAudio = new Audio("/soundeffect/dragon-studio-pop-402324.mp3");
+  popAudio.volume = 0.5;
+  const applauseAudio = new Audio("/soundeffect/roesisch-applause-01-253125.mp3");
+  applauseAudio.volume = 0.8;
+
+  let audioCtx = null;
+  function playTickClickSound() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.04);
+      
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.04);
+    } catch(e) {}
+  }
+
+  function playPopSound() {
+    if (!currentVisibility.jar) return;
+    if (isTimerMode || isLeaderboardMode || isTTSMode || isAuctionMode || isGachaMode) return;
+    try {
+      const sound = popAudio.cloneNode();
+      sound.volume = 0.5;
+      sound.play().catch(e => {});
+    } catch (e) {}
+  }
+
+  function playBidPopSound() {
+    try {
+      const sound = popAudio.cloneNode();
+      sound.volume = 0.7;
+      sound.play().catch(e => {});
+    } catch (e) {}
+  }
+
+  function playApplauseSound() {
+    try {
+      const sound = applauseAudio.cloneNode();
+      sound.volume = 0.8;
+      sound.onended = () => { winnerCardEl.classList.remove('active'); };
+      sound.play().catch(e => { setTimeout(() => { winnerCardEl.classList.remove('active'); }, 5000); });
+    } catch (e) { setTimeout(() => { winnerCardEl.classList.remove('active'); }, 5000); }
+  }
+
+  // Detect OBS Modular Routes
+  const path = window.location.pathname.toLowerCase();
+  const widgetParam = urlParams.get('widget') || urlParams.get('type') || '';
+
+  const isJarMode = path.includes('overlay_jar') || widgetParam === 'jar';
+  const isTimerMode = path.includes('overlay_timer') || widgetParam === 'timer';
+  const isLeaderboardMode = path.includes('overlay_leaderboard') || widgetParam === 'leaderboard';
+  const isTTSMode = path.includes('overlay_tts') || widgetParam === 'tts';
+  const isAuctionMode = path.includes('overlay_auction') || widgetParam === 'auction';
+  const isGachaMode = path.includes('overlay_gacha') || widgetParam === 'gacha';
+
+  let currentVisibility = { tts: true, jar: true, timer: true, leaderboard: true, auction: true, gacha: true };
+
+  function applyWidgetVisibility(vis) {
+    if (isPreviewMode) return; // Do not hide elements in preview mode
+    if (vis) currentVisibility = vis;
+    if (isJarMode) {
+      leaderWidgetEl.style.display = 'none'; timerWidgetEl.style.display = 'none'; auctionWidgetEl.style.display = 'none'; popup.style.display = 'none';
+      jarWrapperEl.style.display = currentVisibility.jar ? 'block' : 'none';
+    } else if (isTimerMode) {
+      leaderWidgetEl.style.display = 'none'; jarWrapperEl.style.display = 'none'; auctionWidgetEl.style.display = 'none'; popup.style.display = 'none';
+      timerWidgetEl.style.display = currentVisibility.timer ? 'flex' : 'none';
+    } else if (isLeaderboardMode) {
+      timerWidgetEl.style.display = 'none'; jarWrapperEl.style.display = 'none'; auctionWidgetEl.style.display = 'none'; popup.style.display = 'none';
+      leaderWidgetEl.style.display = currentVisibility.leaderboard ? 'flex' : 'none';
+    } else if (isTTSMode) {
+      leaderWidgetEl.style.display = 'none'; timerWidgetEl.style.display = 'none'; jarWrapperEl.style.display = 'none'; auctionWidgetEl.style.display = 'none';
+      popup.style.display = currentVisibility.tts ? 'block' : 'none';
+    } else if (isAuctionMode) {
+      leaderWidgetEl.style.display = 'none'; timerWidgetEl.style.display = 'none'; jarWrapperEl.style.display = 'none'; popup.style.display = 'none';
+      auctionWidgetEl.style.display = currentVisibility.auction ? 'flex' : 'none';
+    } else if (isGachaMode) {
+      leaderWidgetEl.style.display = 'none'; timerWidgetEl.style.display = 'none'; jarWrapperEl.style.display = 'none'; auctionWidgetEl.style.display = 'none'; popup.style.display = 'none';
+    } else {
+      leaderWidgetEl.style.display = currentVisibility.leaderboard ? 'flex' : 'none';
+      timerWidgetEl.style.display = currentVisibility.timer ? 'flex' : 'none';
+      auctionWidgetEl.style.display = currentVisibility.auction ? 'flex' : 'none';
+      jarWrapperEl.style.display = currentVisibility.jar ? 'block' : 'none';
+      popup.style.display = currentVisibility.tts ? 'block' : 'none';
+    }
+  }
+
+  function formatTime(totalSec) {
+    const h = Math.floor(totalSec / 3600).toString().padStart(2, '0');
+    const m = Math.floor((totalSec % 3600) / 60).toString().padStart(2, '0');
+    const s = (totalSec % 60).toString().padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  }
+
+  function formatMinSec(totalSec) {
+    const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+    const s = (totalSec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  let previousWinnerState = false;
+
+  function renderAuction(auc) {
+    if (!auc) return;
+    aucTitleEl.innerText = auc.title.toUpperCase();
+    aucTimerEl.innerText = formatMinSec(auc.remaining_seconds || 0);
+
+    const target = auc.target_coins || 1;
+    const highest = auc.highest_bid || 0;
+    aucBidCoinsEl.innerText = `${highest.toLocaleString()} 🪙`;
+    aucHighestBidderEl.innerText = `by @${auc.highest_bidder || '-'}`;
+    aucGoalEl.innerText = `${highest.toLocaleString()} / ${target.toLocaleString()} 🪙`;
+
+    const pct = Math.min(100, Math.floor((highest / target) * 100));
+    aucProgressEl.style.width = `${pct}%`;
+
+    if (auc.is_winner_announced && auc.winner_name && auc.winner_name !== '-') {
+      auctionWidgetEl.style.display = 'none';
+      winnerNameEl.innerText = `@${auc.winner_name}`;
+      winnerCoinsEl.innerText = `${auc.winning_coins.toLocaleString()} 🪙`;
+
+      if (!previousWinnerState) {
+        previousWinnerState = true;
+        winnerCardEl.classList.add('active');
+        playApplauseSound();
+        launchConfettiBurst();
+      }
+    } else {
+      previousWinnerState = false;
+      winnerCardEl.classList.remove('active');
+      if (isAuctionMode || (!isJarMode && !isTimerMode && !isLeaderboardMode && !isTTSMode && !isGachaMode)) {
+        if (currentVisibility.auction) auctionWidgetEl.style.display = 'flex';
+      }
+    }
+  }
+
+  // CS:GO Style Gacha Reel
+  let isGachaSpinning = false;
+
+  function runCSGOGachaSpin(reelSequence, winnerIndex, durationSec) {
+    if (isGachaSpinning) return;
+    isGachaSpinning = true;
+
+    gachaReelStripEl.innerHTML = reelSequence.map((val, idx) => {
+      const num = parseInt(val);
+      let cls = 'rare';
+      let icon = 'monetization_on';
+      let iconColor = 'text-secondary';
+
+      if (!isNaN(num)) {
+        if (num < 0) {
+          cls = 'neg'; icon = 'warning'; iconColor = 'text-red-400';
+        } else if (num >= 20) {
+          cls = 'legendary'; icon = 'workspace_premium'; iconColor = 'text-tertiary';
+        } else if (num >= 10) {
+          cls = 'epic'; icon = 'verified'; iconColor = 'text-primary';
+        }
+      }
+
+      const displayVal = (!isNaN(num) && num > 0) ? `+${num}` : val;
+      return `
+        <div class="prize-card ${cls}" id="gacha-card-${idx}">
+          <div class="w-11 h-11 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center mb-2">
+            <span class="material-symbols-outlined ${iconColor}" style="font-variation-settings: 'FILL' 1; font-size: 24px;">${icon}</span>
+          </div>
+          <span class="font-bold text-sm text-on-surface text-center px-1 uppercase">${displayVal}</span>
+          <span class="font-mono text-[10px] text-on-surface-variant mt-1 opacity-60 uppercase">${cls}</span>
+        </div>
+      `;
+    }).join('');
+
+    gachaReelStripEl.style.transition = 'none';
+    gachaReelStripEl.style.transform = 'translate3d(0px, 0px, 0px)';
+    gachaWidgetEl.style.opacity = '1';
+
+    requestAnimationFrame(() => {
+      const targetCard = document.getElementById(`gacha-card-${winnerIndex}`);
+      const viewportWidth = gachaViewportEl.clientWidth || 780;
+      const viewportCenter = viewportWidth / 2;
+
+      let targetX = 0;
+      if (targetCard) {
+        const cardOffsetLeft = targetCard.offsetLeft;
+        const cardWidth = targetCard.offsetWidth;
+        const cardCenter = cardOffsetLeft + (cardWidth / 2);
+        targetX = -(cardCenter - viewportCenter);
+      } else {
+        targetX = -(winnerIndex * 138 - (viewportCenter - 65));
+      }
+
+      setTimeout(() => {
+        gachaReelStripEl.style.transition = `transform ${durationSec}s cubic-bezier(0.1, 0.88, 0.15, 1)`;
+        gachaReelStripEl.style.transform = `translate3d(${targetX}px, 0px, 0px)`;
+      }, 50);
+    });
+
+    let tickCount = 0;
+    const maxTicks = 35;
+    const tickInterval = setInterval(() => {
+      tickCount++;
+      playTickClickSound();
+      if (tickCount >= maxTicks) clearInterval(tickInterval);
+    }, (durationSec * 1000) / maxTicks);
+
+    setTimeout(() => {
+      clearInterval(tickInterval);
+      const winnerCard = document.getElementById(`gacha-card-${winnerIndex}`);
+      if (winnerCard) {
+        winnerCard.classList.add('winner-glow');
+        playApplauseSound();
+        launchConfettiBurst();
+      }
+
+      setTimeout(() => {
+        if (!isPreviewMode) gachaWidgetEl.style.opacity = '0';
+        isGachaSpinning = false;
+      }, 3500);
+    }, durationSec * 1000 + 300);
+  }
+
+  function triggerTimeBoostAnimation(addedSec) {
+    if (!addedSec || addedSec === 0) return;
+    if (!currentVisibility.timer && !isTimerMode) return;
+    const badge = document.createElement('div');
+    const isPositive = addedSec > 0;
+    badge.className = `time-boost-badge ${isPositive ? 'positive' : 'negative'}`;
+    badge.innerText = isPositive ? `+${addedSec}s` : `${addedSec}s`;
+    timerWidgetEl.appendChild(badge);
+    setTimeout(() => badge.remove(), 1200);
+  }
+
+  function renderLeaderboard(gifters) {
+    if (!gifters || gifters.length === 0) {
+      if (isPreviewMode) return;
+      leaderListEl.innerHTML = '<div class="text-xs text-on-surface-variant text-center py-2">ยังไม่มีข้อมูลอันดับ</div>';
+      return;
+    }
+    const rankGradients = ['rank-gradient-1', 'rank-gradient-2', 'rank-gradient-3'];
+    leaderListEl.innerHTML = gifters.slice(0, 3).map((g, idx) => `
+      <div class="flex items-center justify-between py-1 border-b border-outline-variant/20 last:border-none">
+        <div class="flex items-center gap-2">
+          <div class="w-5 text-center font-bold text-base ${rankGradients[idx] || 'text-on-surface-variant'}">${idx + 1}</div>
+          <div class="w-7 h-7 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center text-xs font-bold text-primary">
+            ${g.sender.charAt(0).toUpperCase()}
+          </div>
+          <span class="text-xs font-semibold text-on-surface truncate max-w-[100px]">${g.sender}</span>
+        </div>
+        <div class="flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded text-secondary border border-secondary/20">
+          <span class="material-symbols-outlined text-[13px]">toll</span>
+          <span class="font-mono text-[11px] font-bold">${g.coins.toLocaleString()}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Physics Gift Jar
+  const jarCanvas = document.getElementById('jar-canvas');
+  const jarCtx = jarCanvas.getContext('2d');
+  jarCanvas.width = 280;
+  jarCanvas.height = 350;
+
+  const jarImage = new Image();
+  jarImage.src = "/media/jar.png";
+  let jarImageLoaded = false;
+  jarImage.onload = () => { jarImageLoaded = true; };
+
+  const giftIconsCache = {};
+  function loadGiftIconImage(iconUrl) {
+    if (!iconUrl) iconUrl = "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp";
+    if (giftIconsCache[iconUrl]) return giftIconsCache[iconUrl];
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = iconUrl;
+    giftIconsCache[iconUrl] = img;
+    return img;
+  }
+
+  function getRadiusByCoins(coins) {
+    if (!coins || coins <= 5) return 10;
+    if (coins <= 50) return 15;
+    if (coins <= 500) return 20;
+    return 25;
+  }
+
+  let jarBodies = [];
+
+  // Seed sample gifts in Jar for preview mode
+  if (isPreviewMode) {
+    const sampleImg = loadGiftIconImage("");
+    for (let i = 0; i < 6; i++) {
+      jarBodies.push({
+        name: "Rose",
+        x: 90 + i * 20,
+        y: 220 + (i % 2) * 20,
+        radius: 16,
+        vx: 0, vy: 0, img: sampleImg
+      });
+    }
+  }
+
+  function spawnGiftItems(name, iconUrl, count, coins) {
+    if (!currentVisibility.jar) return;
+    if (isTimerMode || isLeaderboardMode || isTTSMode || isAuctionMode || isGachaMode) return;
+
+    const giftImg = loadGiftIconImage(iconUrl);
+    const itemRadius = getRadiusByCoins(coins);
+    playPopSound();
+
+    for (let i = 0; i < Math.min(count, 15); i++) {
+      jarBodies.push({
+        name: name,
+        x: 100 + Math.random() * 80,
+        y: 20,
+        radius: itemRadius,
+        vx: (Math.random() - 0.5) * 2.0,
+        vy: 2 + Math.random() * 1.5,
+        img: giftImg
+      });
+    }
+  }
+
+  function updatePhysicsAndRender() {
+    jarCtx.clearRect(0, 0, jarCanvas.width, jarCanvas.height);
+    
+    // Scale and center jar image perfectly
+    if (jarImageLoaded) {
+      if (isPreviewMode) {
+        jarCtx.drawImage(jarImage, 20, 10, 240, 310);
+      } else {
+        jarCtx.drawImage(jarImage, 10, 10, 260, 330);
+      }
+    }
+
+    const gravity = 0.35;
+    const floorY = isPreviewMode ? 285 : 305;
+    const leftX = isPreviewMode ? 65 : 70;
+    const rightX = isPreviewMode ? 195 : 210;
+    const topNeckY = 80;
+
+    for (let i = 0; i < jarBodies.length; i++) {
+      let b = jarBodies[i];
+      b.vy += gravity;
+      b.x += b.vx;
+      b.y += b.vy;
+
+      if (b.y + b.radius > floorY) {
+        b.y = floorY - b.radius;
+        b.vy *= -0.15;
+        b.vx *= 0.6;
+      }
+
+      const currentLeftWall = (b.y < topNeckY) ? 88 : leftX;
+      if (b.x - b.radius < currentLeftWall) {
+        b.x = currentLeftWall + b.radius;
+        b.vx *= -0.4;
+      }
+
+      const currentRightWall = (b.y < topNeckY) ? 192 : rightX;
+      if (b.x + b.radius > currentRightWall) {
+        b.x = currentRightWall - b.radius;
+        b.vx *= -0.4;
+      }
+
+      for (let j = i + 1; j < jarBodies.length; j++) {
+        let b2 = jarBodies[j];
+        let dx = b2.x - b.x;
+        let dy = b2.y - b.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        let minDist = b.radius + b2.radius;
+
+        if (dist < minDist && dist > 0) {
+          let overlap = minDist - dist;
+          let nx = dx / dist;
+          let ny = dy / dist;
+
+          b.x -= nx * overlap * 0.5;
+          b.y -= ny * overlap * 0.5;
+          b2.x += nx * overlap * 0.5;
+          b2.y += ny * overlap * 0.5;
+
+          b.vx *= 0.6; b.vy *= 0.6;
+          b2.vx *= 0.6; b2.vy *= 0.6;
+        }
+      }
+
+      try {
+        if (b.img && b.img.complete && b.img.naturalWidth > 0) {
+          jarCtx.drawImage(b.img, b.x - b.radius, b.y - b.radius, b.radius * 2, b.radius * 2);
+        } else {
+          jarCtx.fillStyle = "#a855f7";
+          jarCtx.beginPath();
+          jarCtx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+          jarCtx.fill();
+        }
+      } catch (e) {}
+    }
+    requestAnimationFrame(updatePhysicsAndRender);
+  }
+  requestAnimationFrame(updatePhysicsAndRender);
+
+  // WebSocket Integration
+  const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
+  const ws = new WebSocket(WS_URL);
+
+  const ttsQueue = [];
+  let isTTSSpeaking = false;
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'init') {
+        if (data.config && data.config.widgets_visibility) applyWidgetVisibility(data.config.widgets_visibility);
+        if (data.timer_seconds !== undefined) timerClockEl.innerText = formatTime(data.timer_seconds);
+        if (data.top_gifters) renderLeaderboard(data.top_gifters);
+        if (data.auction) renderAuction(data.auction);
+      } else if (data.type === 'config_updated') {
+        if (data.config && data.config.widgets_visibility) applyWidgetVisibility(data.config.widgets_visibility);
+      } else if (data.type === 'timer_tick' || data.type === 'timer_update') {
+        timerClockEl.innerText = formatTime(data.seconds);
+      } else if (data.type === 'auction_tick' || data.type === 'auction_update' || data.type === 'auction_winner') {
+        if (data.auction) renderAuction(data.auction);
+      } else if (data.type === 'gacha_spin') {
+        if (currentVisibility.gacha || isGachaMode || (!isJarMode && !isTimerMode && !isLeaderboardMode && !isTTSMode && !isAuctionMode)) {
+          runCSGOGachaSpin(data.reel_sequence, data.winner_index, data.duration);
+        }
+        if (data.timer_seconds !== undefined) timerClockEl.innerText = formatTime(data.timer_seconds);
+      } else if (data.type === 'gift') {
+        spawnGiftItems(data.gift_name, data.gift_icon, data.count, data.coins);
+        if (data.coins >= 500) launchConfettiBurst();
+        if (data.added_seconds !== undefined && data.added_seconds !== 0) {
+          triggerTimeBoostAnimation(data.added_seconds);
+          if (data.timer_seconds !== undefined) timerClockEl.innerText = formatTime(data.timer_seconds);
+        }
+        if (data.top_gifters) renderLeaderboard(data.top_gifters);
+        if (data.auction) {
+          renderAuction(data.auction);
+          if (data.bid_result && data.bid_result.accepted && !data.auction.is_winner_announced) {
+            playBidPopSound();
+          }
+        }
+      } else if (data.type === 'leaderboard_update') {
+        renderLeaderboard(data.top_gifters);
+      } else if (data.type === 'jar_reset') {
+        jarBodies = [];
+      } else if (data.type === 'tts_chat') {
+        if (!isJarMode && !isTimerMode && !isLeaderboardMode && !isAuctionMode && !isGachaMode) {
+          ttsQueue.push(data);
+          if (!isTTSSpeaking) processTTSQueue();
+        }
+      }
+    } catch (e) {}
+  };
+
+  function processTTSQueue() {
+    if (ttsQueue.length === 0) {
+      if (isPreviewMode) return;
+      isTTSSpeaking = false;
+      popup.classList.remove('active');
+      popup.style.opacity = '0';
+      popup.style.transform = 'translateY(20px)';
+      return;
+    }
+
+    isTTSSpeaking = true;
+    const current = ttsQueue.shift();
+
+    senderEl.innerText = `Siri Chat: ${current.sender}`;
+    textEl.innerText = current.text;
+    popup.style.opacity = '1';
+    popup.style.transform = 'translateY(0)';
+
+    if (isPreviewMode) {
+      setTimeout(() => {
+        setTimeout(processTTSQueue, 2000);
+      }, 3000);
+      return;
+    }
+
+    const audioUrl = `/api/tts?text=${encodeURIComponent(current.text)}`;
+    ttsAudio.src = audioUrl;
+
+    ttsAudio.play().then(() => {
+      ttsAudio.onended = () => setTimeout(processTTSQueue, 400);
+      ttsAudio.onerror = () => setTimeout(processTTSQueue, 400);
+    }).catch(err => {
+      setTimeout(processTTSQueue, 2000);
+    });
+  }
+</script>
+</body>
+</html>

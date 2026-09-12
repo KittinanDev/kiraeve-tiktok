@@ -1,0 +1,95 @@
+{
+  "type": "bubble",
+  "header": {
+    "type": "box",
+    "layout": "vertical",
+    "backgroundColor": "#FF9800",
+    "contents": [
+      {
+        "type": "text",
+        "text": "👨‍🍳 ออเดอร์เข้าใหม่!",
+        "color": "#FFFFFF",
+        "weight": "bold",
+        "size": "lg"
+      },
+      {
+        "type": "text",
+        "text": "หมายเลขออเดอร์: #ORD-20260824-001",
+        "color": "#FFFFFF",
+        "size": "xs"
+      }
+    ]
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "text",
+        "text": "รายการที่สั่งซื้อ:",
+        "weight": "bold",
+        "size": "sm",
+        "color": "#333333"
+      },
+      {
+        "type": "text",
+        "text": "• ก๋วยเตี๋ยวหมูน้ำตก x2 (฿120)",
+        "size": "xs",
+        "color": "#555555",
+        "margin": "xs"
+      },
+      {
+        "type": "text",
+        "text": "• เกี๊ยวกรอบ x1 (฿20)",
+        "size": "xs",
+        "color": "#555555",
+        "margin": "xs"
+      },
+      {
+        "type": "separator",
+        "margin": "md"
+      },
+      {
+        "type": "text",
+        "text": "ยอดรวมสินค้า: ฿140",
+        "weight": "bold",
+        "size": "sm",
+        "color": "#111111",
+        "margin": "sm"
+      },
+      {
+        "type": "text",
+        "text": "หมายเหตุ: เผ็ดน้อย ไม่ใส่ถั่วงอก",
+        "size": "xs",
+        "color": "#E53935",
+        "margin": "xs"
+      }
+    ]
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "spacing": "sm",
+    "contents": [
+      {
+        "type": "button",
+        "style": "primary",
+        "color": "#1DB446",
+        "action": {
+          "type": "postback",
+          "label": "✅ ร้านกดรับออเดอร์",
+          "data": "action=MERCHANT_ACCEPT&orderId=ORD-20260824-001"
+        }
+      },
+      {
+        "type": "button",
+        "style": "secondary",
+        "action": {
+          "type": "postback",
+          "label": "🍱 อาหารทำเสร็จแล้ว (ตามไรเดอร์)",
+          "data": "action=MERCHANT_READY&orderId=ORD-20260824-001"
+        }
+      }
+    ]
+  }
+}

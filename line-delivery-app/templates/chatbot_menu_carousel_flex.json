@@ -1,0 +1,77 @@
+{
+  "type": "carousel",
+  "contents": [
+    {
+      "type": "bubble",
+      "hero": {
+        "type": "image",
+        "url": "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&auto=format&fit=crop",
+        "size": "full",
+        "aspectRatio": "20:13",
+        "aspectMode": "cover"
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          { "type": "text", "text": "ก๋วยเตี๋ยวหมูน้ำตกพิเศษ", "weight": "bold", "size": "sm", "color": "#111111" },
+          { "type": "text", "text": "฿60", "weight": "bold", "size": "md", "color": "#1DB446", "margin": "xs" },
+          { "type": "text", "text": "คลังเหลือ: 25 ชิ้น", "size": "xs", "color": "#777777", "margin": "xs" }
+        ]
+      },
+      "footer": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "button",
+            "style": "primary",
+            "color": "#1DB446",
+            "height": "sm",
+            "action": {
+              "type": "postback",
+              "label": "+ เพิ่มลงตะกร้า",
+              "data": "action=ADD_TO_CART&productId=p1"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "bubble",
+      "hero": {
+        "type": "image",
+        "url": "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&auto=format&fit=crop",
+        "size": "full",
+        "aspectRatio": "20:13",
+        "aspectMode": "cover"
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          { "type": "text", "text": "ข้าวผัดกะเพราหมูกรอบไข่ดาว", "weight": "bold", "size": "sm", "color": "#111111" },
+          { "type": "text", "text": "฿70", "weight": "bold", "size": "md", "color": "#1DB446", "margin": "xs" },
+          { "type": "text", "text": "คลังเหลือ: 15 ชิ้น", "size": "xs", "color": "#777777", "margin": "xs" }
+        ]
+      },
+      "footer": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "button",
+            "style": "primary",
+            "color": "#1DB446",
+            "height": "sm",
+            "action": {
+              "type": "postback",
+              "label": "+ เพิ่มลงตะกร้า",
+              "data": "action=ADD_TO_CART&productId=p2"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

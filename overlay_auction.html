@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coin Match Auction Overlay</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800;900&family=Kanit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --overlay-scale: 1.0;
+  }
+
+  html, body {
+    margin: 0; padding: 0;
+    width: 100vw; height: 100vh;
+    background: transparent;
+    font-family: 'Inter', 'Kanit', sans-serif;
+    color: #e5e2e1;
+    overflow: hidden;
+    display: flex;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body.obs-mode {
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 24px;
+  }
+
+  body.preview-mode {
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  /* Scalable Container for Crisp High-DPI Rendering */
+  #scale-wrapper {
+    transform: scale(var(--overlay-scale));
+    transform-origin: top left;
+    transition: transform 0.25s ease-out;
+  }
+
+  body.preview-mode #scale-wrapper {
+    transform-origin: center center;
+    transform: scale(calc(var(--overlay-scale) * 0.85));
+  }
+
+  /* Obsidian Glass Panel (Spacious 440px base width) */
+  .obsidian-panel {
+    background: rgba(14, 14, 18, 0.94);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 16px 45px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  }
+
+  /* Shimmer animation on header */
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .header-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.5), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 3.5s infinite;
+  }
+
+  /* Urgent Timer Pulse */
+  @keyframes urgentPulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.4)); }
+    50% { transform: scale(1.04); filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.9)); }
+  }
+  .animate-urgent {
+    animation: urgentPulse 0.8s infinite ease-in-out;
+  }
+
+  /* Anti-sniping notification toast */
+  @keyframes floatBounce {
+    0% { transform: translateY(10px); opacity: 0; }
+    20% { transform: translateY(0); opacity: 1; }
+    80% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-10px); opacity: 0; }
+  }
+  .animate-toast {
+    animation: floatBounce 3s ease forwards;
+  }
+
+  /* Grand Winner Celebration Overlay */
+  .winner-takeover {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at center, rgba(30, 20, 45, 0.98) 0%, rgba(10, 10, 15, 0.98) 100%);
+    border-radius: 1.5rem;
+    border: 2px solid rgba(245, 158, 11, 0.7);
+    box-shadow: 0 0 60px rgba(245, 158, 11, 0.4), 0 0 100px rgba(168, 85, 247, 0.3);
+    padding: 24px;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.9);
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 50;
+  }
+  .winner-takeover.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+  }
+
+  /* Coin bump */
+  @keyframes coinBump {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.06); filter: brightness(1.3); }
+    100% { transform: scale(1); filter: brightness(1); }
+  }
+  .animate-coin-bump {
+    animation: coinBump 0.5s ease-out;
+  }
+
+  /* Smooth Fade for Entire Auction Widget */
+  #auction-widget {
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  #auction-widget.widget-hidden {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(16px) scale(0.96) !important;
+  }
+  #auction-widget.widget-visible {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: translateY(0) scale(1) !important;
+  }
+  body.preview-mode #auction-widget.widget-hidden {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: none !important;
+  }
+</style>
+</head>
+<body id="body-el" class="obs-mode">
+
+  <!-- Scalable High-DPI Wrapper -->
+  <div id="scale-wrapper" class="relative">
+    
+    <!-- Main Auction Card (440px width) -->
+    <div id="auction-widget" class="obsidian-panel w-[440px] rounded-3xl overflow-hidden relative transition-all duration-300">
+      
+      <!-- Top Neon Purple Accent Line -->
+      <div class="h-[3px] w-full header-shimmer"></div>
+
+      <!-- Header -->
+      <div class="px-5 py-3.5 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-purple-400 text-lg" style="font-variation-settings: 'FILL' 1;">gavel</span>
+          </div>
+          <div class="flex flex-col min-w-0">
+            <span class="text-[10px] font-black uppercase tracking-wider text-purple-400 leading-none">TikTok Live Auction</span>
+            <h2 id="auc-title-el" class="font-black text-sm text-white truncate max-w-[240px] mt-0.5 leading-snug">
+              ประมูล: ร้องเพลงตามใจผู้ชนะ
+            </h2>
+          </div>
+        </div>
+
+        <!-- Live Status Pill -->
+        <div id="auc-status-pill" class="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full shrink-0 shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
+          <span id="auc-status-text" class="font-mono text-[11px] font-extrabold text-emerald-400 uppercase tracking-widest">LIVE</span>
+        </div>
+      </div>
+
+      <!-- Main Content Body -->
+      <div class="p-5 flex flex-col gap-4">
+        
+        <!-- Row 1: Current Highest Bidder & Countdown Timer -->
+        <div class="grid grid-cols-5 gap-3">
+          
+          <!-- Highest Bidder Spotlight (Cols 3) -->
+          <div id="highest-bidder-card" class="col-span-3 bg-gradient-to-br from-amber-500/15 via-black/40 to-black/60 rounded-2xl p-3.5 border border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.12)] flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-extrabold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                <span>👑</span> HIGHEST BIDDER
+              </span>
+              <span class="text-[10px] font-mono font-bold text-amber-300/80">#1 LEADER</span>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <!-- Avatar with Crown -->
+              <div class="relative shrink-0">
+                <div id="highest-avatar-container">
+                  <div class="w-[52px] h-[52px] rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-lg font-black text-white border-2 border-amber-400 shadow-lg shadow-amber-500/20">
+                    ?
+                  </div>
+                </div>
+                <span class="absolute -top-2 -right-1 text-sm leading-none drop-shadow-md">👑</span>
+              </div>
+
+              <!-- Name & Total Coins -->
+              <div class="flex flex-col min-w-0">
+                <span id="auc-highest-bidder" class="text-base font-black text-white truncate max-w-[140px] leading-tight">
+                  @-
+                </span>
+                <div class="flex items-center gap-1.5 mt-1 bg-black/60 px-2.5 py-1 rounded-xl border border-amber-500/30 w-fit">
+                  <span class="material-symbols-outlined text-amber-400 text-[14px]" style="font-variation-settings: 'FILL' 1;">toll</span>
+                  <span id="auc-bid-coins" class="font-mono text-base font-black text-amber-400 tracking-tight leading-none">
+                    0 🪙
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Countdown Timer (Cols 2) -->
+          <div id="timer-box" class="col-span-2 bg-white/[0.03] rounded-2xl p-3.5 border border-white/10 flex flex-col items-center justify-center text-center relative overflow-hidden">
+            <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-0.5">
+              TIME LEFT
+            </span>
+            <div id="auc-timer-el" class="font-mono text-3xl font-black text-emerald-400 tracking-tight leading-tight">
+              05:00
+            </div>
+            <span id="auc-timer-subtext" class="text-[10px] font-semibold text-gray-400 mt-0.5">
+              +15s on last bid
+            </span>
+
+            <!-- Urgent pulse overlay -->
+            <div id="timer-urgent-glow" class="hidden absolute inset-0 bg-rose-500/10 border border-rose-500/40 rounded-2xl pointer-events-none animate-pulse"></div>
+          </div>
+        </div>
+
+        <!-- Row 2: Reserve Goal Progress Bar -->
+        <div class="bg-black/40 rounded-2xl p-3 border border-white/5 flex flex-col gap-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-[11px] font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-purple-400 text-[15px]">flag</span>
+              <span>เป้าหมาย (Reserve Goal)</span>
+            </span>
+            <span id="auc-goal-el" class="font-mono text-xs font-black text-purple-300">
+              0 / 300 🪙 (0%)
+            </span>
+          </div>
+
+          <!-- Gauge Track -->
+          <div class="h-2.5 w-full bg-gray-950 rounded-full overflow-hidden border border-white/10 relative">
+            <div id="auc-progress-el" class="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 transition-all duration-500 ease-out rounded-full shadow-[0_0_12px_rgba(168,85,247,0.8)]" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Row 3: Contenders Mini-Board (Top 2 & Top 3 Bidders) -->
+        <div class="flex flex-col gap-2">
+          <div class="flex justify-between items-center px-1">
+            <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
+              ⚔️ ผู้ท้าชิงอันดับรอง (CONTENDERS)
+            </span>
+            <span id="auc-bid-count" class="text-[10px] font-mono text-gray-500">
+              0 bids placed
+            </span>
+          </div>
+
+          <div id="contenders-container" class="grid grid-cols-2 gap-2">
+            <!-- Rendered by JS: #2 and #3 -->
+            <div class="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 flex items-center gap-2">
+              <span class="text-sm">🥈</span>
+              <span class="text-xs text-gray-500 truncate">รอผู้เสนอราคา...</span>
+            </div>
+            <div class="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 flex items-center gap-2">
+              <span class="text-sm">🥉</span>
+              <span class="text-xs text-gray-500 truncate">รอผู้เสนอราคา...</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Anti-Sniping Alert Floating Toast -->
+      <div id="sniping-toast" class="hidden absolute top-4 left-1/2 -translate-x-1/2 bg-amber-400 text-black px-4 py-1.5 rounded-full font-black text-xs shadow-2xl flex items-center gap-1.5 z-40 whitespace-nowrap">
+        <span>🛡️</span>
+        <span>ANTI-SNIPING! เวลาต่อเพิ่ม +15 วินาที</span>
+      </div>
+
+      <!-- Grand Winner Celebration Screen (Overlay takeover) -->
+      <div id="winner-takeover" class="winner-takeover">
+        <!-- Radial light rays behind trophy -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
+          <div class="w-72 h-72 rounded-full bg-gradient-to-tr from-amber-500 to-purple-600 blur-3xl"></div>
+        </div>
+
+        <div class="relative z-10 flex flex-col items-center">
+          <div class="w-16 h-16 rounded-2xl bg-amber-400/20 border border-amber-400/50 flex items-center justify-center mb-3 shadow-[0_0_30px_rgba(245,158,11,0.5)]">
+            <span class="text-3xl">🏆</span>
+          </div>
+
+          <span class="text-xs font-black text-amber-400 uppercase tracking-widest mb-1">
+            🎉 ขอแสดงความยินดีกับผู้ชนะการประมูล! 🎉
+          </span>
+          <h3 class="text-sm font-semibold text-gray-300 max-w-[340px] truncate" id="winner-auc-title">
+            ประมูล: ร้องเพลงตามใจผู้ชนะ
+          </h3>
+
+          <!-- Winner Avatar -->
+          <div class="my-4 relative">
+            <div id="winner-avatar-container">
+              <div class="w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 to-purple-600 flex items-center justify-center text-3xl font-black text-white border-4 border-amber-400 shadow-2xl shadow-amber-500/40">
+                W
+              </div>
+            </div>
+            <span class="absolute -top-3 -right-2 text-2xl leading-none drop-shadow-lg">👑</span>
+          </div>
+
+          <div id="winner-name-el" class="text-2xl font-black text-white tracking-tight truncate max-w-[320px]">
+            @Winner
+          </div>
+
+          <div class="mt-2 flex items-center gap-2 bg-black/60 px-5 py-2 rounded-2xl border border-amber-400/40 shadow-inner">
+            <span class="material-symbols-outlined text-amber-400 text-xl" style="font-variation-settings: 'FILL' 1;">toll</span>
+            <span id="winner-coins-el" class="font-mono text-2xl font-black text-emerald-400 tracking-tight">
+              0 🪙
+            </span>
+          </div>
+
+          <span class="text-[11px] text-gray-400 mt-4">
+            ขอบคุณทุกท่านที่ร่วมสนับสนุนและประมูลในไลฟ์สด!
+          </span>
+
+          <!-- Auto-close Countdown Progress Bar & Text -->
+          <div class="w-full max-w-[240px] h-1.5 bg-black/60 rounded-full overflow-hidden mt-3 border border-white/10">
+            <div id="winner-progress-bar" class="h-full bg-gradient-to-r from-amber-400 via-pink-500 to-purple-500 rounded-full" style="width: 100%;"></div>
+          </div>
+          <span id="winner-autoclose-text" class="text-[10px] text-gray-400 font-mono mt-1">
+            กำลังปิดหน้าจออัตโนมัติใน 10s...
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Confetti Canvas for Grand Victory Celebration -->
+  <canvas id="confetti-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-[100]"></canvas>
+
+  <!-- Audio Elements -->
+  <audio id="snd-applause" src="/soundeffect/roesisch-applause-01-253125.mp3" preload="auto"></audio>
+  <audio id="snd-pop" src="/soundeffect/dragon-studio-pop-402324.mp3" preload="auto"></audio>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const isPreview = urlParams.get('preview') === 'true';
+  const scaleParam = urlParams.get('scale');
+  const bodyEl = document.getElementById('body-el');
+
+  // DOM Elements
+  const aucWidgetEl = document.getElementById('auction-widget');
+  const aucTitleEl = document.getElementById('auc-title-el');
+  const aucStatusPill = document.getElementById('auc-status-pill');
+  const aucStatusText = document.getElementById('auc-status-text');
+  const highestBidderCard = document.getElementById('highest-bidder-card');
+  const highestAvatarContainer = document.getElementById('highest-avatar-container');
+  const aucHighestBidderEl = document.getElementById('auc-highest-bidder');
+  const aucBidCoinsEl = document.getElementById('auc-bid-coins');
+  const aucTimerEl = document.getElementById('auc-timer-el');
+  const aucTimerSubtext = document.getElementById('auc-timer-subtext');
+  const timerUrgentGlow = document.getElementById('timer-urgent-glow');
+  const aucGoalEl = document.getElementById('auc-goal-el');
+  const aucProgressEl = document.getElementById('auc-progress-el');
+  const aucBidCountEl = document.getElementById('auc-bid-count');
+  const contendersContainer = document.getElementById('contenders-container');
+  const snipingToast = document.getElementById('sniping-toast');
+
+  // Winner Takeover Elements
+  const winnerTakeover = document.getElementById('winner-takeover');
+  const winnerAucTitle = document.getElementById('winner-auc-title');
+  const winnerAvatarContainer = document.getElementById('winner-avatar-container');
+  const winnerNameEl = document.getElementById('winner-name-el');
+  const winnerCoinsEl = document.getElementById('winner-coins-el');
+  const winnerProgressBar = document.getElementById('winner-progress-bar');
+  const winnerAutocloseText = document.getElementById('winner-autoclose-text');
+
+  // Audio Elements
+  const sndApplause = document.getElementById('snd-applause');
+  const sndPop = document.getElementById('snd-pop');
+
+  if (isPreview) {
+    bodyEl.className = 'preview-mode';
+    aucWidgetEl.classList.add('widget-visible');
+  } else {
+    aucWidgetEl.classList.add('widget-hidden');
+  }
+
+  // Set Scale
+  function setScale(scaleVal) {
+    const s = parseFloat(scaleVal) || 1.0;
+    document.documentElement.style.setProperty('--overlay-scale', s);
+  }
+  if (scaleParam) {
+    setScale(scaleParam);
+  }
+
+  // Multi-tier Avatar Helpers
+  const AVATAR_GRADIENTS = [
+    'from-pink-500 to-rose-600',
+    'from-purple-500 to-indigo-600',
+    'from-cyan-500 to-blue-600',
+    'from-emerald-400 to-teal-600',
+    'from-amber-400 to-orange-500',
+    'from-fuchsia-500 to-pink-600'
+  ];
+
+  function getAvatarUrl(url) {
+    if (!url || typeof url !== 'string' || !url.startsWith('http')) return '';
+    return `/api/avatar-proxy?url=${encodeURIComponent(url)}`;
+  }
+
+  function renderAvatarHtml(picUrl, name, sizePx, borderClass) {
+    const safeName = escapeHtml(name || 'U');
+    const firstLetter = (safeName || 'U').trim().charAt(0).toUpperCase();
+    const grad = AVATAR_GRADIENTS[Math.abs(hashString(name || 'U')) % AVATAR_GRADIENTS.length];
+    const proxyUrl = getAvatarUrl(picUrl);
+
+    if (proxyUrl) {
+      return `
+        <img src="${proxyUrl}" 
+             referrerpolicy="no-referrer"
+             crossorigin="anonymous"
+             class="w-[${sizePx}px] h-[${sizePx}px] rounded-full object-cover ${borderClass} shadow-md shrink-0"
+             onerror="if (this.src.includes('/api/avatar-proxy')) { this.src='${escapeHtml(picUrl)}'; } else { this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-[${sizePx}px] h-[${sizePx}px] rounded-full bg-gradient-to-br ${grad} flex items-center justify-center font-black text-white ${borderClass} shadow-md shrink-0\\'>${firstLetter}</div>'; }">
+      `;
+    } else {
+      return `
+        <div class="w-[${sizePx}px] h-[${sizePx}px] rounded-full bg-gradient-to-br ${grad} flex items-center justify-center font-black text-white ${borderClass} shadow-md shrink-0">
+          ${firstLetter}
+        </div>
+      `;
+    }
+  }
+
+  function hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return hash;
+  }
+
+  function formatMinSec(totalSec) {
+    const s = Math.max(0, totalSec || 0);
+    const m = Math.floor(s / 60).toString().padStart(2, '0');
+    const sec = (s % 60).toString().padStart(2, '0');
+    return `${m}:${sec}`;
+  }
+
+  function escapeHtml(str) {
+    return (str || '').replace(/[&<>"']/g, function(m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  }
+
+  let prevHighestCoins = 0;
+  let prevRemainingSec = -1;
+  let winnerShown = false;
+  let toastTimeout = null;
+
+  function renderAuction(auc) {
+    if (!auc) return;
+
+    // Scale from config if not forced via URL
+    if (auc.scale && !scaleParam) {
+      setScale(auc.scale);
+    }
+
+    // Header Title
+    aucTitleEl.innerText = auc.title || 'ประมูลสด TikTok LIVE';
+
+    // Status Pill
+    if (auc.is_active) {
+      if (auc.is_paused) {
+        aucStatusPill.className = 'flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full shrink-0';
+        aucStatusPill.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400"></span><span class="font-mono text-[11px] font-extrabold text-amber-400 uppercase tracking-widest">PAUSED</span>';
+      } else {
+        aucStatusPill.className = 'flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full shrink-0 shadow-sm';
+        aucStatusPill.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span><span class="font-mono text-[11px] font-extrabold text-emerald-400 uppercase tracking-widest">LIVE</span>';
+      }
+    } else {
+      aucStatusPill.className = 'flex items-center gap-1.5 bg-gray-500/10 border border-gray-500/30 px-3 py-1 rounded-full shrink-0';
+      aucStatusPill.innerHTML = '<span class="w-2 h-2 rounded-full bg-gray-400"></span><span class="font-mono text-[11px] font-extrabold text-gray-400 uppercase tracking-widest">OFF</span>';
+    }
+
+    // Timer display & urgent styles
+    const rem = auc.remaining_seconds || 0;
+    aucTimerEl.innerText = formatMinSec(rem);
+
+    if (rem <= 15 && auc.is_active && !auc.is_paused) {
+      aucTimerEl.className = 'font-mono text-3xl font-black text-rose-500 tracking-tight leading-tight animate-urgent';
+      aucTimerSubtext.innerText = '⚠️ ช่วงเวลาลุ้นสุดท้าย!';
+      aucTimerSubtext.className = 'text-[10px] font-bold text-rose-400 mt-0.5 animate-pulse';
+      timerUrgentGlow.classList.remove('hidden');
+    } else if (rem <= 60 && auc.is_active) {
+      aucTimerEl.className = 'font-mono text-3xl font-black text-amber-400 tracking-tight leading-tight';
+      aucTimerSubtext.innerText = '+15s เมื่อมีบิดใหม่';
+      aucTimerSubtext.className = 'text-[10px] font-semibold text-gray-400 mt-0.5';
+      timerUrgentGlow.classList.add('hidden');
+    } else {
+      aucTimerEl.className = 'font-mono text-3xl font-black text-emerald-400 tracking-tight leading-tight';
+      aucTimerSubtext.innerText = '+15s เมื่อมีบิดใหม่';
+      aucTimerSubtext.className = 'text-[10px] font-semibold text-gray-400 mt-0.5';
+      timerUrgentGlow.classList.add('hidden');
+    }
+
+    // Anti-Sniping Toast
+    if (auc.last_extended && prevRemainingSec > 0 && rem > prevRemainingSec) {
+      showAntiSnipingToast();
+    }
+    prevRemainingSec = rem;
+
+    // Highest Bidder Card
+    const highestCoins = auc.highest_bid || 0;
+    const highestName = auc.highest_bidder || '-';
+    const highestPic = auc.highest_avatar || '';
+
+    // Check coin increase for bump animation & sound
+    if (highestCoins > prevHighestCoins && prevHighestCoins > 0) {
+      highestBidderCard.classList.remove('animate-coin-bump');
+      void highestBidderCard.offsetWidth; // trigger reflow
+      highestBidderCard.classList.add('animate-coin-bump');
+      playPopSound();
+    }
+    prevHighestCoins = highestCoins;
+
+    aucHighestBidderEl.innerText = highestName !== '-' ? `@${highestName}` : 'ยังไม่มีผู้เสนอราคา';
+    aucBidCoinsEl.innerText = `${highestCoins.toLocaleString()} 🪙`;
+    highestAvatarContainer.innerHTML = renderAvatarHtml(highestPic, highestName, 52, 'border-2 border-amber-400 shadow-lg shadow-amber-500/20');
+
+    // Reserve Goal Progress Bar
+    const target = auc.target_coins || 1;
+    const pct = Math.min(100, Math.floor((highestCoins / target) * 100));
+    aucProgressEl.style.width = `${pct}%`;
+    aucGoalEl.innerText = `${highestCoins.toLocaleString()} / ${target.toLocaleString()} 🪙 (${pct}%)`;
+
+    // Bid count
+    const bidCnt = auc.bid_count || 0;
+    aucBidCountEl.innerText = `${bidCnt} การเสนอราคา`;
+
+    // Contenders (Top 2 and Top 3)
+    const topList = auc.top_bidders || [];
+    renderContenders(topList, highestCoins);
+
+    // Winner Announcement Takeover & Visibility logic
+    const autoHide = auc.auto_hide_on_end !== false;
+
+    if (auc.is_active) {
+      // Auction is currently active
+      showWidget();
+      if (winnerShown) {
+        dismissWinner(false);
+      }
+    } else {
+      // Auction is inactive
+      if (auc.is_winner_announced && auc.winner_name && auc.winner_name !== '-') {
+        showWinner(auc);
+      } else {
+        if (!winnerShown) {
+          if (autoHide && !isPreview) {
+            hideWidget();
+          } else {
+            showWidget();
+          }
+        }
+      }
+    }
+  }
+
+  function showWidget() {
+    aucWidgetEl.classList.remove('widget-hidden');
+    aucWidgetEl.classList.add('widget-visible');
+  }
+
+  function hideWidget() {
+    if (isPreview) return; // Keep visible in preview iframe
+    aucWidgetEl.classList.remove('widget-visible');
+    aucWidgetEl.classList.add('widget-hidden');
+  }
+
+  function renderContenders(topList, highestCoins) {
+    const contenders = topList.slice(1, 3);
+    if (contenders.length === 0) {
+      contendersContainer.innerHTML = `
+        <div class="col-span-2 bg-white/[0.02] border border-white/5 rounded-xl py-2 px-3 flex items-center justify-center text-xs text-gray-500 gap-2">
+          <span>⚔️</span>
+          <span>รอผู้ท้าชิงอันดับ 2 และ 3 เข้าแข่งขัน...</span>
+        </div>
+      `;
+      return;
+    }
+
+    const medals = ['🥈', '🥉'];
+    const borders = ['border-slate-300', 'border-amber-600'];
+
+    let html = '';
+    for (let i = 0; i < 2; i++) {
+      const c = contenders[i];
+      if (c) {
+        const gap = highestCoins - c.coins;
+        html += `
+          <div class="bg-white/[0.03] border border-white/10 rounded-xl p-2 flex items-center justify-between min-w-0">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-sm shrink-0">${medals[i]}</span>
+              <div class="shrink-0">
+                ${renderAvatarHtml(c.profile_picture, c.sender, 28, 'border ' + borders[i])}
+              </div>
+              <div class="flex flex-col min-w-0">
+                <span class="text-xs font-bold text-white truncate max-w-[85px] leading-tight">
+                  ${escapeHtml(c.sender)}
+                </span>
+                <span class="text-[9px] text-gray-400 font-mono leading-none mt-0.5">
+                  -${gap.toLocaleString()} 🪙
+                </span>
+              </div>
+            </div>
+            <span class="font-mono text-xs font-extrabold text-emerald-400 shrink-0">
+              ${c.coins.toLocaleString()} 🪙
+            </span>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="bg-white/[0.01] border border-white/5 rounded-xl p-2 flex items-center gap-2 text-xs text-gray-600">
+            <span class="text-sm opacity-60">${medals[i]}</span>
+            <span class="truncate">รอผู้ท้าชิง...</span>
+          </div>
+        `;
+      }
+    }
+    contendersContainer.innerHTML = html;
+  }
+
+  function showAntiSnipingToast() {
+    snipingToast.classList.remove('hidden');
+    snipingToast.classList.remove('animate-toast');
+    void snipingToast.offsetWidth;
+    snipingToast.classList.add('animate-toast');
+
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+      snipingToast.classList.add('hidden');
+    }, 3000);
+  }
+
+  let celebrationTimeout = null;
+  let celebrationInterval = null;
+
+  function showWinner(auc) {
+    if (winnerShown) return;
+    winnerShown = true;
+
+    showWidget();
+
+    winnerAucTitle.innerText = auc.title || 'ประมูลสด TikTok LIVE';
+    winnerNameEl.innerText = `@${auc.winner_name}`;
+    winnerCoinsEl.innerText = `${(auc.winning_coins || 0).toLocaleString()} 🪙`;
+    winnerAvatarContainer.innerHTML = renderAvatarHtml(auc.winner_avatar, auc.winner_name, 80, 'border-4 border-amber-400 shadow-2xl shadow-amber-500/40');
+
+    winnerTakeover.classList.add('active');
+
+    // Trigger Confetti VFX and Audio
+    startConfetti();
+    playApplauseSound();
+
+    // Auto-dismiss setup
+    const durationSec = Math.max(3, parseInt(auc.celebration_duration_sec || 10));
+    const autoHide = auc.auto_hide_on_end !== false;
+
+    if (celebrationTimeout) clearTimeout(celebrationTimeout);
+    if (celebrationInterval) clearInterval(celebrationInterval);
+
+    const startTime = Date.now();
+    const totalMs = durationSec * 1000;
+
+    if (winnerProgressBar) winnerProgressBar.style.width = '100%';
+    if (winnerAutocloseText) winnerAutocloseText.innerText = `กำลังปิดหน้าจออัตโนมัติใน ${durationSec}s...`;
+
+    celebrationInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const remainingMs = Math.max(0, totalMs - elapsed);
+      const remainingSec = Math.ceil(remainingMs / 1000);
+      const pct = Math.max(0, (remainingMs / totalMs) * 100);
+      if (winnerProgressBar) winnerProgressBar.style.width = `${pct}%`;
+      if (winnerAutocloseText) winnerAutocloseText.innerText = `กำลังปิดหน้าจออัตโนมัติใน ${remainingSec}s...`;
+      if (remainingMs <= 0) {
+        clearInterval(celebrationInterval);
+        celebrationInterval = null;
+      }
+    }, 100);
+
+    celebrationTimeout = setTimeout(() => {
+      dismissWinner(autoHide);
+    }, totalMs);
+  }
+
+  function dismissWinner(autoHide = true) {
+    if (celebrationTimeout) {
+      clearTimeout(celebrationTimeout);
+      celebrationTimeout = null;
+    }
+    if (celebrationInterval) {
+      clearInterval(celebrationInterval);
+      celebrationInterval = null;
+    }
+    winnerShown = false;
+    winnerTakeover.classList.remove('active');
+    stopConfetti();
+
+    if (autoHide && !isPreview) {
+      hideWidget();
+    }
+  }
+
+  function hideWinner() {
+    dismissWinner(false);
+  }
+
+  function playPopSound() {
+    try {
+      sndPop.currentTime = 0;
+      sndPop.volume = 0.5;
+      sndPop.play().catch(() => {});
+    } catch(e) {}
+  }
+
+  function playApplauseSound() {
+    try {
+      sndApplause.currentTime = 0;
+      sndApplause.volume = 0.9;
+      sndApplause.play().catch(() => {});
+    } catch(e) {}
+  }
+
+  // Confetti Particle System
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  let confettiAnimationId = null;
+  let confettiParticles = [];
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  function startConfetti() {
+    confettiParticles = [];
+    const colors = ['#f59e0b', '#ec4899', '#8b5cf6', '#10b981', '#3b82f6', '#ffffff', '#fbbf24'];
+    for (let i = 0; i < 150; i++) {
+      confettiParticles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height - canvas.height,
+        r: Math.random() * 6 + 3,
+        d: Math.random() * 150 + 10,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        tilt: Math.floor(Math.random() * 10) - 10,
+        tiltAngleInc: (Math.random() * 0.07) + 0.05,
+        tiltAngle: 0
+      });
+    }
+
+    if (confettiAnimationId) cancelAnimationFrame(confettiAnimationId);
+    animateConfetti();
+  }
+
+  function animateConfetti() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < confettiParticles.length; i++) {
+      const p = confettiParticles[i];
+      p.tiltAngle += p.tiltAngleInc;
+      p.y += (Math.cos(p.d) + 3 + p.r / 2) / 1.5;
+      p.x += Math.sin(p.d);
+      p.tilt = Math.sin(p.tiltAngle - (i / 3)) * 15;
+
+      ctx.beginPath();
+      ctx.lineWidth = p.r;
+      ctx.strokeStyle = p.color;
+      ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+      ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+      ctx.stroke();
+
+      if (p.y > canvas.height) {
+        p.x = Math.random() * canvas.width;
+        p.y = -20;
+      }
+    }
+    confettiAnimationId = requestAnimationFrame(animateConfetti);
+  }
+
+  function stopConfetti() {
+    if (confettiAnimationId) {
+      cancelAnimationFrame(confettiAnimationId);
+      confettiAnimationId = null;
+    }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // WebSocket Connection
+  const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
+  let ws = null;
+
+  function connectWS() {
+    ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      console.log("[Auction Overlay] WebSocket connected");
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'auction_dismiss_winner') {
+          dismissWinner(true);
+          if (data.auction) {
+            renderAuction(data.auction);
+          }
+        } else if (data.type === 'init' || data.type === 'auction_tick' || data.type === 'auction_update' || data.type === 'auction_winner' || data.type === 'gift') {
+          if (data.auction) {
+            renderAuction(data.auction);
+          }
+        }
+        if (data.type === 'config_updated' && data.config && data.config.auction_config) {
+          const ac = data.config.auction_config;
+          if (ac.scale && !scaleParam) setScale(ac.scale);
+        }
+      } catch(e) {
+        console.error(e);
+      }
+    };
+
+    ws.onclose = () => {
+      setTimeout(connectWS, 2000);
+    };
+  }
+
+  connectWS();
+
+  // Initial Fetch Status
+  fetch('/api/status')
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.auction) renderAuction(data.auction);
+    })
+    .catch(() => {});
+</script>
+</body>
+</html>

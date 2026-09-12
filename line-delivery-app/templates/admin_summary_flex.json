@@ -1,0 +1,82 @@
+{
+  "type": "bubble",
+  "header": {
+    "type": "box",
+    "layout": "vertical",
+    "backgroundColor": "#0F172A",
+    "contents": [
+      {
+        "type": "text",
+        "text": "📊 รายงานสรุปภาพรวมประจำวัน (Admin Summary)",
+        "color": "#FFFFFF",
+        "weight": "bold",
+        "size": "sm"
+      },
+      {
+        "type": "text",
+        "text": "วันที่: 24 สิงหาคม 2026",
+        "color": "#94A3B8",
+        "size": "xs",
+        "margin": "xs"
+      }
+    ]
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "spacing": "sm",
+    "contents": [
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          { "type": "text", "text": "ออเดอร์ทั้งหมดประจำวัน:", "size": "xs", "color": "#475569" },
+          { "type": "text", "text": "48 ออเดอร์", "size": "xs", "color": "#0F172A", "weight": "bold", "align": "end" }
+        ]
+      },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          { "type": "text", "text": "จัดส่งสำเร็จแล้ว:", "size": "xs", "color": "#475569" },
+          { "type": "text", "text": "45 ออเดอร์", "size": "xs", "color": "#16A34A", "weight": "bold", "align": "end" }
+        ]
+      },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          { "type": "text", "text": "กำลังดำเนินการอยู่:", "size": "xs", "color": "#475569" },
+          { "type": "text", "text": "3 ออเดอร์", "size": "xs", "color": "#EA580C", "weight": "bold", "align": "end" }
+        ]
+      },
+      { "type": "separator", "margin": "md" },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "margin": "sm",
+        "contents": [
+          { "type": "text", "text": "ยอดขายรวมสุทธิ:", "size": "sm", "weight": "bold", "color": "#0F172A" },
+          { "type": "text", "text": "฿8,450.00", "size": "sm", "weight": "bold", "color": "#16A34A", "align": "end" }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "button",
+        "style": "primary",
+        "color": "#0F172A",
+        "height": "sm",
+        "action": {
+          "type": "uri",
+          "label": "🖥️ เปิดแผงควบคุม Admin Dashboard",
+          "uri": "https://liff.line.me/YOUR_LIFF_ID?tab=admin"
+        }
+      }
+    ]
+  }
+}

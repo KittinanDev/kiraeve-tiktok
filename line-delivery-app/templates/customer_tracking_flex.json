@@ -1,0 +1,140 @@
+{
+  "type": "bubble",
+  "header": {
+    "type": "box",
+    "layout": "vertical",
+    "backgroundColor": "#1DB446",
+    "contents": [
+      {
+        "type": "text",
+        "text": "🛵 สถานะการจัดส่งออเดอร์ #ORD-20260824-001",
+        "color": "#FFFFFF",
+        "weight": "bold",
+        "size": "sm"
+      },
+      {
+        "type": "text",
+        "text": "สถานะปัจจุบัน: ไรเดอร์กำลังนำอาหารไปส่งคุณ",
+        "color": "#FFFFFF",
+        "size": "xs",
+        "margin": "xs"
+      }
+    ]
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "spacing": "md",
+    "contents": [
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#1DB446",
+            "cornerRadius": "md",
+            "paddingAll": "xs",
+            "flex": 1,
+            "contents": [
+              { "type": "text", "text": "1. รอยืนยัน", "color": "#FFFFFF", "size": "xxs", "align": "center", "weight": "bold" }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#1DB446",
+            "cornerRadius": "md",
+            "paddingAll": "xs",
+            "flex": 1,
+            "margin": "xs",
+            "contents": [
+              { "type": "text", "text": "2. ทำอาหาร", "color": "#FFFFFF", "size": "xxs", "align": "center", "weight": "bold" }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#1DB446",
+            "cornerRadius": "md",
+            "paddingAll": "xs",
+            "flex": 1,
+            "margin": "xs",
+            "contents": [
+              { "type": "text", "text": "3. กำลังส่ง", "color": "#FFFFFF", "size": "xxs", "align": "center", "weight": "bold" }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#E2E8F0",
+            "cornerRadius": "md",
+            "paddingAll": "xs",
+            "flex": 1,
+            "margin": "xs",
+            "contents": [
+              { "type": "text", "text": "4. ส่งสำเร็จ", "color": "#64748B", "size": "xxs", "align": "center" }
+            ]
+          }
+        ]
+      },
+      { "type": "separator" },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "vertical",
+            "flex": 4,
+            "contents": [
+              { "type": "text", "text": "🛵 พี่สมชาย ไรเดอร์สายสปีด", "weight": "bold", "size": "xs", "color": "#111111" },
+              { "type": "text", "text": "ทะเบียน: กข-9999 กทม.", "size": "xs", "color": "#666666" }
+            ]
+          },
+          {
+            "type": "button",
+            "style": "secondary",
+            "height": "sm",
+            "flex": 2,
+            "action": {
+              "type": "uri",
+              "label": "📞 โทรหา",
+              "uri": "tel:0899999999"
+            }
+          }
+        ]
+      },
+      { "type": "separator" },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "backgroundColor": "#F8FAFC",
+        "cornerRadius": "md",
+        "paddingAll": "sm",
+        "contents": [
+          { "type": "text", "text": "📍 ตำแหน่งไรเดอร์ล่าสุด (Realtime GPS)", "size": "xs", "weight": "bold", "color": "#334155" },
+          { "type": "text", "text": "Lat: 13.7563, Lng: 100.5018 (ห่างจากคุณ 800 เมตร)", "size": "xs", "color": "#64748B", "margin": "xs" }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "button",
+        "style": "primary",
+        "color": "#1DB446",
+        "height": "sm",
+        "action": {
+          "type": "uri",
+          "label": "🗺️ เปิดแผนที่พิกัดสดบน LIFF",
+          "uri": "https://liff.line.me/YOUR_LIFF_ID/tracking?order_id=ORD-20260824-001"
+        }
+      }
+    ]
+  }
+}

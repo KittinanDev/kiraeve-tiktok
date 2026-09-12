@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(run)",
+      "Bash(python -c \"import aiohttp, TikTokLive; print\\('deps ok'\\)\")",
+      "Bash(pip install *)",
+      "Bash(python server.py)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8765/)",
+      "Bash(start *)"
+    ]
+  }
+}

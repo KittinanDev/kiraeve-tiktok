@@ -1,0 +1,189 @@
+{
+  "tiktok_username": "gwang_gimmick",
+  "tts_config": {
+    "enabled": true,
+    "voice": "th-TH-PremwadeeNeural",
+    "speed": "+0%",
+    "pitch": "+0Hz",
+    "volume": 1,
+    "blacklisted_words": [
+      "คำหยาบ1",
+      "คำหยาบ2"
+    ],
+    "max_length": 100,
+    "audio_muted": false,
+    "max_history": 8
+  },
+  "gift_jar_config": {
+    "enabled": true,
+    "jar_style": "glass_jar",
+    "max_items": 120,
+    "gravity": 1.0
+  },
+  "subathon_timer_config": {
+    "enabled": true,
+    "mode": "countdown",
+    "initial_seconds": 3600,
+    "max_seconds": 86400
+  },
+  "timer_gift_mappings": [
+    {
+      "gift_name": "Rose",
+      "action": "add",
+      "seconds_value": 30,
+      "enabled": true
+    },
+    {
+      "gift_name": "TikTok",
+      "action": "add",
+      "seconds_value": 30,
+      "enabled": true
+    },
+    {
+      "gift_name": "Ice Cream Cone",
+      "action": "add",
+      "seconds_value": 30,
+      "enabled": true
+    },
+    {
+      "gift_name": "Finger Heart",
+      "action": "subtract",
+      "seconds_value": 15,
+      "enabled": true
+    },
+    {
+      "gift_name": "Doughnut",
+      "action": "add",
+      "seconds_value": 300,
+      "enabled": true
+    },
+    {
+      "gift_name": "Lion",
+      "action": "add",
+      "seconds_value": 1800,
+      "enabled": true
+    },
+    {
+      "gift_name": "Mini Speaker",
+      "action": "add",
+      "seconds_value": 60,
+      "enabled": true
+    },
+    {
+      "gift_name": "Panda",
+      "action": "add",
+      "seconds_value": 120,
+      "enabled": true
+    }
+  ],
+  "leaderboard_config": {
+    "enabled": true,
+    "top_count": 5,
+    "title": "👑 TOP SUPPORTERS TODAY",
+    "scale": 2
+  },
+  "auction_config": {
+    "enabled": true,
+    "title": "🎮 ประมูล: เล่นเกมตามสั่ง 1 ตา",
+    "target_coins": 500,
+    "duration_seconds": 180,
+    "min_increment": 1,
+    "auto_extend_sec": 20,
+    "celebration_duration_sec": 4,
+    "auto_hide_on_end": true,
+    "scale": 1.0
+  },
+  "gacha_config": {
+    "enabled": true,
+    "items": [
+      {
+        "text": "+300s โบนัสใหญ่",
+        "tier": "legendary",
+        "rarity_name": "SSR 👑",
+        "color": "#fbbf24"
+      },
+      {
+        "text": "+60s",
+        "tier": "epic",
+        "rarity_name": "SR ⭐⭐",
+        "color": "#c084fc"
+      },
+      {
+        "text": "+30s",
+        "tier": "rare",
+        "rarity_name": "R ⭐",
+        "color": "#34d399"
+      },
+      {
+        "text": "-30s ลดเวลา",
+        "tier": "hazard",
+        "rarity_name": "DEBUFF 💀",
+        "color": "#f87171"
+      },
+      {
+        "text": "วิดพื้น 10 ครั้ง",
+        "tier": "custom",
+        "rarity_name": "ทำโทษ 🏋️",
+        "color": "#ec4899"
+      },
+      {
+        "text": "+15s",
+        "tier": "common",
+        "rarity_name": "Normal",
+        "color": "#94a3b8"
+      }
+    ],
+    "rarity_names": {
+      "legendary": "SSR ⭐⭐⭐",
+      "epic": "SR ⭐⭐",
+      "rare": "R ⭐",
+      "common": "Normal",
+      "hazard": "DEBUFF 💀",
+      "custom": "ภารกิจพิเศษ"
+    },
+    "spin_duration": 4,
+    "trigger_gift_name": "Doughnut",
+    "tick_sound_enabled": true,
+    "win_sound_enabled": true,
+    "scale": 1.0,
+    "auto_hide": true
+  },
+  "vfx_config": {
+    "confetti_enabled": true,
+    "screen_flash_enabled": true,
+    "floating_alerts_enabled": true
+  },
+  "gift_sound_mappings": [
+    {
+      "gift_name": "Rose",
+      "min_count": 1,
+      "sound_file": "dragon-studio-pop-402324.mp3",
+      "volume": 0.8,
+      "enabled": true
+    },
+    {
+      "gift_name": "Lion",
+      "min_count": 1,
+      "sound_file": "roesisch-applause-01-253125.mp3",
+      "volume": 1.0,
+      "enabled": true
+    }
+  ],
+  "widgets_visibility": {
+    "tts": true,
+    "jar": true,
+    "timer": true,
+    "leaderboard": true,
+    "auction": true,
+    "gacha": true,
+    "vfx": true
+  },
+  "auto_connect": true,
+  "username_history": [
+    "gwang_gimmick",
+    "novadolls8",
+    "wondersshop0",
+    "kivie_75",
+    "weare.mavis"
+  ]
+}

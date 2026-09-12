@@ -1,0 +1,80 @@
+{
+  "name": "kiraeve-tiktok",
+  "version": "1.0.0",
+  "description": "Kiraeve TikTok — Live Studio & Overlays Manager (Electron Desktop App)",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --publish never",
+    "dist:win": "electron-builder --win --publish never",
+    "release": "electron-builder --publish always"
+  },
+  "build": {
+    "appId": "com.kiraeve.tiktok",
+    "productName": "Kiraeve TikTok",
+    "files": [
+      "main.js",
+      "icons/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "server.py",
+        "to": "app/server.py"
+      },
+      {
+        "from": "dashboard.html",
+        "to": "app/dashboard.html"
+      },
+      {
+        "from": "overlay.html",
+        "to": "app/overlay.html"
+      },
+      {
+        "from": "config.json",
+        "to": "app/config.json"
+      },
+      {
+        "from": "requirements.txt",
+        "to": "app/requirements.txt"
+      },
+      {
+        "from": "media",
+        "to": "app/media"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icons/app.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "deleteAppDataOnUninstall": false
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "KittinanDev",
+        "repo": "kiraeve-tiktok",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9",
+    "tiktok-live-connector": "^2.4.4"
+  }
+}

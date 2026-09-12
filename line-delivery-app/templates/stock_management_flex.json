@@ -1,0 +1,125 @@
+{
+  "type": "bubble",
+  "header": {
+    "type": "box",
+    "layout": "vertical",
+    "backgroundColor": "#333333",
+    "contents": [
+      {
+        "type": "text",
+        "text": "📦 รายงาน & จัดการสต็อกสินค้า",
+        "color": "#FFFFFF",
+        "weight": "bold",
+        "size": "lg"
+      },
+      {
+        "type": "text",
+        "text": "อัปเดตเรียลไทม์ผ่าน LINE Chat",
+        "color": "#AAAAAA",
+        "size": "xs"
+      }
+    ]
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "spacing": "md",
+    "contents": [
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "vertical",
+            "flex": 4,
+            "contents": [
+              {
+                "type": "text",
+                "text": "ก๋วยเตี๋ยวหมูน้ำตกพิเศษ",
+                "weight": "bold",
+                "size": "xs",
+                "color": "#111111"
+              },
+              {
+                "type": "text",
+                "text": "คลัง: 25 ชิ้น | สถานะ: พร้อมขาย",
+                "size": "xs",
+                "color": "#1DB446"
+              }
+            ]
+          },
+          {
+            "type": "button",
+            "style": "secondary",
+            "height": "sm",
+            "flex": 2,
+            "action": {
+              "type": "postback",
+              "label": "+10 สต็อก",
+              "data": "action=ADD_STOCK&productId=p1&amount=10"
+            }
+          }
+        ]
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "vertical",
+            "flex": 4,
+            "contents": [
+              {
+                "type": "text",
+                "text": "เกี๊ยวหมูทอดกรอบ",
+                "weight": "bold",
+                "size": "xs",
+                "color": "#111111"
+              },
+              {
+                "type": "text",
+                "text": "คลัง: 0 ชิ้น | สถานะ: สินค้าหมด",
+                "size": "xs",
+                "color": "#E53935"
+              }
+            ]
+          },
+          {
+            "type": "button",
+            "style": "primary",
+            "color": "#1DB446",
+            "height": "sm",
+            "flex": 2,
+            "action": {
+              "type": "postback",
+              "label": "+20 สต็อก",
+              "data": "action=ADD_STOCK&productId=p3&amount=20"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "button",
+        "style": "primary",
+        "color": "#333333",
+        "height": "sm",
+        "action": {
+          "type": "uri",
+          "label": "📲 เปิดหน้าจัดการสต็อกแบบเต็ม (LIFF)",
+          "uri": "https://liff.line.me/YOUR_LIFF_ID?tab=stock"
+        }
+      }
+    ]
+  }
+}
