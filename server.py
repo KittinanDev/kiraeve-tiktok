@@ -1491,8 +1491,12 @@ async def spawn_tiktok_process(username: str):
             pass
 
     log.info("Spawning tiktok_connector.js for @%s...", username)
+    embedded_node = BASE_DIR / "python_embed" / "node.exe"
+    node_cmd = str(embedded_node) if embedded_node.exists() else "node"
+
     proc = await asyncio.create_subprocess_exec(
-        "node", "tiktok_connector.js", username,
+        node_cmd, "tiktok_connector.js", username,
+        cwd=str(BASE_DIR),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE
     )

@@ -1,8 +1,28 @@
 const { app, BrowserWindow, Tray, Menu, shell, dialog, clipboard, ipcMain } = require("electron");
-const { spawn } = require("child_process");
+const { spawn, execSync } = require("child_process");
 const path = require("path");
 const http = require("http");
 const fs = require("fs");
+
+// อนุญาตให้เล่นเสียง Audio/TTS อัตโนมัติใน Electron โดยไม่ต้องรอ User Gesture
+app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
+
+// ============================================================
+// Single Instance Lock (ป้องกันการเปิดโปรแกรมซ้อนกันหลายตัว)
+// ============================================================
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+  process.exit(0);
+}
+
+app.on("second-instance", () => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  }
+});
 
 // ============================================================
 // Auto-Updater (electron-updater + GitHub Releases)
@@ -114,47 +134,84 @@ ipcMain.handle("updater:get-version", () => {
 // ------------------------------------------------------------------
 
 function findPython() {
+  const embeddedPython = path.join(PROJECT_DIR, "python_embed", "python.exe");
+  if (fs.existsSync(embeddedPython)) {
+    return embeddedPython;
+  }
   const candidates = process.platform === "win32"
     ? ["python", "py"]
     : ["python3", "python"];
-  return candidates[0]; // spawn จะ resolve ผ่าน PATH เอง ลอง fallback ถ้า exit ทันที
+  return candidates[0];
 }
 
-function startServer() {
-  const exePath = path.join(PROJECT_DIR, "server.exe");
-  const pythonExe = process.env.NPC_OVERLAY_PYTHON || findPython();
-
-  if (fs.existsSync(exePath)) {
-    console.log(`[main] Launching standalone binary: ${exePath}`);
-    pyProc = spawn(exePath, [], {
-      cwd: PROJECT_DIR,
-      windowsHide: true,
-    });
-  } else {
-    console.log(`[main] Launching Python script: ${pythonExe} server.py`);
-    pyProc = spawn(pythonExe, ["server.py"], {
-      cwd: PROJECT_DIR,
-      windowsHide: true,
-    });
+function killPortOccupant(port) {
+  if (process.platform !== "win32") return;
+  try {
+    const stdout = execSync(`netstat -ano | findstr :${port}`, { encoding: "utf8", windowsHide: true });
+    const lines = stdout.trim().split("\n");
+    for (const line of lines) {
+      const parts = line.trim().split(/\s+/);
+      // Example line: TCP 127.0.0.1:8765 0.0.0.0:0 LISTENING 1234
+      if (parts.length >= 5 && parts[1].endsWith(`:${port}`)) {
+        const pid = parseInt(parts[parts.length - 1], 10);
+        if (pid && pid !== process.pid) {
+          console.log(`[main] Killing conflicting process on port ${port} (PID: ${pid})`);
+          try {
+            execSync(`taskkill /F /PID ${pid}`, { windowsHide: true });
+          } catch (_) {}
+        }
+      }
+    }
+  } catch (_) {
+    // findstr exits with code 1 if no matching port found
   }
+}
 
-  pyProc.stdout.on("data", (d) => process.stdout.write(`[server] ${d}`));
-  pyProc.stderr.on("data", (d) => process.stderr.write(`[server] ${d}`));
+let lastServerStderr = "";
+
+function startServer() {
+  // เคลียร์ process เก่าที่อาจค้างอยู่ที่ port 8765 ก่อนเสมอ
+  killPortOccupant(PORT);
+
+  const pythonExe = process.env.NPC_OVERLAY_PYTHON || findPython();
+  const embeddedDir = path.join(PROJECT_DIR, "python_embed");
+  lastServerStderr = "";
+
+  // เพิ่ม python_embed เข้า PATH เพื่อให้คำสั่ง 'node' และโมดูลทำงานได้สมบูรณ์ในเครื่องปลายทาง
+  const customPath = fs.existsSync(embeddedDir)
+    ? `${embeddedDir};${process.env.PATH}`
+    : process.env.PATH;
+
+  console.log(`[main] Launching Python Server using: ${pythonExe}`);
+  pyProc = spawn(pythonExe, ["server.py"], {
+    cwd: PROJECT_DIR,
+    windowsHide: true,
+    env: { ...process.env, PATH: customPath, PYTHONUNBUFFERED: "1" }
+  });
+
+  pyProc.stdout.on("data", (d) => {
+    process.stdout.write(`[server] ${d}`);
+  });
+  pyProc.stderr.on("data", (d) => {
+    const text = d.toString();
+    lastServerStderr += text;
+    process.stderr.write(`[server] ${text}`);
+  });
 
   pyProc.on("error", (err) => {
     dialog.showErrorBox(
       "เปิดเซิร์ฟเวอร์ไม่ได้",
-      `หา Python ไม่เจอ (สั่ง "${pythonExe}") หรือรันไม่ได้\n\n${err.message}\n\n` +
-      `ตรวจสอบว่าติดตั้ง Python 3.9+ แล้ว และรัน "pip install -r requirements.txt" ในโฟลเดอร์โปรเจกต์`
+      `ไม่สามารถรันเซิร์ฟเวอร์ได้:\n\n${err.message}\n\nที่ตำแหน่ง: ${PROJECT_DIR}`
     );
   });
 
   pyProc.on("exit", (code, signal) => {
     pyProc = null;
     if (!quitting && code !== 0) {
+      const detail = lastServerStderr.trim() || `Exit code: ${code}`;
       dialog.showErrorBox(
         "เซิร์ฟเวอร์หยุดทำงานกะทันหัน",
-        `python server.py ปิดตัวเอง (code ${code})\nลองเปิดแอปใหม่ หรือรัน "python server.py" เองในโฟลเดอร์โปรเจกต์เพื่อดู error เต็ม ๆ`
+        `Server ปิดตัวเองลง (code ${code})\n\nรายละเอียด Error:\n${detail}`
       );
     }
   });
@@ -207,6 +264,15 @@ function createWindow() {
     mainWindow.loadURL(SERVER_URL);
   });
 
+  mainWindow.webContents.on("did-fail-load", (event, errorCode, errorDescription) => {
+    console.warn(`[renderer] Page failed to load (${errorCode}: ${errorDescription}). Retrying in 1s...`);
+    setTimeout(() => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.loadURL(SERVER_URL);
+      }
+    }, 1000);
+  });
+
   // ปิดหน้าต่าง = แค่ซ่อน ไม่ปิดเซิร์ฟเวอร์ (เผื่อกำลังไลฟ์อยู่ overlay ใน OBS ต้องใช้เซิร์ฟเวอร์ต่อ)
   mainWindow.on("close", (event) => {
     if (!quitting) {
@@ -237,8 +303,9 @@ function createTray() {
 }
 
 app.whenReady().then(async () => {
-  if (!fs.existsSync(path.join(PROJECT_DIR, "server.py"))) {
-    dialog.showErrorBox("หา server.py ไม่เจอ", `ไม่พบไฟล์ server.py ที่ ${PROJECT_DIR}`);
+  const hasServer = fs.existsSync(path.join(PROJECT_DIR, "server.exe")) || fs.existsSync(path.join(PROJECT_DIR, "server.py"));
+  if (!hasServer) {
+    dialog.showErrorBox("หา Server ไม่เจอ", `ไม่พบไฟล์ server.exe หรือ server.py ที่ ${PROJECT_DIR}`);
     app.quit();
     return;
   }

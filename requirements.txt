@@ -1,2 +1,5 @@
 TikTokLive>=6.6.5
 aiohttp>=3.9
+edge-tts>=6.1.9
+gTTS>=2.5.0
+

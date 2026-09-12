@@ -1,7 +1,40 @@
-const { TikTokLiveConnection } = require('tiktok-live-connector');
-const http = require('http');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
+const http = require('http');
+
+function getTikTokLiveClass() {
+    try {
+        const mod = require('tiktok-live-connector');
+        const cls = (mod && mod.TikTokLiveConnection) || (mod && mod.WebcastPushConnection) || (typeof mod === 'function' ? mod : null);
+        if (cls) return cls;
+    } catch (e) {}
+
+    const candidates = [
+        path.join(__dirname, 'node_modules', 'tiktok-live-connector'),
+        path.join(__dirname, '..', 'node_modules', 'tiktok-live-connector'),
+        path.join(__dirname, '..', 'app.asar', 'node_modules', 'tiktok-live-connector'),
+        path.join(process.cwd(), 'node_modules', 'tiktok-live-connector'),
+        path.join(process.cwd(), 'resources', 'app', 'node_modules', 'tiktok-live-connector'),
+        path.join(__dirname, 'python_embed', 'node_modules', 'tiktok-live-connector')
+    ];
+
+    for (const cand of candidates) {
+        try {
+            if (fs.existsSync(cand)) {
+                const mod = require(cand);
+                const cls = (mod && mod.TikTokLiveConnection) || (mod && mod.WebcastPushConnection) || (typeof mod === 'function' ? mod : null);
+                if (cls) return cls;
+            }
+        } catch (e) {}
+    }
+    return null;
+}
+
+const TikTokLiveConnection = getTikTokLiveClass();
+if (!TikTokLiveConnection) {
+    console.error('[TikTok-Live-Connector] CRITICAL: TikTokLiveConnection could not be loaded from any path!');
+}
+
 
 const username = (process.argv[2] || 'tiktok').replace('@', '').trim();
 console.log('[TikTok-Live-Connector] Starting connector manager for @' + username + '...');
@@ -113,6 +146,10 @@ async function tryConnect() {
     isPolling = true;
 
     try {
+        if (!TikTokLiveConnection) {
+            throw new Error("tiktok-live-connector is not installed in the app environment. Please run install-prereqs.bat as Administrator.");
+        }
+
         tiktokLiveConnection = new TikTokLiveConnection(username, {
             processInitialData: false,
             enableExtendedGiftInfo: false
