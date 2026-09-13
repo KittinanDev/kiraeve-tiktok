@@ -230,12 +230,13 @@
       const gradClass = AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length];
       const directPic = g.profile_picture || '';
       const proxyPic = getAvatarUrl(directPic, g.sender);
+      const safeName = encodeURIComponent(g.sender || 'viewer');
 
       let avatarHtml = `
         <img src="${proxyPic}" 
              referrerpolicy="no-referrer"
              class="w-10 h-10 rounded-full object-cover ${avatarBorder} shadow-sm shrink-0" 
-             onerror="if (this.src.includes('/api/avatar-proxy')) { this.src='${escapeHtml(directPic)}'; } else { this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-10 h-10 rounded-full bg-gradient-to-br ${gradClass} flex items-center justify-center text-sm font-black text-white ${avatarBorder} shadow-sm shrink-0\\'>${firstLetter}</div>'; }">
+             onerror="this.onerror=null; this.src='/api/avatar-proxy?name=${safeName}';">
       `;
 
       let giftPreviewHtml = '';

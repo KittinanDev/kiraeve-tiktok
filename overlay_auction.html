@@ -399,7 +399,7 @@
       <img src="${proxyUrl}" 
            referrerpolicy="no-referrer"
            class="w-[${sizePx}px] h-[${sizePx}px] rounded-full object-cover ${borderClass} shadow-md shrink-0"
-           onerror="if (this.src.includes('/api/avatar-proxy')) { this.src='${escapeHtml(picUrl)}'; } else { this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-[${sizePx}px] h-[${sizePx}px] rounded-full bg-gradient-to-br ${grad} flex items-center justify-center font-black text-white ${borderClass} shadow-md shrink-0\\'>${firstLetter}</div>'; }">
+           onerror="this.onerror=null; this.src='/api/avatar-proxy?name=${encodeURIComponent(name || \'viewer\')}';">
     `;
   }
 

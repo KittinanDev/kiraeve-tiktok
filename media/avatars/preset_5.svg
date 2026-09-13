@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+      <defs>
+        <linearGradient id="bg6" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#c084fc"/>
+        </linearGradient>
+      </defs>
+      <circle cx="60" cy="60" r="58" fill="url(#bg6)"/>
+      <circle cx="60" cy="56" r="25" fill="#fed7aa"/>
+      <!-- Long Purple Hair -->
+      <path d="M34 50 C32 28 88 28 86 50 C88 75 84 88 84 95 L76 95 C76 75 78 50 74 46 C70 42 50 42 46 46 C42 50 44 75 44 95 L36 95 C36 88 32 75 34 50 Z" fill="#581c87"/>
+      <!-- Eyes with lashes -->
+      <circle cx="51" cy="55" r="3.5" fill="#3b0764"/>
+      <circle cx="69" cy="55" r="3.5" fill="#3b0764"/>
+      <circle cx="52" cy="54" r="1.3" fill="#ffffff"/>
+      <circle cx="70" cy="54" r="1.3" fill="#ffffff"/>
+      <path d="M47 51 L49 53" stroke="#3b0764" stroke-width="1.5"/>
+      <path d="M73 51 L71 53" stroke="#3b0764" stroke-width="1.5"/>
+      <!-- Cute Smile -->
+      <path d="M55 64 Q60 68 65 64" stroke="#c2410c" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- Ribbon Hairpin -->
+      <circle cx="42" cy="38" r="4" fill="#f43f5e"/>
+      <!-- Robe -->
+      <path d="M32 108 C34 86 86 86 88 108 Z" fill="#6b21a8"/>
+    </svg>

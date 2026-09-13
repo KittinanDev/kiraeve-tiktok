@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+      <defs>
+        <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ec4899"/><stop offset="100%" stop-color="#f43f5e"/>
+        </linearGradient>
+      </defs>
+      <circle cx="60" cy="60" r="58" fill="url(#bg2)"/>
+      <circle cx="60" cy="56" r="25" fill="#fed7aa"/>
+      <!-- Beanie -->
+      <path d="M35 48 C35 24 85 24 85 48 Z" fill="#831843"/>
+      <rect x="33" y="45" width="54" height="7" rx="3.5" fill="#9d174d"/>
+      <circle cx="60" cy="22" r="6" fill="#fbcfe8"/>
+      <!-- Eyes & Wink -->
+      <circle cx="51" cy="56" r="3.2" fill="#431407"/>
+      <circle cx="52" cy="55" r="1" fill="#ffffff"/>
+      <path d="M66 56 Q70 52 74 56" stroke="#431407" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <!-- Blush -->
+      <circle cx="46" cy="61" r="4" fill="#fda4af" opacity="0.6"/>
+      <circle cx="74" cy="61" r="4" fill="#fda4af" opacity="0.6"/>
+      <!-- Smile -->
+      <path d="M56 64 Q60 69 64 64" stroke="#c2410c" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- Shoulders -->
+      <path d="M32 108 C34 86 86 86 88 108 Z" fill="#be185d"/>
+    </svg>

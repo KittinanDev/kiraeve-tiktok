@@ -1146,43 +1146,107 @@ async def handle_tiktok_coin(request: web.Request) -> web.Response:
 AVATAR_CACHE_DIR = BASE_DIR / "media" / "avatars"
 AVATAR_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
+DEFAULT_EMBEDDED_AVATAR = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs>
+  <circle cx="60" cy="60" r="58" fill="url(#bg)"/>
+  <circle cx="60" cy="54" r="26" fill="#fcd34d"/>
+  <path d="M36 50 C36 28 84 28 84 50 C80 34 40 34 36 50 Z" fill="#312e81"/>
+  <circle cx="51" cy="52" r="3.5" fill="#1e1b4b"/><circle cx="69" cy="52" r="3.5" fill="#1e1b4b"/>
+  <circle cx="52" cy="51" r="1.2" fill="#ffffff"/><circle cx="70" cy="51" r="1.2" fill="#ffffff"/>
+  <path d="M54 62 Q60 68 66 62" stroke="#b45309" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M30 52 C30 30 90 30 90 52" stroke="#06b6d4" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <rect x="26" y="46" width="9" height="18" rx="4" fill="#0891b2"/><rect x="85" y="46" width="9" height="18" rx="4" fill="#0891b2"/>
+  <path d="M30 108 C32 84 88 84 90 108 Z" fill="#4338ca"/>
+</svg>'''
+
 async def handle_avatar_proxy(request: web.Request) -> web.Response:
     raw_url = request.query.get("url", "").strip()
     user_name = request.query.get("name", "").strip()
-    
+    safe_user = re.sub(r'[^\w\.-]', '_', user_name.lower()) if user_name else "supporter"
+
+    # 1. If explicit URL provided, check URL cache
     if raw_url and raw_url.startswith("http"):
         url_hash = hashlib.md5(raw_url.encode('utf-8')).hexdigest()[:12]
         cached_file = AVATAR_CACHE_DIR / f"avatar_{url_hash}.webp"
         
-        if cached_file.exists() and cached_file.stat().st_size > 0:
+        if cached_file.exists() and cached_file.stat().st_size > 100:
             with open(cached_file, "rb") as f:
                 return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
 
-        try:
-            req_headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        headers_list = [
+            {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+                "Referer": "https://www.tiktok.com/",
+                "Origin": "https://www.tiktok.com",
+                "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9"
+            },
+            {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+                "Accept": "*/*"
             }
-            async with aiohttp.ClientSession() as session:
-                async with session.get(raw_url, headers=req_headers, ssl=False, timeout=aiohttp.ClientTimeout(total=5)) as resp:
-                    if resp.status == 200:
-                        data = await resp.read()
-                        if len(data) > 0:
-                            with open(cached_file, "wb") as f:
-                                f.write(data)
-                            c_type = resp.headers.get("Content-Type", "image/webp")
-                            return web.Response(body=data, content_type=c_type, headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
-        except Exception as e:
-            log.warning("Could not proxy avatar from %s: %s", raw_url[:40], e)
+        ]
 
-    # SVG Fallback based on user name or initial
-    first_char = (user_name[:1] if user_name else "U").upper()
-    colors = ["#f59e0b", "#3b82f6", "#ec4899", "#10b981", "#8b5cf6", "#ef4444", "#06b6d4"]
-    bg_color = colors[abs(hash(user_name or "U")) % len(colors)]
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-      <circle cx="50" cy="50" r="50" fill="{bg_color}"/>
-      <text x="50" y="65" font-size="44" font-family="sans-serif" font-weight="900" fill="#ffffff" text-anchor="middle">{first_char}</text>
-    </svg>'''
-    return web.Response(text=svg, content_type="image/svg+xml", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=3600"})
+        urls_to_try = [raw_url]
+        if "tiktokcdn.com" in raw_url:
+            clean_url = raw_url.split("?")[0]
+            if clean_url != raw_url:
+                urls_to_try.append(clean_url)
+            alt_host = re.sub(r'p\d+-sign-[a-z]+', 'p16-va', clean_url)
+            if alt_host not in urls_to_try:
+                urls_to_try.append(alt_host)
+
+        for try_url in urls_to_try:
+            for hdrs in headers_list:
+                try:
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(try_url, headers=hdrs, ssl=False, timeout=aiohttp.ClientTimeout(total=4)) as resp:
+                            if resp.status == 200:
+                                data = await resp.read()
+                                if len(data) > 100:
+                                    try:
+                                        with open(cached_file, "wb") as f:
+                                            f.write(data)
+                                    except Exception:
+                                        pass
+                                    c_type = resp.headers.get("Content-Type", "image/webp")
+                                    return web.Response(body=data, content_type=c_type, headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+                except Exception:
+                    pass
+
+    # 2. Check user-specific cached portrait
+    user_cached_file = AVATAR_CACHE_DIR / f"user_{safe_user}.svg"
+    if user_cached_file.exists() and user_cached_file.stat().st_size > 100:
+        with open(user_cached_file, "rb") as f:
+            return web.Response(body=f.read(), content_type="image/svg+xml", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+
+    # 3. Try fetching personalized character portrait from Dicebear
+    seed = urllib.parse.quote(user_name or "supporter")
+    dicebear_url = f"https://api.dicebear.com/7.x/adventurer/svg?seed={seed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(dicebear_url, ssl=False, timeout=aiohttp.ClientTimeout(total=3)) as resp:
+                if resp.status == 200:
+                    svg_data = await resp.read()
+                    if len(svg_data) > 200:
+                        try:
+                            with open(user_cached_file, "wb") as f:
+                                f.write(svg_data)
+                        except Exception:
+                            pass
+                        return web.Response(body=svg_data, content_type="image/svg+xml", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+    except Exception:
+        pass
+
+    # 4. Bundled 8 offline character presets mapped by username hash
+    preset_idx = abs(hash(user_name or "supporter")) % 8
+    preset_file = AVATAR_CACHE_DIR / f"preset_{preset_idx}.svg"
+    if preset_file.exists() and preset_file.stat().st_size > 50:
+        with open(preset_file, "rb") as f:
+            return web.Response(body=f.read(), content_type="image/svg+xml", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+
+    # 5. Last resort: Embedded vector character portrait
+    return web.Response(text=DEFAULT_EMBEDDED_AVATAR, content_type="image/svg+xml", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
 
 async def handle_delete_sound(request: web.Request) -> web.Response:
     try:

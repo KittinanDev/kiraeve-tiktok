@@ -4598,10 +4598,10 @@ tailwind.config = {
   async function triggerLeaderboardTest(sender, giftName, count, coins) {
     appendLog(`[TEST] ทดสอบส่งของขวัญอันดับจาก "${sender}": "${giftName}" x${count} (${coins.toLocaleString()} เหรียญ)`);
     const sampleAvatars = {
-      'Alice_TopGifter': 'https://p16-sign-va.tiktokcdn.com/tos-maliva-avt-0068/7315891234~tplv-tiktok-shrink:100:100.jpeg',
-      'Bob_VIP': 'https://p16-sign-va.tiktokcdn.com/tos-maliva-avt-0068/7315895678~tplv-tiktok-shrink:100:100.jpeg',
-      'Charlie_Fan': 'https://p16-sign-va.tiktokcdn.com/tos-maliva-avt-0068/7315899999~tplv-tiktok-shrink:100:100.jpeg',
-      'Dave_Rose': 'https://p16-sign-va.tiktokcdn.com/tos-maliva-avt-0068/7315890000~tplv-tiktok-shrink:100:100.jpeg'
+      'Alice_TopGifter': 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp',
+      'Bob_VIP': 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/4e7ad6bdf0a1d860c538f38026d4e812~tplv-obj.webp',
+      'Charlie_Fan': 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+      'Dave_Rose': 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80'
     };
     const avatarUrl = sampleAvatars[sender] || '';
     try {
@@ -5291,7 +5291,7 @@ tailwind.config = {
       const medals = ['#1', '#2', '#3'];
       listEl.innerHTML = auc.top_bidders.map((b, idx) => {
         const medal = idx < 3 ? medals[idx] : `#${idx+1}`;
-        const pic = b.profile_picture ? `<img src="/api/avatar-proxy?url=${encodeURIComponent(b.profile_picture)}" class="w-6 h-6 rounded-full object-cover border border-white/20 shrink-0" onerror="this.style.display='none'">` : `<div class="w-6 h-6 rounded-full bg-tik-card-border flex items-center justify-center font-bold text-[10px] text-white shrink-0">${(b.sender || 'U').charAt(0).toUpperCase()}</div>`;
+        const pic = `<img src="/api/avatar-proxy?url=${encodeURIComponent(b.profile_picture || '')}&name=${encodeURIComponent(b.sender || 'U')}" class="w-6 h-6 rounded-full object-cover border border-white/20 shrink-0" onerror="this.onerror=null; this.src='/api/avatar-proxy?name=${encodeURIComponent(b.sender || 'U')}';">`;
         return `
           <div class="flex items-center justify-between p-1.5 rounded-lg bg-tik-card border border-tik-card-border">
             <div class="flex items-center gap-2 min-w-0">

@@ -169,12 +169,26 @@ function extractAvatarUrl(data) {
         data.avatarLarge,
         data.avatarMedium,
         data.avatarThumb,
+        data.avatarLarge?.urls,
+        data.avatarMedium?.urls,
+        data.avatarThumb?.urls,
+        data.avatarLarge?.url_list,
+        data.avatarMedium?.url_list,
+        data.avatarThumb?.url_list,
         data.user?.profilePictureUrl,
         data.user?.userDetails?.profilePictureUrls,
         data.user?.avatarLarge?.urlList,
         data.user?.avatarMedium?.urlList,
         data.user?.avatarThumb?.urlList,
+        data.user?.avatarLarge?.urls,
+        data.user?.avatarMedium?.urls,
+        data.user?.avatarThumb?.urls,
+        data.user?.avatarLarge?.url_list,
+        data.user?.avatarMedium?.url_list,
+        data.user?.avatarThumb?.url_list,
         data.user?.profilePicture?.urlList,
+        data.user?.avatarUri,
+        data.avatarUri,
         data.profilePictureUrls,
         data.user?.profilePictureUrls
     ];
@@ -192,7 +206,33 @@ function extractAvatarUrl(data) {
             }
         }
     }
-    return '';
+    // Deep recursive fallback for any nested avatar URL in protobuf
+    function findAvatarDeep(obj, depth = 0) {
+        if (!obj || depth > 4) return '';
+        if (typeof obj === 'string') {
+            if (obj.startsWith('http') && (obj.includes('tiktokcdn.com') || obj.includes('/tos-') || obj.includes('webcast')) && (obj.includes('avt') || obj.includes('avatar') || obj.includes('shrink') || obj.includes('100x100') || obj.includes('c5_') || obj.includes('.webp') || obj.includes('.jpeg') || obj.includes('.jpg'))) {
+                return obj;
+            }
+            return '';
+        }
+        if (Array.isArray(obj)) {
+            for (const item of obj) {
+                const res = findAvatarDeep(item, depth + 1);
+                if (res) return res;
+            }
+            return '';
+        }
+        if (typeof obj === 'object') {
+            for (const key of Object.keys(obj)) {
+                if (key.toLowerCase().includes('avatar') || key.toLowerCase().includes('picture') || key.toLowerCase().includes('user') || key.toLowerCase().includes('image')) {
+                    const res = findAvatarDeep(obj[key], depth + 1);
+                    if (res) return res;
+                }
+            }
+        }
+        return '';
+    }
+    return findAvatarDeep(data);
 }
 
 const streakMap = new Map();

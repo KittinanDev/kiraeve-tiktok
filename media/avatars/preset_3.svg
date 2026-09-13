@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+      <defs>
+        <linearGradient id="bg4" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#059669"/>
+        </linearGradient>
+      </defs>
+      <circle cx="60" cy="60" r="58" fill="url(#bg4)"/>
+      <circle cx="60" cy="55" r="25" fill="#fed7aa"/>
+      <!-- Brown Curly Hair -->
+      <circle cx="45" cy="38" r="12" fill="#78350f"/>
+      <circle cx="60" cy="34" r="13" fill="#78350f"/>
+      <circle cx="75" cy="38" r="12" fill="#78350f"/>
+      <!-- Eyes -->
+      <circle cx="50" cy="54" r="3.5" fill="#451a03"/>
+      <circle cx="70" cy="54" r="3.5" fill="#451a03"/>
+      <circle cx="51" cy="53" r="1.2" fill="#ffffff"/>
+      <circle cx="71" cy="53" r="1.2" fill="#ffffff"/>
+      <!-- Star Cheek -->
+      <path d="M42 62 L43 64 L45 64 L43 66 L44 68 L42 67 L40 68 L41 66 L39 64 L41 64 Z" fill="#fbbf24"/>
+      <!-- Smile -->
+      <path d="M53 64 Q60 70 67 64" stroke="#c2410c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <!-- Jacket -->
+      <path d="M30 108 C32 84 88 84 90 108 Z" fill="#065f46"/>
+    </svg>
