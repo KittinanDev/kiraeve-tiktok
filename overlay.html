@@ -510,6 +510,74 @@ tailwind.config = {
   }
 
   // Audio Optimization
+  class SequentialSoundQueue {
+    constructor() {
+      this.queue = [];
+      this.isPlaying = false;
+      this.currentAudio = null;
+    }
+
+    enqueue(soundUrl, volume = 1.0, count = 1) {
+      if (!soundUrl) return;
+      const repeat = Math.max(1, Math.min(10, parseInt(count || 1)));
+      for (let i = 0; i < repeat; i++) {
+        this.queue.push({ soundUrl, volume });
+      }
+      if (this.queue.length > 30) {
+        this.queue = this.queue.slice(-30);
+      }
+      if (!this.isPlaying) {
+        this.playNext();
+      }
+    }
+
+    playNext() {
+      if (this.queue.length === 0) {
+        this.isPlaying = false;
+        this.currentAudio = null;
+        return;
+      }
+
+      this.isPlaying = true;
+      const item = this.queue.shift();
+      try {
+        const audio = new Audio(item.soundUrl);
+        audio.volume = item.volume !== undefined ? Math.max(0, Math.min(1, item.volume)) : 1.0;
+        this.currentAudio = audio;
+
+        let finished = false;
+        const done = () => {
+          if (finished) return;
+          finished = true;
+          setTimeout(() => this.playNext(), 120);
+        };
+
+        audio.onended = done;
+        audio.onerror = done;
+        setTimeout(() => {
+          if (!finished && this.currentAudio === audio) done();
+        }, 15000);
+
+        audio.play().catch(e => {
+          done();
+        });
+      } catch(e) {
+        this.playNext();
+      }
+    }
+
+    stopAll() {
+      this.queue = [];
+      if (this.currentAudio) {
+        try { this.currentAudio.pause(); } catch(e){}
+        this.currentAudio = null;
+      }
+      this.isPlaying = false;
+    }
+  }
+
+  const giftSoundQueue = new SequentialSoundQueue();
+
   const popAudio = new Audio("/soundeffect/dragon-studio-pop-402324.mp3");
   popAudio.volume = 0.5;
   const applauseAudio = new Audio("/soundeffect/roesisch-applause-01-253125.mp3");
@@ -964,6 +1032,9 @@ tailwind.config = {
         if (data.timer_seconds !== undefined) timerClockEl.innerText = formatTime(data.timer_seconds);
       } else if (data.type === 'gift') {
         spawnGiftItems(data.gift_name, data.gift_icon, data.count, data.coins);
+        if (!isPreviewMode && data.sound_effect && (isJarMode || (!isTimerMode && !isLeaderboardMode && !isTTSMode && !isAuctionMode && !isGachaMode))) {
+          giftSoundQueue.enqueue(data.sound_effect, data.sound_volume, data.count);
+        }
         if (data.coins >= 500) launchConfettiBurst();
         if (data.added_seconds !== undefined && data.added_seconds !== 0) {
           triggerTimeBoostAnimation(data.added_seconds);
@@ -976,6 +1047,8 @@ tailwind.config = {
             playBidPopSound();
           }
         }
+      } else if (data.type === 'stop_audio') {
+        giftSoundQueue.stopAll();
       } else if (data.type === 'leaderboard_update') {
         renderLeaderboard(data.top_gifters);
       } else if (data.type === 'jar_reset') {

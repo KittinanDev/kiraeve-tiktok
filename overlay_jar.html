@@ -445,11 +445,14 @@
       this.currentAudio = null;
     }
 
-    enqueue(soundUrl, volume = 1.0) {
+    enqueue(soundUrl, volume = 1.0, count = 1) {
       if (!soundUrl) return;
-      this.queue.push({ soundUrl, volume });
-      if (this.queue.length > 3) {
-        this.queue = this.queue.slice(-3); // Cap queue so sounds don't pile up indefinitely
+      const repeat = Math.max(1, Math.min(10, parseInt(count || 1)));
+      for (let i = 0; i < repeat; i++) {
+        this.queue.push({ soundUrl, volume });
+      }
+      if (this.queue.length > 30) {
+        this.queue = this.queue.slice(-30);
       }
       if (!this.isPlaying) {
         this.playNext();
@@ -474,14 +477,14 @@
         const done = () => {
           if (finished) return;
           finished = true;
-          setTimeout(() => this.playNext(), 60);
+          setTimeout(() => this.playNext(), 120);
         };
 
         audio.onended = done;
         audio.onerror = done;
         setTimeout(() => {
           if (!finished && this.currentAudio === audio) done();
-        }, 12000);
+        }, 15000);
 
         audio.play().catch(e => {
           done();
@@ -513,7 +516,7 @@
       if (data.type === 'gift') {
         spawnGiftItems(data.gift_name, data.gift_icon, data.count, data.coins, data.sender, data.profile_picture);
         if (!isPreview && data.sound_effect) {
-          soundQueue.enqueue(data.sound_effect, data.sound_volume);
+          soundQueue.enqueue(data.sound_effect, data.sound_volume, data.count);
         }
       } else if (data.type === 'jar_reset') {
         giftBodies.forEach(b => World.remove(engine.world, b));

@@ -31,6 +31,20 @@ function autoPatchLegacyConnector() {
                     );
                     modified = true;
                 }
+                if (code.includes('delete webcastObject.user;')) {
+                    code = code.replace(
+                        'delete webcastObject.user;',
+                        'webcastObject.rawUser = webcastObject.user;'
+                    );
+                    modified = true;
+                }
+                if (code.includes('webcastUser.avatarLarge?.urlList') && !code.includes('avatarLarge?.url_list')) {
+                    code = code.replace(
+                        'profilePictureUrl: getPreferredPictureFormat(webcastUser.avatarLarge?.urlList)',
+                        'profilePictureUrl: getPreferredPictureFormat(webcastUser.avatarLarge?.urlList) || getPreferredPictureFormat(webcastUser.avatarLarge?.url_list) || getPreferredPictureFormat(webcastUser.avatarThumb?.url_list) || getPreferredPictureFormat(webcastUser.avatarMedium?.url_list)'
+                    );
+                    modified = true;
+                }
                 if (modified) {
                     fs.writeFileSync(file, code, 'utf-8');
                     console.log('[TikTok-Live-Connector] Applied robustness patch to ' + file);
@@ -235,7 +249,30 @@ function extractAvatarUrl(data) {
     return findAvatarDeep(data);
 }
 
-const streakMap = new Map();
+const activeGiftStreaks = new Map();
+
+function flushGiftStreak(streakKey) {
+    const entry = activeGiftStreaks.get(streakKey);
+    if (!entry) return;
+    activeGiftStreaks.delete(streakKey);
+    if (entry.timer) {
+        clearTimeout(entry.timer);
+        entry.timer = null;
+    }
+
+    console.log(`[Gift Batch Flushed] ${entry.sender} (@${entry.uniqueId}) finished streak: ${entry.giftName} x${entry.count} (${entry.coins} coins)`);
+    postEventToServer('gift', {
+        gift_id: entry.giftId,
+        sender: entry.sender,
+        unique_id: entry.uniqueId,
+        gift_name: entry.giftName,
+        count: entry.count,
+        unit_coins: entry.unitCoins,
+        coins: entry.coins,
+        gift_icon: entry.iconUrl,
+        profile_picture: entry.profilePic
+    });
+}
 
 const https = require('https');
 const userAvatarCache = new Map();
@@ -413,47 +450,71 @@ async function tryConnect() {
             const uniqueId = data.uniqueId || (data.user && (data.user.uniqueId || data.user.displayId)) || data.displayId || '';
             const sender = nickname || uniqueId || 'ผู้สนับสนุน';
             const giftId = data.giftId || (data.gift && data.gift.gift_id) || 1;
-            const streakKey = `${sender}_${giftId}`;
-            const repeatCount = data.repeatCount || data.count || 1;
+            const streakKey = `${uniqueId || sender}_${giftId}`;
+            const repeatCount = parseInt(data.repeatCount || data.count || 1);
             const isStreakEnd = data.repeatEnd === 1 || data.repeatEnd === true;
-
-            // Calculate delta count so every tap drops into the jar immediately
-            let spawnCount = repeatCount;
-            if (streakMap.has(streakKey)) {
-                const prev = streakMap.get(streakKey);
-                spawnCount = Math.max(1, repeatCount - prev);
-            }
-            if (isStreakEnd) {
-                streakMap.delete(streakKey);
-            } else {
-                streakMap.set(streakKey, repeatCount);
-                setTimeout(() => streakMap.delete(streakKey), 15000);
-            }
 
             const cached = giftCatalogById[giftId] || giftCatalogById[String(giftId)] || giftCatalogById[Number(giftId)];
             const giftName = (cached && cached.name) || data.giftName || (data.giftDetails && data.giftDetails.giftName) || data.describe || 'Gift';
-            const unitCoins = (data.diamondCount || (cached && (cached.diamond_count || cached.coins)) || 1);
-            const coins = unitCoins * spawnCount;
+            const unitCoins = parseInt(data.diamondCount || (cached && (cached.diamond_count || cached.coins)) || 1);
             const iconUrl = (cached && (cached.icon || cached.image_url)) || data.giftPictureUrl || extractGiftIcon(data) || '';
             
             let profilePic = extractAvatarUrl(data);
-            if (!profilePic && uniqueId) {
-                profilePic = await resolveRealTikTokAvatar(uniqueId);
-            } else if (uniqueId && !userAvatarCache.has(uniqueId.toLowerCase())) {
-                resolveRealTikTokAvatar(uniqueId).catch(() => {});
+            if (!profilePic && uniqueId && userAvatarCache.has(uniqueId.toLowerCase())) {
+                profilePic = userAvatarCache.get(uniqueId.toLowerCase());
             }
 
-            console.log(`[Gift Received] ${sender} (@${uniqueId}) sent ${giftName} (ID: ${giftId}) x${spawnCount} (${coins} coins) | Avatar: ${profilePic ? 'YES' : 'PENDING'}`);
-            postEventToServer('gift', {
-                gift_id: giftId,
-                sender: sender,
-                unique_id: uniqueId,
-                gift_name: giftName,
-                count: spawnCount,
-                coins: coins,
-                gift_icon: iconUrl,
-                profile_picture: profilePic
-            });
+            if (isStreakEnd) {
+                // Streak ended or single non-streakable / batch gift
+                if (activeGiftStreaks.has(streakKey)) {
+                    const existing = activeGiftStreaks.get(streakKey);
+                    if (existing.timer) clearTimeout(existing.timer);
+                    activeGiftStreaks.delete(streakKey);
+                }
+                const finalCount = Math.max(1, repeatCount);
+                const finalCoins = unitCoins * finalCount;
+                console.log(`[Gift Received] ${sender} (@${uniqueId}) sent ${giftName} (ID: ${giftId}) x${finalCount} (${finalCoins} coins) | StreakEnd: YES | Avatar: ${profilePic ? 'YES' : 'PENDING'}`);
+                postEventToServer('gift', {
+                    gift_id: giftId,
+                    sender: sender,
+                    unique_id: uniqueId,
+                    gift_name: giftName,
+                    count: finalCount,
+                    unit_coins: unitCoins,
+                    coins: finalCoins,
+                    gift_icon: iconUrl,
+                    profile_picture: profilePic
+                });
+            } else {
+                // Combo in progress (repeatEnd: false)
+                // Buffer and debounce so we do not spam duplicate events or double sounds
+                let entry = activeGiftStreaks.get(streakKey);
+                if (entry) {
+                    if (entry.timer) clearTimeout(entry.timer);
+                    entry.count = Math.max(entry.count, repeatCount);
+                    entry.coins = unitCoins * entry.count;
+                    if (profilePic && !entry.profilePic) entry.profilePic = profilePic;
+                } else {
+                    entry = {
+                        giftId: giftId,
+                        sender: sender,
+                        uniqueId: uniqueId,
+                        giftName: giftName,
+                        count: repeatCount,
+                        unitCoins: unitCoins,
+                        coins: unitCoins * repeatCount,
+                        iconUrl: iconUrl,
+                        profilePic: profilePic,
+                        timer: null
+                    };
+                    activeGiftStreaks.set(streakKey, entry);
+                }
+
+                // Safety debounce: flush if streak finish signal was not received after 1200ms
+                entry.timer = setTimeout(() => {
+                    flushGiftStreak(streakKey);
+                }, 1200);
+            }
         });
 
         tiktokLiveConnection.on('like', data => {

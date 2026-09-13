@@ -1192,7 +1192,41 @@ async def handle_avatar_proxy(request: web.Request) -> web.Response:
     clean_user = re.sub(r'[^a-zA-Z0-9_\.]', '', user_name.lower().replace('@', ''))
     safe_user = re.sub(r'[^\w\.-]', '_', user_name.lower()) if user_name else "supporter"
 
-    # 1. Check if real TikTok avatar already exists on local disk
+    # 1. If explicit URL provided, check cache or download directly from TikTok CDN
+    if raw_url and raw_url.startswith("http"):
+        url_hash = hashlib.md5(raw_url.encode('utf-8')).hexdigest()[:12]
+        cached_file = AVATAR_CACHE_DIR / f"avatar_{url_hash}.webp"
+        
+        if cached_file.exists() and cached_file.stat().st_size > 100:
+            with open(cached_file, "rb") as f:
+                return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+            "Referer": "https://www.tiktok.com/",
+            "Origin": "https://www.tiktok.com",
+            "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
+        }
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(raw_url, headers=headers, ssl=False, timeout=aiohttp.ClientTimeout(total=4)) as resp:
+                    if resp.status == 200:
+                        data = await resp.read()
+                        if len(data) > 100:
+                            try:
+                                with open(cached_file, "wb") as f:
+                                    f.write(data)
+                                if clean_user:
+                                    with open(AVATAR_CACHE_DIR / f"avatar_{clean_user}.webp", "wb") as f:
+                                        f.write(data)
+                            except Exception:
+                                pass
+                            c_type = resp.headers.get("Content-Type", "image/webp")
+                            return web.Response(body=data, content_type=c_type, headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+        except Exception:
+            pass
+
+    # 2. Check if real TikTok avatar already exists on local disk by username
     if clean_user:
         local_real_avatar = AVATAR_CACHE_DIR / f"avatar_{clean_user}.webp"
         if local_real_avatar.exists() and local_real_avatar.stat().st_size > 100:
@@ -1206,11 +1240,11 @@ async def handle_avatar_proxy(request: web.Request) -> web.Response:
                     }
                 )
 
-    # 2. Try on-demand resolution via local Node.js avatar resolver
+    # 3. Try on-demand resolution via local Node.js avatar resolver
     if clean_user:
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(f"http://127.0.0.1:8766/resolve-avatar?user={clean_user}", timeout=aiohttp.ClientTimeout(total=3)) as r:
+                async with session.get(f"http://127.0.0.1:8766/resolve-avatar?user={clean_user}", timeout=aiohttp.ClientTimeout(total=1.5)) as r:
                     if r.status == 200:
                         r_data = await r.json()
                         if r_data.get("ok"):
@@ -1227,56 +1261,6 @@ async def handle_avatar_proxy(request: web.Request) -> web.Response:
                                     )
         except Exception:
             pass
-
-    # 3. If explicit URL provided, check URL cache
-    if raw_url and raw_url.startswith("http"):
-        url_hash = hashlib.md5(raw_url.encode('utf-8')).hexdigest()[:12]
-        cached_file = AVATAR_CACHE_DIR / f"avatar_{url_hash}.webp"
-        
-        if cached_file.exists() and cached_file.stat().st_size > 100:
-            with open(cached_file, "rb") as f:
-                return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
-
-        headers_list = [
-            {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-                "Referer": "https://www.tiktok.com/",
-                "Origin": "https://www.tiktok.com",
-                "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-                "Accept-Language": "en-US,en;q=0.9"
-            },
-            {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-                "Accept": "*/*"
-            }
-        ]
-
-        urls_to_try = [raw_url]
-        if "tiktokcdn.com" in raw_url:
-            clean_url = raw_url.split("?")[0]
-            if clean_url != raw_url:
-                urls_to_try.append(clean_url)
-            alt_host = re.sub(r'p\d+-sign-[a-z]+', 'p16-va', clean_url)
-            if alt_host not in urls_to_try:
-                urls_to_try.append(alt_host)
-
-        for try_url in urls_to_try:
-            for hdrs in headers_list:
-                try:
-                    async with aiohttp.ClientSession() as session:
-                        async with session.get(try_url, headers=hdrs, ssl=False, timeout=aiohttp.ClientTimeout(total=4)) as resp:
-                            if resp.status == 200:
-                                data = await resp.read()
-                                if len(data) > 100:
-                                    try:
-                                        with open(cached_file, "wb") as f:
-                                            f.write(data)
-                                    except Exception:
-                                        pass
-                                    c_type = resp.headers.get("Content-Type", "image/webp")
-                                    return web.Response(body=data, content_type=c_type, headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
-                except Exception:
-                    pass
 
     # 4. Check user-specific cached portrait
     user_cached_file = AVATAR_CACHE_DIR / f"user_{safe_user}.svg"
@@ -1488,7 +1472,13 @@ async def handle_mock_event(request: web.Request) -> web.Response:
             unique_id = data.get("unique_id") or data.get("uniqueId") or sender
             profile_picture = data.get("profile_picture") or data.get("profilePictureUrl") or ""
             count = int(data.get("count", 1))
-            coins = int(data.get("coins", 1)) * count
+            unit_coins = int(data.get("unit_coins", 0))
+            if unit_coins > 0:
+                coins = unit_coins * count
+            elif "coins" in data:
+                coins = int(data["coins"])
+            else:
+                coins = count
             gift_name_clean = (gift_name or "").strip()
             norm_incoming = normalize_gift_name(gift_name_clean)
             
@@ -1714,8 +1704,31 @@ async def handle_mock_event(request: web.Request) -> web.Response:
             gacha_sound_url = None
             sound_vol = 1.0
 
+            incoming_id = data.get("gift_id")
+
             for m in gift_mappings:
-                if m.get("enabled", True) and m.get("gift_name", "").strip().lower() == gift_name.strip().lower():
+                if not m.get("enabled", True):
+                    continue
+                rule_name = m.get("gift_name", "").strip()
+                if not rule_name:
+                    continue
+                norm_rule = normalize_gift_name(rule_name)
+                matched = False
+                if norm_incoming == norm_rule or rule_name.lower() == gift_name_clean.lower():
+                    matched = True
+                elif len(rule_name) >= 3 and (rule_name.lower() in gift_name_clean.lower() or gift_name_clean.lower() in rule_name.lower()):
+                    matched = True
+                elif len(norm_rule) >= 3 and (norm_rule in norm_incoming or norm_incoming in norm_rule):
+                    matched = True
+
+                if not matched and incoming_id:
+                    cached_g = GIFT_CACHE_MAP.get(str(incoming_id))
+                    if cached_g and cached_g.get("name"):
+                        c_norm = normalize_gift_name(cached_g["name"])
+                        if c_norm == norm_rule or cached_g["name"].lower() == rule_name.lower():
+                            matched = True
+
+                if matched:
                     if count >= int(m.get("min_count", 1)):
                         s_file = m.get("sound_file")
                         if s_file:
@@ -1723,13 +1736,32 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                             sound_vol = float(m.get("volume", 1.0))
                             break
 
-            # No default sound fallback if unconfigured (gacha_sound_url remains None)
-
             # User Configured Per-Gift Video Mapping Lookup
             video_mappings = cfg.get("gift_video_mappings", [])
             video_alert_data = None
             for vm in video_mappings:
-                if vm.get("enabled", True) and vm.get("gift_name", "").strip().lower() == gift_name.strip().lower():
+                if not vm.get("enabled", True):
+                    continue
+                v_rule_name = vm.get("gift_name", "").strip()
+                if not v_rule_name:
+                    continue
+                norm_v_rule = normalize_gift_name(v_rule_name)
+                v_matched = False
+                if norm_incoming == norm_v_rule or v_rule_name.lower() == gift_name_clean.lower():
+                    v_matched = True
+                elif len(v_rule_name) >= 3 and (v_rule_name.lower() in gift_name_clean.lower() or gift_name_clean.lower() in v_rule_name.lower()):
+                    v_matched = True
+                elif len(norm_v_rule) >= 3 and (norm_v_rule in norm_incoming or norm_incoming in norm_v_rule):
+                    v_matched = True
+
+                if not v_matched and incoming_id:
+                    cached_g = GIFT_CACHE_MAP.get(str(incoming_id))
+                    if cached_g and cached_g.get("name"):
+                        c_norm = normalize_gift_name(cached_g["name"])
+                        if c_norm == norm_v_rule or cached_g["name"].lower() == v_rule_name.lower():
+                            v_matched = True
+
+                if v_matched:
                     if count >= int(vm.get("min_count", 1)):
                         v_file = vm.get("video_file")
                         if v_file:
