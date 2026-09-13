@@ -113,7 +113,8 @@ DEFAULT_CONFIG = {
         "enabled": True,
         "mode": "countdown",
         "initial_seconds": 3600,
-        "max_seconds": 86400
+        "max_seconds": 86400,
+        "show_progress": True
     },
     "timer_gift_mappings": [
         { "gift_name": "Rose", "action": "add", "seconds_value": 30, "enabled": True },

@@ -28,11 +28,11 @@
     justify-content: center;
   }
   .timer-glow-normal {
-    text-shadow: 0 0 20px rgba(208, 188, 255, 0.6), 0 0 40px rgba(168, 85, 247, 0.4);
+    text-shadow: none;
   }
   .timer-glow-danger {
     color: #f87171 !important;
-    text-shadow: 0 0 20px rgba(239, 68, 68, 0.9), 0 0 40px rgba(239, 68, 68, 0.5);
+    text-shadow: none;
     animation: dangerPulse 1s ease-in-out infinite;
   }
   @keyframes dangerPulse {
@@ -86,8 +86,8 @@
       01:00:00
     </div>
 
-    <!-- Progress Bar -->
-    <div class="w-full max-w-[280px] h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/15 shadow-inner">
+    <!-- Progress Bar (Toggleable) -->
+    <div id="timer-progress-container" class="w-full max-w-[280px] h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/15 shadow-inner">
       <div id="timer-progress-fill" class="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-400 rounded-full" style="width: 100%;"></div>
     </div>
   </div>
@@ -101,6 +101,7 @@
   const timerStatusDot = document.getElementById('timer-status-dot');
   const timerStatusText = document.getElementById('timer-status-text');
   const timerModeBadge = document.getElementById('timer-mode-badge');
+  const timerProgressContainer = document.getElementById('timer-progress-container');
   const timerProgressFill = document.getElementById('timer-progress-fill');
 
   let currentSeconds = 3600;
@@ -108,6 +109,7 @@
   let initialSeconds = 3600;
   let isRunning = false;
   let timerMode = 'countdown';
+  let showProgressBar = urlParams.get('progress') !== 'false';
 
   if (isPreview) {
     bodyEl.className = 'preview-mode';
@@ -119,6 +121,13 @@
     const m = Math.floor((totalSec % 3600) / 60).toString().padStart(2, '0');
     const s = (totalSec % 60).toString().padStart(2, '0');
     return `${h}:${m}:${s}`;
+  }
+
+  function setProgressBarVisible(show) {
+    showProgressBar = show !== false;
+    if (timerProgressContainer) {
+      timerProgressContainer.style.display = showProgressBar ? 'block' : 'none';
+    }
   }
 
   function updateClockDisplay(sec) {
@@ -138,6 +147,12 @@
     } else {
       timerClockEl.className = 'font-mono font-black text-5xl text-white tracking-tight timer-glow-normal py-1';
     }
+
+    if (!showProgressBar) {
+      if (timerProgressContainer) timerProgressContainer.style.display = 'none';
+      return;
+    }
+    if (timerProgressContainer) timerProgressContainer.style.display = 'block';
 
     // Update Progress Bar
     const baseline = Math.max(initialSeconds, 3600);
@@ -224,13 +239,25 @@
         if (data.type === 'init') {
           if (data.timer_initial_seconds) initialSeconds = data.timer_initial_seconds;
           if (data.timer_max_seconds) maxSeconds = data.timer_max_seconds;
+          const timerCfg = data.config?.subathon_timer_config;
+          if (timerCfg && timerCfg.show_progress !== undefined) {
+            setProgressBarVisible(timerCfg.show_progress);
+          } else if (data.timer_show_progress !== undefined) {
+            setProgressBarVisible(data.timer_show_progress);
+          }
           if (data.timer_seconds !== undefined) updateClockDisplay(data.timer_seconds);
           if (data.timer_running !== undefined) updateStatus(data.timer_running, data.timer_mode);
         } else if (data.type === 'timer_tick' || data.type === 'timer_update') {
           if (data.initial_seconds) initialSeconds = data.initial_seconds;
           if (data.max_seconds) maxSeconds = data.max_seconds;
+          if (data.show_progress !== undefined) setProgressBarVisible(data.show_progress);
           if (data.seconds !== undefined) updateClockDisplay(data.seconds);
           if (data.is_running !== undefined) updateStatus(data.is_running, data.mode);
+        } else if (data.type === 'config_updated' || data.type === 'config_update') {
+          const timerCfg = data.config?.subathon_timer_config;
+          if (timerCfg && timerCfg.show_progress !== undefined) {
+            setProgressBarVisible(timerCfg.show_progress);
+          }
         } else if (data.type === 'gift' || data.type === 'gacha_spin') {
           if (data.added_seconds !== undefined && data.added_seconds !== 0) {
             triggerTimeBoostAnimation(data.added_seconds);

@@ -242,18 +242,8 @@
 <body id="body-el">
 
   <div id="scale-wrapper">
-    <!-- Viewer Spotlight Banner -->
-    <div id="viewer-spotlight" class="mb-3 flex items-center gap-2.5 bg-gray-900/95 border border-amber-500/40 px-3.5 py-1.5 rounded-full shadow-2xl backdrop-blur-md transition-all duration-300">
-      <img id="viewer-avatar" src="/api/avatar-proxy?url=https://p16-va-tiktok.ibyteimg.com/img/musically-maliva-obj/default-avatar.jpeg" class="w-7 h-7 rounded-full border border-amber-400 object-cover shadow-sm" onerror="this.src='/api/gift-icon?name=Rose'">
-      <div class="flex items-center gap-2 text-xs">
-        <span class="text-amber-300 font-extrabold text-sm" id="viewer-name">@Supporter</span>
-        <span class="text-gray-300">เปิดกล่องสุ่มด้วย</span>
-        <div class="flex items-center gap-1 bg-amber-950/60 border border-amber-500/30 px-2 py-0.5 rounded-full">
-          <img id="viewer-gift-icon" src="/api/gift-icon?name=Doughnut" class="w-4 h-4 object-contain">
-          <span class="text-amber-300 font-bold text-[11px]" id="viewer-gift-name">Doughnut</span>
-        </div>
-      </div>
-    </div>
+    <!-- Viewer Spotlight Banner (Hidden per user request) -->
+    <div id="viewer-spotlight" style="display: none !important;"></div>
 
     <!-- Main CS:GO Reel Viewport -->
     <div class="reel-container" id="gacha-viewport">
@@ -513,7 +503,6 @@
 
     return `
       <div class="prize-card ${r.cls}" id="gacha-card-${idx}" data-color="${r.colorHex}">
-        <span class="font-mono text-[9px] ${r.iconColor} font-extrabold tracking-wider uppercase opacity-90 px-1 truncate max-w-full text-center block">${r.badge}</span>
         ${centerVisual}
         <span class="font-extrabold text-xs text-white text-center px-1 tracking-tight drop-shadow leading-tight line-clamp-2">${escapeHtml(displayVal)}</span>
       </div>

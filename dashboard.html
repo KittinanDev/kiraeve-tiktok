@@ -437,7 +437,7 @@ tailwind.config = {
       <div class="flex items-center justify-between px-1">
         <span class="text-[11px] text-on-surface-variant font-mono flex items-center gap-1">
           <span class="material-symbols-outlined text-[13px]">package_2</span>
-          <span>v</span><span id="sidebar-app-version">1.1.0</span>
+          <span>v</span><span id="sidebar-app-version">1.1.1</span>
         </span>
         <button onclick="openUpdateModal()" id="sidebar-update-btn"
           class="flex items-center gap-1 text-[11px] font-semibold text-amber-500 hover:text-amber-400 transition-colors group">
@@ -1114,7 +1114,7 @@ tailwind.config = {
               <span class="material-symbols-outlined text-[16px]">open_in_new</span>
             </a>
           </div>
-          <p class="text-[11px] text-on-surface-variant">แนะนำตั้งค่าขนาดใน OBS: กว้าง 480px, สูง 700px (ความโปร่งใสและระบบฟิสิกส์ทำงานอัตโนมัติ)</p>
+          <p class="text-[11px] text-on-surface-variant">แนะนำตั้งค่าขนาดใน OBS: กว้าง 740px, สูง 460px (ความโปร่งใสและระบบฟิสิกส์ทำงานอัตโนมัติ ล้นได้กว้างและสูงเต็มที่)</p>
         </div>
       </div>
 
@@ -1253,6 +1253,15 @@ tailwind.config = {
                 <option value="countdown">Countdown (นับถอยหลัง เพิ่มเวลาเมื่อส่งของขวัญ)</option>
                 <option value="countup">Countup (นับเดินหน้า ลดเวลาเมื่อส่งของขวัญ)</option>
               </select>
+            </div>
+            <div>
+              <label class="flex items-center justify-between cursor-pointer bg-tik-bg border border-tik-card-border rounded-lg p-3 hover:border-tik-pink/50 transition-all">
+                <div>
+                  <span class="text-xs font-bold text-white block">แสดงหลอดเวลาด้านล่าง (Progress Bar)</span>
+                  <span class="text-[11px] text-on-surface-variant">เปิดหรือปิดหลอดสีไล่ระดับใต้ตัวเลขนาฬิกาบน Overlay</span>
+                </div>
+                <input type="checkbox" id="timer-show-progress" checked class="w-4 h-4 accent-tik-pink rounded cursor-pointer">
+              </label>
             </div>
             <!-- Timer Max Cap Removed (Unlimited / No Ceiling) -->
             <input type="hidden" id="timer-max-cap-input" value="999999999">
@@ -2754,8 +2763,8 @@ tailwind.config = {
     // โหลดเวอร์ชันจาก Electron หรือ fallback 1.0.0
     if (window.kiraeveUpdater) {
       window.kiraeveUpdater.getVersion().then(v => {
-        document.getElementById('modal-current-version').innerText = v || '1.1.0';
-        document.getElementById('sidebar-app-version').innerText = v || '1.1.0';
+        document.getElementById('modal-current-version').innerText = v || '1.1.1';
+        document.getElementById('sidebar-app-version').innerText = v || '1.1.1';
       });
     }
     // หากยังไม่เคยเช็กหรืออยู่ในหน้า idle ให้เริ่มเช็กอัปเดตอัตโนมัติทันที
@@ -4177,10 +4186,12 @@ tailwind.config = {
   }
 
   async function saveTimerConfig() {
+    const showProg = document.getElementById('timer-show-progress') ? document.getElementById('timer-show-progress').checked : true;
     const cfg = {
       subathon_timer_config: {
         mode: document.getElementById('timer-mode-select').value,
-        max_seconds: parseInt(document.getElementById('timer-max-cap-input').value)
+        max_seconds: parseInt(document.getElementById('timer-max-cap-input').value),
+        show_progress: showProg
       },
       timer_gift_mappings: currentTimerMappings
     };
@@ -4330,6 +4341,7 @@ tailwind.config = {
       if (data.subathon_timer_config) {
         if (document.getElementById('timer-mode-select')) document.getElementById('timer-mode-select').value = data.subathon_timer_config.mode || 'countdown';
         if (document.getElementById('timer-max-cap-input')) document.getElementById('timer-max-cap-input').value = data.subathon_timer_config.max_seconds || 86400;
+        if (document.getElementById('timer-show-progress')) document.getElementById('timer-show-progress').checked = data.subathon_timer_config.show_progress !== false;
       }
       if (data.timer_gift_mappings) {
         currentTimerMappings = data.timer_gift_mappings;
@@ -5161,7 +5173,8 @@ tailwind.config = {
       },
       subathon_timer_config: {
         mode: document.getElementById('timer-mode-select')?.value || 'countdown',
-        max_seconds: parseInt(document.getElementById('timer-max-cap-input')?.value || 86400)
+        max_seconds: parseInt(document.getElementById('timer-max-cap-input')?.value || 86400),
+        show_progress: document.getElementById('timer-show-progress')?.checked ?? true
       },
       timer_gift_mappings: currentTimerMappings,
       gift_sound_mappings: currentGiftMappings,

@@ -35,8 +35,8 @@
   }
   #jar-wrapper {
     position: relative;
-    width: 560px;
-    height: 420px;
+    width: 740px;
+    height: 460px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -102,8 +102,8 @@
 
   const jarCanvas = document.getElementById('jar-canvas');
   const jarCtx = jarCanvas.getContext('2d');
-  const CANVAS_W = 560;
-  const CANVAS_H = 420;
+  const CANVAS_W = 740;
+  const CANVAS_H = 460;
   jarCanvas.width = CANVAS_W;
   jarCanvas.height = CANVAS_H;
 
@@ -122,22 +122,22 @@
   });
   engine.gravity.y = 1.0;
 
-  // Jar Placement in Canvas (Center: 280)
-  const JAR_CENTER_X = 280;
-  const JAR_DRAW_X = 170;
-  const JAR_DRAW_Y = 105;
+  // Jar Placement in Canvas (Center: 370)
+  const JAR_CENTER_X = 370;
+  const JAR_DRAW_X = 260;
+  const JAR_DRAW_Y = 145;
   const JAR_DRAW_W = 220;
   const JAR_DRAW_H = 280;
 
-  // Jar Inner Boundaries (Aligned with original intact photo jar)
-  const INNER_LEFT = 182;
-  const INNER_RIGHT = 378;
-  const INNER_FLOOR_Y = 364;
-  const SHOULDER_Y = 160;
-  const NECK_TOP_Y = 110;
-  const MOUTH_LEFT = 192;
-  const MOUTH_RIGHT = 368;
-  const EXT_GROUND_Y = 385;
+  // Jar Inner Boundaries (Aligned with jar image centered at 370)
+  const INNER_LEFT = 272;
+  const INNER_RIGHT = 468;
+  const INNER_FLOOR_Y = 404;
+  const SHOULDER_Y = 200;
+  const NECK_TOP_Y = 150;
+  const MOUTH_LEFT = 282;
+  const MOUTH_RIGHT = 458;
+  const EXT_GROUND_Y = 425;
 
   // Function to create smooth curved floor segments following the 3D bottle contour
   function createCurvedFloorBodies() {
@@ -148,7 +148,7 @@
 
     function getFloorY(x) {
       const dx = (x - JAR_CENTER_X) / R;
-      return 365 - 9 * Math.pow(Math.abs(dx), 2.0);
+      return 405 - 9 * Math.pow(Math.abs(dx), 2.0);
     }
 
     for (let i = 0; i < NUM_SEGS; i++) {
@@ -176,37 +176,37 @@
     return segments;
   }
 
-  // Static Barrier Bodies (Zero Leaks, Heavy-Duty Bedrock Foundation)
+  // Static Barrier Bodies (Zero Leaks, Heavy-Duty Bedrock Foundation, Wide Overflows)
   const staticBodies = [
     // Curved Jar Bottom Floor (Thickened 24px)
     ...createCurvedFloorBodies(),
     // Solid Foundation Support Block under Jar Base (Prevents any heavy weight tunneling)
-    Bodies.rectangle(JAR_CENTER_X, 396, 210, 30, { isStatic: true, friction: 0.8, label: 'jar_base_foundation' }),
+    Bodies.rectangle(JAR_CENTER_X, 436, 210, 30, { isStatic: true, friction: 0.8, label: 'jar_base_foundation' }),
     // Jar Inner Left Wall
-    Bodies.rectangle(INNER_LEFT - 8, (SHOULDER_Y + 360) / 2, 16, (360 - SHOULDER_Y), { isStatic: true, friction: 0.1, label: 'jar_left_wall' }),
+    Bodies.rectangle(INNER_LEFT - 8, (SHOULDER_Y + 400) / 2, 16, (400 - SHOULDER_Y), { isStatic: true, friction: 0.1, label: 'jar_left_wall' }),
     // Jar Inner Right Wall
-    Bodies.rectangle(INNER_RIGHT + 8, (SHOULDER_Y + 360) / 2, 16, (360 - SHOULDER_Y), { isStatic: true, friction: 0.1, label: 'jar_right_wall' }),
+    Bodies.rectangle(INNER_RIGHT + 8, (SHOULDER_Y + 400) / 2, 16, (400 - SHOULDER_Y), { isStatic: true, friction: 0.1, label: 'jar_right_wall' }),
     // Left Shoulder Slope (inside)
-    Bodies.rectangle(187, 145, 14, 40, { isStatic: true, angle: 0.35, friction: 0.1, label: 'shoulder_left' }),
+    Bodies.rectangle(277, 185, 14, 40, { isStatic: true, angle: 0.35, friction: 0.1, label: 'shoulder_left' }),
     // Right Shoulder Slope (inside)
-    Bodies.rectangle(373, 145, 14, 40, { isStatic: true, angle: -0.35, friction: 0.1, label: 'shoulder_right' }),
-    // Left Neck Lip Chamfer (Guides overflow out to the left mound)
-    Bodies.rectangle(188, NECK_TOP_Y + 8, 28, 12, { isStatic: true, angle: -0.55, friction: 0.2, label: 'lip_left' }),
-    // Right Neck Lip Chamfer (Guides overflow out to the right mound)
-    Bodies.rectangle(372, NECK_TOP_Y + 8, 28, 12, { isStatic: true, angle: 0.55, friction: 0.2, label: 'lip_right' }),
+    Bodies.rectangle(463, 185, 14, 40, { isStatic: true, angle: -0.35, friction: 0.1, label: 'shoulder_right' }),
+    // Left Neck Lip Chamfer (Guides overflow smoothly out to the left mound)
+    Bodies.rectangle(278, NECK_TOP_Y + 8, 28, 12, { isStatic: true, angle: -0.55, friction: 0.2, label: 'lip_left' }),
+    // Right Neck Lip Chamfer (Guides overflow smoothly out to the right mound)
+    Bodies.rectangle(462, NECK_TOP_Y + 8, 28, 12, { isStatic: true, angle: 0.55, friction: 0.2, label: 'lip_right' }),
 
-    // External Left Ground (Mound floor on the left)
-    Bodies.rectangle(85, EXT_GROUND_Y + 15, 170, 30, { isStatic: true, friction: 0.6, label: 'ext_floor_left' }),
-    // External Right Ground (Mound floor on the right)
-    Bodies.rectangle(475, EXT_GROUND_Y + 15, 170, 30, { isStatic: true, friction: 0.6, label: 'ext_floor_right' }),
+    // External Left Ground (Extended wide mound floor on the left: from x=0 to x=265)
+    Bodies.rectangle(132, EXT_GROUND_Y + 15, 265, 30, { isStatic: true, friction: 0.6, label: 'ext_floor_left' }),
+    // External Right Ground (Extended wide mound floor on the right: from x=475 to x=CANVAS_W)
+    Bodies.rectangle(607, EXT_GROUND_Y + 15, 265, 30, { isStatic: true, friction: 0.6, label: 'ext_floor_right' }),
 
     // Impenetrable Canvas Bedrock Floor (Prevents any item from ever falling off-canvas)
     Bodies.rectangle(CANVAS_W / 2, CANVAS_H + 25, CANVAS_W + 200, 50, { isStatic: true, friction: 0.8, label: 'bedrock_floor' }),
 
-    // Leftmost Screen Barrier (Full Height)
-    Bodies.rectangle(0, 200, 20, 420, { isStatic: true, friction: 0.3, label: 'screen_left' }),
-    // Rightmost Screen Barrier (Full Height)
-    Bodies.rectangle(CANVAS_W, 200, 20, 420, { isStatic: true, friction: 0.3, label: 'screen_right' })
+    // Leftmost Screen Barrier (Full Height 460px)
+    Bodies.rectangle(0, 230, 20, 460, { isStatic: true, friction: 0.3, label: 'screen_left' }),
+    // Rightmost Screen Barrier (Full Height 460px)
+    Bodies.rectangle(CANVAS_W, 230, 20, 460, { isStatic: true, friction: 0.3, label: 'screen_right' })
   ];
   World.add(engine.world, staticBodies);
 
@@ -277,7 +277,7 @@
   }
 
   let giftBodies = [];
-  const MAX_BODIES = 800; // Large capacity: holds full jar + deep overflow mounds without deleting
+  const MAX_BODIES = 3000; // Giant capacity: holds full jar + deep side mounds without deleting
 
   function spawnSingleGift(giftImg, profileImg, itemRadius, name) {
     if (giftBodies.length >= MAX_BODIES) {
@@ -288,8 +288,8 @@
       World.remove(engine.world, oldest);
     }
 
-    const spawnX = JAR_CENTER_X + (Math.random() - 0.5) * 40;
-    const spawnY = 25 + (Math.random() - 0.5) * 15;
+    const spawnX = JAR_CENTER_X + (Math.random() - 0.5) * 50;
+    const spawnY = 15 + (Math.random() - 0.5) * 10;
 
     const body = Bodies.circle(spawnX, spawnY, itemRadius, {
       restitution: 0.12,   // Low bounce for rock-solid settling
@@ -324,11 +324,12 @@
       showSenderToast(sender, name, count, profilePic || iconUrl);
     }
 
+    // Spawn ALL gifts accurately without capping (e.g. 100 roses spawns all 100 items into the jar)
     const totalToSpawn = Math.max(1, count || 1);
-    const spawnCount = Math.min(totalToSpawn, 30);
-    const intervalMs = spawnCount > 1 ? Math.max(60, Math.min(140, 1500 / spawnCount)) : 0;
+    // Smooth rapid burst interval so 100 items cascade naturally
+    const intervalMs = totalToSpawn > 1 ? Math.max(15, Math.min(80, 800 / totalToSpawn)) : 0;
 
-    for (let i = 0; i < spawnCount; i++) {
+    for (let i = 0; i < totalToSpawn; i++) {
       if (i === 0) {
         spawnSingleGift(giftImg, profileImg, itemRadius, name);
       } else {
@@ -346,7 +347,7 @@
     if (isOverflow) {
       // 1. Fill Jar to the brim
       for (let i = 0; i < 210; i++) {
-        const b = Bodies.circle(INNER_LEFT + 15 + Math.random() * (INNER_RIGHT - INNER_LEFT - 30), 100 + Math.random() * 250, 8.5, {
+        const b = Bodies.circle(INNER_LEFT + 15 + Math.random() * (INNER_RIGHT - INNER_LEFT - 30), 140 + Math.random() * 250, 8.5, {
           restitution: 0.1, friction: 0.4, sleepThreshold: 15
         });
         b.giftImg = sampleImg;
@@ -354,9 +355,9 @@
         giftBodies.push(b);
         World.add(engine.world, b);
       }
-      // 2. Left Overflow Mound
-      for (let i = 0; i < 30; i++) {
-        const b = Bodies.circle(60 + Math.random() * 105, 300 + Math.random() * 75, 8.5, {
+      // 2. Left Overflow Mound (x: 40 to 240)
+      for (let i = 0; i < 45; i++) {
+        const b = Bodies.circle(50 + Math.random() * 180, 340 + Math.random() * 75, 8.5, {
           restitution: 0.1, friction: 0.5, sleepThreshold: 15
         });
         b.giftImg = sampleImg;
@@ -364,9 +365,9 @@
         giftBodies.push(b);
         World.add(engine.world, b);
       }
-      // 3. Right Overflow Mound
-      for (let i = 0; i < 30; i++) {
-        const b = Bodies.circle(395 + Math.random() * 105, 300 + Math.random() * 75, 8.5, {
+      // 3. Right Overflow Mound (x: 490 to 690)
+      for (let i = 0; i < 45; i++) {
+        const b = Bodies.circle(490 + Math.random() * 180, 340 + Math.random() * 75, 8.5, {
           restitution: 0.1, friction: 0.5, sleepThreshold: 15
         });
         b.giftImg = sampleImg;
@@ -376,7 +377,7 @@
       }
     } else {
       for (let i = 0; i < 35; i++) {
-        const b = Bodies.circle(INNER_LEFT + 15 + Math.random() * (INNER_RIGHT - INNER_LEFT - 30), 200 + Math.random() * 150, 8.5, {
+        const b = Bodies.circle(INNER_LEFT + 15 + Math.random() * (INNER_RIGHT - INNER_LEFT - 30), 240 + Math.random() * 150, 8.5, {
           restitution: 0.1, friction: 0.4, sleepThreshold: 15
         });
         b.giftImg = sampleImg;

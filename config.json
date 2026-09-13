@@ -24,7 +24,8 @@
     "enabled": true,
     "mode": "countdown",
     "initial_seconds": 3600,
-    "max_seconds": 86400
+    "max_seconds": 86400,
+    "show_progress": true
   },
   "timer_gift_mappings": [
     {
