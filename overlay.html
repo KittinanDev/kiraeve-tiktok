@@ -731,7 +731,7 @@ tailwind.config = {
   // CS:GO Style Gacha Reel
   let isGachaSpinning = false;
 
-  function runCSGOGachaSpin(reelSequence, winnerIndex, durationSec) {
+  function runCSGOGachaSpin(reelSequence, winnerIndex, durationSec, spinId) {
     if (isGachaSpinning) return;
     isGachaSpinning = true;
 
@@ -798,6 +798,21 @@ tailwind.config = {
 
     setTimeout(() => {
       clearInterval(tickInterval);
+
+      // Notify backend that gacha reel has physically landed
+      if (!isPreviewMode && spinId) {
+        try {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'gacha_settle', spin_id: spinId }));
+          }
+        } catch(e) {}
+        fetch('/api/gacha-settle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ spin_id: spinId })
+        }).catch(() => {});
+      }
+
       const winnerCard = document.getElementById(`gacha-card-${winnerIndex}`);
       if (winnerCard) {
         winnerCard.classList.add('winner-glow');
@@ -1027,9 +1042,8 @@ tailwind.config = {
         if (data.auction) renderAuction(data.auction);
       } else if (data.type === 'gacha_spin') {
         if (currentVisibility.gacha || isGachaMode || (!isJarMode && !isTimerMode && !isLeaderboardMode && !isTTSMode && !isAuctionMode)) {
-          runCSGOGachaSpin(data.reel_sequence, data.winner_index, data.duration);
+          runCSGOGachaSpin(data.reel_sequence, data.winner_index, data.duration, data.spin_id);
         }
-        if (data.timer_seconds !== undefined) timerClockEl.innerText = formatTime(data.timer_seconds);
       } else if (data.type === 'gift') {
         spawnGiftItems(data.gift_name, data.gift_icon, data.count, data.coins);
         if (!isPreviewMode && data.sound_effect && (isJarMode || (!isTimerMode && !isLeaderboardMode && !isTTSMode && !isAuctionMode && !isGachaMode))) {

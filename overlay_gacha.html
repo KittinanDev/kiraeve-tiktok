@@ -703,6 +703,20 @@
         if (tickAnimationId) cancelAnimationFrame(tickAnimationId);
         playMechanicalLock();
 
+        // Notify backend to execute outcome (Subathon timer sync & won gift alert) at exact landing moment
+        if (!isPreview && data.spin_id) {
+          try {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: 'gacha_settle', spin_id: data.spin_id }));
+            }
+          } catch(e) {}
+          fetch('/api/gacha-settle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ spin_id: data.spin_id })
+          }).catch(() => {});
+        }
+
         const winnerCard = document.getElementById(`gacha-card-${winnerIndex}`);
         if (winnerCard) {
           winnerCard.classList.add('winner-glow');
