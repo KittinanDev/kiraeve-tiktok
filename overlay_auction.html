@@ -381,32 +381,26 @@
     'from-fuchsia-500 to-pink-600'
   ];
 
-  function getAvatarUrl(url) {
-    if (!url || typeof url !== 'string' || !url.startsWith('http')) return '';
-    return `/api/avatar-proxy?url=${encodeURIComponent(url)}`;
+  function getAvatarUrl(url, name) {
+    const safeName = encodeURIComponent(name || '');
+    if (!url || typeof url !== 'string' || !url.startsWith('http')) {
+      return `/api/avatar-proxy?name=${safeName}`;
+    }
+    return `/api/avatar-proxy?url=${encodeURIComponent(url)}&name=${safeName}`;
   }
 
   function renderAvatarHtml(picUrl, name, sizePx, borderClass) {
     const safeName = escapeHtml(name || 'U');
     const firstLetter = (safeName || 'U').trim().charAt(0).toUpperCase();
     const grad = AVATAR_GRADIENTS[Math.abs(hashString(name || 'U')) % AVATAR_GRADIENTS.length];
-    const proxyUrl = getAvatarUrl(picUrl);
+    const proxyUrl = getAvatarUrl(picUrl, name);
 
-    if (proxyUrl) {
-      return `
-        <img src="${proxyUrl}" 
-             referrerpolicy="no-referrer"
-             crossorigin="anonymous"
-             class="w-[${sizePx}px] h-[${sizePx}px] rounded-full object-cover ${borderClass} shadow-md shrink-0"
-             onerror="if (this.src.includes('/api/avatar-proxy')) { this.src='${escapeHtml(picUrl)}'; } else { this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-[${sizePx}px] h-[${sizePx}px] rounded-full bg-gradient-to-br ${grad} flex items-center justify-center font-black text-white ${borderClass} shadow-md shrink-0\\'>${firstLetter}</div>'; }">
-      `;
-    } else {
-      return `
-        <div class="w-[${sizePx}px] h-[${sizePx}px] rounded-full bg-gradient-to-br ${grad} flex items-center justify-center font-black text-white ${borderClass} shadow-md shrink-0">
-          ${firstLetter}
-        </div>
-      `;
-    }
+    return `
+      <img src="${proxyUrl}" 
+           referrerpolicy="no-referrer"
+           class="w-[${sizePx}px] h-[${sizePx}px] rounded-full object-cover ${borderClass} shadow-md shrink-0"
+           onerror="if (this.src.includes('/api/avatar-proxy')) { this.src='${escapeHtml(picUrl)}'; } else { this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-[${sizePx}px] h-[${sizePx}px] rounded-full bg-gradient-to-br ${grad} flex items-center justify-center font-black text-white ${borderClass} shadow-md shrink-0\\'>${firstLetter}</div>'; }">
+    `;
   }
 
   function hashString(str) {

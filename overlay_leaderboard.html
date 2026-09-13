@@ -172,9 +172,12 @@
     'from-rose-500 to-purple-600'
   ];
 
-  function getAvatarUrl(rawUrl) {
-    if (!rawUrl || typeof rawUrl !== 'string' || !rawUrl.startsWith('http')) return '';
-    return `/api/avatar-proxy?url=${encodeURIComponent(rawUrl)}`;
+  function getAvatarUrl(rawUrl, name) {
+    const safeName = encodeURIComponent(name || '');
+    if (!rawUrl || typeof rawUrl !== 'string' || !rawUrl.startsWith('http')) {
+      return `/api/avatar-proxy?name=${safeName}`;
+    }
+    return `/api/avatar-proxy?url=${encodeURIComponent(rawUrl)}&name=${safeName}`;
   }
 
   function renderLeaderboard(gifters) {
@@ -226,24 +229,14 @@
       const firstLetter = (g.sender || 'U').trim().charAt(0).toUpperCase();
       const gradClass = AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length];
       const directPic = g.profile_picture || '';
-      const proxyPic = getAvatarUrl(directPic);
+      const proxyPic = getAvatarUrl(directPic, g.sender);
 
-      let avatarHtml = '';
-      if (proxyPic) {
-        avatarHtml = `
-          <img src="${proxyPic}" 
-               referrerpolicy="no-referrer"
-               crossorigin="anonymous"
-               class="w-10 h-10 rounded-full object-cover ${avatarBorder} shadow-sm shrink-0" 
-               onerror="if (this.src.includes('/api/avatar-proxy')) { this.src='${escapeHtml(directPic)}'; } else { this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-10 h-10 rounded-full bg-gradient-to-br ${gradClass} flex items-center justify-center text-sm font-black text-white ${avatarBorder} shadow-sm shrink-0\\'>${firstLetter}</div>'; }">
-        `;
-      } else {
-        avatarHtml = `
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br ${gradClass} flex items-center justify-center text-sm font-black text-white ${avatarBorder} shadow-sm shrink-0">
-            ${firstLetter}
-          </div>
-        `;
-      }
+      let avatarHtml = `
+        <img src="${proxyPic}" 
+             referrerpolicy="no-referrer"
+             class="w-10 h-10 rounded-full object-cover ${avatarBorder} shadow-sm shrink-0" 
+             onerror="if (this.src.includes('/api/avatar-proxy')) { this.src='${escapeHtml(directPic)}'; } else { this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-10 h-10 rounded-full bg-gradient-to-br ${gradClass} flex items-center justify-center text-sm font-black text-white ${avatarBorder} shadow-sm shrink-0\\'>${firstLetter}</div>'; }">
+      `;
 
       let giftPreviewHtml = '';
       const giftIconSrc = g.gift_icon || (g.last_gift ? `/api/gift-icon?name=${encodeURIComponent(g.last_gift)}` : '');

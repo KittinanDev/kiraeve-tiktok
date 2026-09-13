@@ -437,7 +437,7 @@ tailwind.config = {
       <div class="flex items-center justify-between px-1">
         <span class="text-[11px] text-on-surface-variant font-mono flex items-center gap-1">
           <span class="material-symbols-outlined text-[13px]">package_2</span>
-          <span>v</span><span id="sidebar-app-version">1.1.6</span>
+          <span>v</span><span id="sidebar-app-version">1.1.7</span>
         </span>
         <button onclick="openUpdateModal()" id="sidebar-update-btn"
           class="flex items-center gap-1 text-[11px] font-semibold text-amber-500 hover:text-amber-400 transition-colors group">
@@ -2763,8 +2763,8 @@ tailwind.config = {
     // โหลดเวอร์ชันจาก Electron หรือ fallback 1.0.0
     if (window.kiraeveUpdater) {
       window.kiraeveUpdater.getVersion().then(v => {
-        document.getElementById('modal-current-version').innerText = v || '1.1.6';
-        document.getElementById('sidebar-app-version').innerText = v || '1.1.6';
+        document.getElementById('modal-current-version').innerText = v || '1.1.7';
+        document.getElementById('sidebar-app-version').innerText = v || '1.1.7';
       });
     }
     // หากยังไม่เคยเช็กหรืออยู่ในหน้า idle ให้เริ่มเช็กอัปเดตอัตโนมัติทันที
@@ -4618,6 +4618,13 @@ tailwind.config = {
 
   async function triggerLeaderboardTest(sender, giftName, count, coins) {
     appendLog(`[TEST] ทดสอบส่งของขวัญอันดับจาก "${sender}": "${giftName}" x${count} (${coins.toLocaleString()} เหรียญ)`);
+    const sampleAvatars = {
+      'Alice_TopGifter': 'https://p16-sign-va.tiktokcdn.com/tos-maliva-avt-0068/7315891234~tplv-tiktok-shrink:100:100.jpeg',
+      'Bob_VIP': 'https://p16-sign-va.tiktokcdn.com/tos-maliva-avt-0068/7315895678~tplv-tiktok-shrink:100:100.jpeg',
+      'Charlie_Fan': 'https://p16-sign-va.tiktokcdn.com/tos-maliva-avt-0068/7315899999~tplv-tiktok-shrink:100:100.jpeg',
+      'Dave_Rose': 'https://p16-sign-va.tiktokcdn.com/tos-maliva-avt-0068/7315890000~tplv-tiktok-shrink:100:100.jpeg'
+    };
+    const avatarUrl = sampleAvatars[sender] || '';
     try {
       const res = await fetch('/api/mock-event', {
         method: 'POST',
@@ -4628,7 +4635,8 @@ tailwind.config = {
           gift_name: giftName,
           count: count,
           coins: coins,
-          sender: sender
+          sender: sender,
+          profile_picture: avatarUrl
         })
       });
       const data = await res.json();

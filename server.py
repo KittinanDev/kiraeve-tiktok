@@ -1142,33 +1142,41 @@ AVATAR_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 async def handle_avatar_proxy(request: web.Request) -> web.Response:
     raw_url = request.query.get("url", "").strip()
-    if not raw_url or not raw_url.startswith("http"):
-        return web.Response(status=400, text="Invalid avatar URL")
+    user_name = request.query.get("name", "").strip()
     
-    url_hash = hashlib.md5(raw_url.encode('utf-8')).hexdigest()[:12]
-    cached_file = AVATAR_CACHE_DIR / f"avatar_{url_hash}.webp"
-    
-    if cached_file.exists():
-        with open(cached_file, "rb") as f:
-            return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+    if raw_url and raw_url.startswith("http"):
+        url_hash = hashlib.md5(raw_url.encode('utf-8')).hexdigest()[:12]
+        cached_file = AVATAR_CACHE_DIR / f"avatar_{url_hash}.webp"
+        
+        if cached_file.exists() and cached_file.stat().st_size > 0:
+            with open(cached_file, "rb") as f:
+                return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
 
-    try:
-        req_headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Referer": "https://www.tiktok.com/"
-        }
-        async with aiohttp.ClientSession() as session:
-            async with session.get(raw_url, headers=req_headers, ssl=False, timeout=aiohttp.ClientTimeout(total=8)) as resp:
-                if resp.status == 200:
-                    data = await resp.read()
-                    with open(cached_file, "wb") as f:
-                        f.write(data)
-                    c_type = resp.headers.get("Content-Type", "image/webp")
-                    return web.Response(body=data, content_type=c_type, headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
-    except Exception as e:
-        log.warning("Could not proxy avatar from %s: %s", raw_url[:40], e)
+        try:
+            req_headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+            async with aiohttp.ClientSession() as session:
+                async with session.get(raw_url, headers=req_headers, ssl=False, timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                    if resp.status == 200:
+                        data = await resp.read()
+                        if len(data) > 0:
+                            with open(cached_file, "wb") as f:
+                                f.write(data)
+                            c_type = resp.headers.get("Content-Type", "image/webp")
+                            return web.Response(body=data, content_type=c_type, headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+        except Exception as e:
+            log.warning("Could not proxy avatar from %s: %s", raw_url[:40], e)
 
-    return web.Response(status=404, text="Avatar not available")
+    # SVG Fallback based on user name or initial
+    first_char = (user_name[:1] if user_name else "U").upper()
+    colors = ["#f59e0b", "#3b82f6", "#ec4899", "#10b981", "#8b5cf6", "#ef4444", "#06b6d4"]
+    bg_color = colors[abs(hash(user_name or "U")) % len(colors)]
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <circle cx="50" cy="50" r="50" fill="{bg_color}"/>
+      <text x="50" y="65" font-size="44" font-family="sans-serif" font-weight="900" fill="#ffffff" text-anchor="middle">{first_char}</text>
+    </svg>'''
+    return web.Response(text=svg, content_type="image/svg+xml", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=3600"})
 
 async def handle_delete_sound(request: web.Request) -> web.Response:
     try:

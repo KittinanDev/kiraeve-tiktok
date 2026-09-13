@@ -758,21 +758,30 @@ tailwind.config = {
       return;
     }
     const rankGradients = ['rank-gradient-1', 'rank-gradient-2', 'rank-gradient-3'];
-    leaderListEl.innerHTML = gifters.slice(0, 3).map((g, idx) => `
+    leaderListEl.innerHTML = gifters.slice(0, 3).map((g, idx) => {
+      const firstLetter = (g.sender || 'U').trim().charAt(0).toUpperCase();
+      const directPic = g.profile_picture || '';
+      const safeName = encodeURIComponent(g.sender || '');
+      const avatarSrc = directPic && directPic.startsWith('http')
+        ? `/api/avatar-proxy?url=${encodeURIComponent(directPic)}&name=${safeName}`
+        : `/api/avatar-proxy?name=${safeName}`;
+
+      return `
       <div class="flex items-center justify-between py-1 border-b border-outline-variant/20 last:border-none">
         <div class="flex items-center gap-2">
           <div class="w-5 text-center font-bold text-base ${rankGradients[idx] || 'text-on-surface-variant'}">${idx + 1}</div>
-          <div class="w-7 h-7 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center text-xs font-bold text-primary">
-            ${g.sender.charAt(0).toUpperCase()}
-          </div>
-          <span class="text-xs font-semibold text-on-surface truncate max-w-[100px]">${g.sender}</span>
+          <img src="${avatarSrc}" 
+               referrerpolicy="no-referrer"
+               class="w-7 h-7 rounded-full object-cover border border-outline-variant shrink-0" 
+               onerror="if (this.src.includes('/api/avatar-proxy') && '${escapeHtml(directPic)}') { this.src='${escapeHtml(directPic)}'; } else { this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-7 h-7 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center text-xs font-bold text-primary\\'>${firstLetter}</div>'; }">
+          <span class="text-xs font-semibold text-on-surface truncate max-w-[100px]">${escapeHtml(g.sender)}</span>
         </div>
         <div class="flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded text-secondary border border-secondary/20">
           <span class="material-symbols-outlined text-[13px]">toll</span>
           <span class="font-mono text-[11px] font-bold">${g.coins.toLocaleString()}</span>
         </div>
       </div>
-    `).join('');
+    `}).join('');
   }
 
   // Physics Gift Jar
