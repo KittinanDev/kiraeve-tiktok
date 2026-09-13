@@ -445,11 +445,11 @@
       this.currentAudio = null;
     }
 
-    enqueue(soundUrl, volume = 1.0, times = 1) {
+    enqueue(soundUrl, volume = 1.0) {
       if (!soundUrl) return;
-      const count = Math.min(times || 1, 20);
-      for (let i = 0; i < count; i++) {
-        this.queue.push({ soundUrl, volume });
+      this.queue.push({ soundUrl, volume });
+      if (this.queue.length > 3) {
+        this.queue = this.queue.slice(-3); // Cap queue so sounds don't pile up indefinitely
       }
       if (!this.isPlaying) {
         this.playNext();
@@ -513,7 +513,7 @@
       if (data.type === 'gift') {
         spawnGiftItems(data.gift_name, data.gift_icon, data.count, data.coins, data.sender, data.profile_picture);
         if (!isPreview && data.sound_effect) {
-          soundQueue.enqueue(data.sound_effect, data.sound_volume, data.count || 1);
+          soundQueue.enqueue(data.sound_effect, data.sound_volume);
         }
       } else if (data.type === 'jar_reset') {
         giftBodies.forEach(b => World.remove(engine.world, b));

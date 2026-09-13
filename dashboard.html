@@ -5583,8 +5583,10 @@ tailwind.config = {
       await new Promise(r => setTimeout(r, 200));
     }
     const sampleAvatars = {
-      'Alice_VIP': 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp',
-      'Bob_King': 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/4e7ad6bdf0a1d860c538f38026d4e812~tplv-obj.webp'
+      'Alice': 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp',
+      'Bob': 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/4e7ad6bdf0a1d860c538f38026d4e812~tplv-obj.webp',
+      'Charlie': 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp',
+      'Sniping_Hero': 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/4e7ad6bdf0a1d860c538f38026d4e812~tplv-obj.webp'
     };
     await fetch('/api/mock-event', {
       method: 'POST',
@@ -5593,6 +5595,7 @@ tailwind.config = {
         event_type: 'gift',
         target_widget: 'auction',
         sender: sender,
+        unique_id: sender.toLowerCase(),
         gift_name: giftName,
         count: count,
         coins: coins,
@@ -5801,9 +5804,8 @@ tailwind.config = {
         }
 
         if (b.sound_effect) {
-          playAudioPreview(b.sound_effect);
           const sName = b.sound_effect.split('/').pop();
-          triggers.push(`[AUDIO] เสียงตอบสนอง (${sName})`);
+          triggers.push(`[AUDIO] ส่งเสียงตอบสนองไปยัง Overlay (${sName})`);
         }
 
         appendLog(`[OK] สำเร็จ! กระตุ้นฟังก์ชัน: ${triggers.join(' | ')}`);

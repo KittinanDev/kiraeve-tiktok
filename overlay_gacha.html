@@ -628,6 +628,10 @@
     }
 
     resultBannerEl.style.opacity = '0';
+    try {
+      winAudioEl.pause();
+      winAudioEl.currentTime = 0;
+    } catch(e) {}
 
     // 1. Force instant reset to 0px and cancel any previous transition
     gachaReelStripEl.style.transition = 'none';

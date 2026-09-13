@@ -118,20 +118,22 @@
     animation: coinBump 0.4s ease-out;
   }
 
-  /* Auction Widget: ALWAYS Visible & Responsive */
+  /* Auction Widget Visibility and Animation */
   #auction-widget {
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    transform: translateY(0) scale(1) !important;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   }
   #auction-widget.widget-hidden {
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    transform: translateY(0) scale(1) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(16px) scale(0.96) !important;
   }
   #auction-widget.widget-visible {
     opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: translateY(0) scale(1) !important;
+  }
+  body.preview-mode #auction-widget.widget-hidden {
+    opacity: 0.35 !important;
     pointer-events: auto !important;
     transform: translateY(0) scale(1) !important;
   }
@@ -142,7 +144,7 @@
   <div id="scale-wrapper" class="relative">
     
     <!-- Main Auction Card -->
-    <div id="auction-widget" class="broadcast-panel w-[440px] rounded-2xl overflow-hidden relative transition-all duration-300">
+    <div id="auction-widget" class="broadcast-panel w-[440px] rounded-2xl overflow-hidden relative transition-all duration-300 widget-hidden">
       
       <!-- Top Accent Line -->
       <div class="h-[3px] w-full top-accent-line"></div>
@@ -392,15 +394,15 @@
 
   function renderAvatarHtml(picUrl, name, sizePx, borderClass) {
     const safeName = escapeHtml(name || 'U');
-    const firstLetter = (safeName || 'U').trim().charAt(0).toUpperCase();
-    const grad = AVATAR_GRADIENTS[Math.abs(hashString(name || 'U')) % AVATAR_GRADIENTS.length];
     const proxyUrl = getAvatarUrl(picUrl, name);
+    const lookupParam = encodeURIComponent(name || 'viewer');
 
     return `
       <img src="${proxyUrl}" 
            referrerpolicy="no-referrer"
-           class="w-[${sizePx}px] h-[${sizePx}px] rounded-full object-cover ${borderClass} shadow-md shrink-0"
-           onerror="this.onerror=null; this.src='/api/avatar-proxy?name=' + encodeURIComponent(name || 'viewer');">
+           style="width: ${sizePx}px; height: ${sizePx}px; min-width: ${sizePx}px; min-height: ${sizePx}px;"
+           class="rounded-full object-cover ${borderClass || ''} shadow-md shrink-0 inline-block"
+           onerror="this.onerror=null; this.src='/api/avatar-proxy?name=${lookupParam}';">
     `;
   }
 
@@ -430,9 +432,9 @@
   let localAuctionRem = 0;
   let localAuctionActive = false;
   let localAuctionPaused = false;
-  let localAuctionTickTimer = null;
   
   function updateAuctionTimerUI(rem) {
+    aucTimerEl.innerText = formatMinSec(rem);
     if (rem <= 15 && localAuctionActive && !localAuctionPaused) {
       aucTimerEl.className = 'font-mono text-2xl sm:text-3xl font-black text-rose-500 tracking-tight leading-tight animate-urgent';
       aucTimerSubtext.innerText = 'โค้งสุดท้าย';
@@ -449,10 +451,6 @@
       aucTimerSubtext.className = 'text-[10px] font-semibold text-gray-400 mt-0.5';
       timerUrgentGlow.classList.add('hidden');
     }
-    localAuctionRem = auc.remaining_seconds || 0;
-    localAuctionActive = auc.is_active;
-    localAuctionPaused = auc.is_paused;
-    updateAuctionTimerUI(localAuctionRem); // Handled by updateAuctionTimerUI locally
   }
 
   let prevRemainingSec = -1;
@@ -481,27 +479,10 @@
     }
 
     const rem = auc.remaining_seconds || 0;
-    localAuctionRem = auc.remaining_seconds || 0;
+    localAuctionRem = rem;
     localAuctionActive = auc.is_active;
     localAuctionPaused = auc.is_paused;
-    updateAuctionTimerUI(localAuctionRem); // Handled by updateAuctionTimerUI locally
-
-    if (rem <= 15 && auc.is_active && !auc.is_paused) {
-      aucTimerEl.className = 'font-mono text-2xl sm:text-3xl font-black text-rose-500 tracking-tight leading-tight animate-urgent';
-      aucTimerSubtext.innerText = 'ช่วงเวลาลุ้นสุดท้าย';
-      aucTimerSubtext.className = 'text-[10px] font-bold text-rose-400 mt-0.5 animate-pulse';
-      timerUrgentGlow.classList.remove('hidden');
-    } else if (rem <= 60 && auc.is_active) {
-      aucTimerEl.className = 'font-mono text-2xl sm:text-3xl font-black text-amber-400 tracking-tight leading-tight';
-      aucTimerSubtext.innerText = 'นับถอยหลัง';
-      aucTimerSubtext.className = 'text-[10px] font-semibold text-gray-400 mt-0.5';
-      timerUrgentGlow.classList.add('hidden');
-    } else {
-      aucTimerEl.className = 'font-mono text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight leading-tight';
-      aucTimerSubtext.innerText = 'เวลาที่เหลือ';
-      aucTimerSubtext.className = 'text-[10px] font-semibold text-gray-400 mt-0.5';
-      timerUrgentGlow.classList.add('hidden');
-    }
+    updateAuctionTimerUI(localAuctionRem);
 
     prevRemainingSec = rem;
 
@@ -520,11 +501,12 @@
     if (highestCoins > 0 && highestName && highestName !== '-') {
       aucHighestBidderEl.innerText = `@${highestName}`;
       aucBidCoinsEl.innerText = `${highestCoins.toLocaleString()} Coins`;
-      highestAvatarContainer.innerHTML = renderAvatarHtml(highestPic, highestName, 48, 'border-2 border-amber-400 shadow-md');
+      const lookupHighest = auc.highest_unique_id || highestName;
+      highestAvatarContainer.innerHTML = renderAvatarHtml(highestPic, lookupHighest, 48, 'border-2 border-amber-400 shadow-md');
     } else {
       aucHighestBidderEl.innerText = 'รอผู้เปิดประมูล...';
       aucBidCoinsEl.innerText = '0 Coins';
-      highestAvatarContainer.innerHTML = renderAvatarHtml('', 'U', 48, 'border-2 border-white/20 shadow-md');
+      highestAvatarContainer.innerHTML = renderAvatarHtml('', 'viewer', 48, 'border-2 border-white/20 shadow-md');
     }
 
     const isUnlimited = auc.unlimited_coins || auc.is_unlimited || !auc.target_coins || auc.target_coins <= 0;
@@ -565,7 +547,11 @@
       if (auc.is_winner_announced && auc.winner_name && auc.winner_name !== '-') {
         showWinner(auc);
       } else {
-        showWidget();
+        if (autoHide && !isPreview) {
+          hideWidget();
+        } else {
+          showWidget();
+        }
       }
     }
   }
@@ -573,12 +559,12 @@
   function showWidget() {
     aucWidgetEl.classList.remove('widget-hidden');
     aucWidgetEl.classList.add('widget-visible');
-    aucWidgetEl.style.opacity = '1';
     aucWidgetEl.style.display = 'block';
   }
 
   function hideWidget() {
-    showWidget(); // Always remain visible in OBS
+    aucWidgetEl.classList.remove('widget-visible');
+    aucWidgetEl.classList.add('widget-hidden');
   }
 
   function renderContenders(topList, highestCoins) {
@@ -605,7 +591,7 @@
             <div class="flex items-center gap-1.5 min-w-0">
               <span class="text-[10px] font-black shrink-0 text-gray-300">${rankBadges[i]}</span>
               <div class="shrink-0">
-                ${renderAvatarHtml(c.profile_picture, c.sender, 22, 'border ' + borders[i])}
+                ${renderAvatarHtml(c.profile_picture, c.unique_id || c.sender, 22, 'border ' + borders[i])}
               </div>
               <div class="flex flex-col min-w-0">
                 <span class="text-xs font-bold text-white truncate max-w-[75px] leading-tight">
@@ -645,7 +631,8 @@
     winnerAucTitle.innerText = auc.title || 'ประมูลสด TikTok LIVE';
     winnerNameEl.innerText = `@${auc.winner_name}`;
     winnerCoinsEl.innerText = `${(auc.winning_coins || 0).toLocaleString()} Coins`;
-    winnerAvatarContainer.innerHTML = renderAvatarHtml(auc.winner_avatar, auc.winner_name, 64, 'border-2 border-amber-400 shadow-xl');
+    const lookupWinner = auc.winner_unique_id || auc.winner_name;
+    winnerAvatarContainer.innerHTML = renderAvatarHtml(auc.winner_avatar, lookupWinner, 64, 'border-2 border-amber-400 shadow-xl');
 
     winnerTakeover.classList.add('active');
 
@@ -691,6 +678,10 @@
       clearInterval(celebrationInterval);
       celebrationInterval = null;
     }
+    try {
+      sndApplause.pause();
+      sndApplause.currentTime = 0;
+    } catch(e) {}
     winnerShown = false;
     winnerTakeover.classList.remove('active');
     stopConfetti();
@@ -855,13 +846,6 @@
   }
 
   connectWs();
-
-  setInterval(() => {
-    if (localAuctionActive && !localAuctionPaused && localAuctionRem > 0) {
-      localAuctionRem--;
-      updateAuctionTimerUI(localAuctionRem);
-    }
-  }, 1000);
 </script>
 </body>
 </html>

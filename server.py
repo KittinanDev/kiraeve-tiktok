@@ -702,9 +702,11 @@ class TikFinityAuctionState:
         self.is_winner_announced = False
         self.bids.clear()
         self.bidder_avatars.clear()
+        self.bidder_unique_ids.clear()
         self.bidder_last_gifts.clear()
         self.bid_history.clear()
         self.winner_name = "-"
+        self.winner_unique_id = ""
         self.winning_coins = 0
         self.winner_avatar = ""
         self.remaining_seconds = self.initial_duration
@@ -712,7 +714,7 @@ class TikFinityAuctionState:
 
     def to_dict(self) -> dict:
         top_bidders = self.get_top_bidders(5)
-        highest = top_bidders[0] if top_bidders else {"sender": "-", "coins": 0, "profile_picture": ""}
+        highest = top_bidders[0] if top_bidders else {"sender": "-", "unique_id": "-", "coins": 0, "profile_picture": ""}
         is_unlimited = bool(self.target_coins <= 0)
         return {
             "title": self.title,
@@ -720,6 +722,7 @@ class TikFinityAuctionState:
             "is_unlimited": is_unlimited,
             "unlimited_coins": is_unlimited,
             "highest_bidder": highest["sender"],
+            "highest_unique_id": highest.get("unique_id", highest["sender"]),
             "highest_bid": highest["coins"],
             "highest_avatar": highest.get("profile_picture", ""),
             "top_bidders": top_bidders,
@@ -729,6 +732,7 @@ class TikFinityAuctionState:
             "is_paused": self.is_paused,
             "is_winner_announced": self.is_winner_announced,
             "winner_name": self.winner_name,
+            "winner_unique_id": self.winner_unique_id or self.winner_name,
             "winning_coins": self.winning_coins,
             "winner_avatar": self.winner_avatar,
             "auto_extend_sec": self.auto_extend_sec,
@@ -1484,6 +1488,8 @@ async def handle_mock_event(request: web.Request) -> web.Response:
             profile_picture = data.get("profile_picture") or data.get("profilePictureUrl") or ""
             count = int(data.get("count", 1))
             coins = int(data.get("coins", 1)) * count
+            gift_name_clean = (gift_name or "").strip()
+            norm_incoming = normalize_gift_name(gift_name_clean)
             
             raw_icon = data.get("gift_icon") or data.get("giftIcon")
             if raw_icon and str(raw_icon).startswith("http"):
