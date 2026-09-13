@@ -437,7 +437,7 @@ tailwind.config = {
       <div class="flex items-center justify-between px-1">
         <span class="text-[11px] text-on-surface-variant font-mono flex items-center gap-1">
           <span class="material-symbols-outlined text-[13px]">package_2</span>
-          <span>v</span><span id="sidebar-app-version">1.0.9</span>
+          <span>v</span><span id="sidebar-app-version">1.1.0</span>
         </span>
         <button onclick="openUpdateModal()" id="sidebar-update-btn"
           class="flex items-center gap-1 text-[11px] font-semibold text-amber-500 hover:text-amber-400 transition-colors group">
@@ -450,7 +450,7 @@ tailwind.config = {
         <span class="material-symbols-outlined text-[15px] text-amber-500 animate-bounce">system_update</span>
         <div class="flex-1 min-w-0">
           <p class="text-[11px] font-semibold text-amber-500 truncate">อัปเดตใหม่พร้อมแล้ว!</p>
-          <p class="text-[10px] text-on-surface-variant truncate" id="sidebar-update-version">v1.0.9</p>
+          <p class="text-[10px] text-on-surface-variant truncate" id="sidebar-update-version">v1.1.0</p>
         </div>
       </div>
     </div>
@@ -2513,33 +2513,21 @@ tailwind.config = {
         <!-- Hidden File Input for Quick Inline Sound Upload -->
         <input type="file" id="inline-sound-file-input" accept=".mp3,.wav,.ogg,.m4a" class="hidden" onchange="uploadInlineSoundFile(this)">
 
-        <!-- Section 1: Upload Custom Sound MP3 File -->
-        <div class="bg-tik-card border border-tik-card-border rounded-xl p-5 space-y-3">
-          <div class="flex justify-between items-center pb-2 border-b border-tik-card-border">
-            <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-tik-pink text-xl">cloud_upload</span>
-              <h2 class="text-base font-bold text-white">Upload Custom MP3 Sound Effect</h2>
-            </div>
-            <span class="text-xs text-tik-cyan font-mono">.MP3, .WAV, .OGG, .M4A</span>
-          </div>
-
-          <div class="flex flex-col sm:flex-row gap-3 items-center">
-            <input type="file" id="sound-file-input" accept=".mp3,.wav,.ogg,.m4a" class="flex-1 bg-tik-bg border border-tik-card-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tik-pink file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-tik-pink file:text-white hover:file:bg-tik-pink-hover cursor-pointer">
-            <button onclick="uploadCustomSound()" class="bg-tik-pink hover:bg-tik-pink-hover text-white font-bold px-5 py-2.5 rounded-lg text-xs transition-colors flex items-center gap-2 shadow-lg w-full sm:w-auto justify-center">
-              <span class="material-symbols-outlined text-[18px]">upload</span>
-              <span>Upload MP3 Sound</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Section 2: Audio File Library -->
+        <!-- Section 1: Audio File Library & Sound Upload -->
         <div class="bg-tik-card border border-tik-card-border rounded-xl p-5 space-y-4">
-          <div class="flex justify-between items-center pb-2 border-b border-tik-card-border">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-2 border-b border-tik-card-border">
             <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-amber-500 text-xl">folder_open</span>
-              <h2 class="text-base font-bold text-white">Audio Files Library (คลังไฟล์เสียงในระบบ)</h2>
+              <span class="material-symbols-outlined text-tik-pink text-xl">folder_open</span>
+              <div>
+                <h2 class="text-base font-bold text-white">Audio Files Library (คลังไฟล์เสียงในระบบ)</h2>
+                <p class="text-xs text-on-surface-variant">อัปโหลดไฟล์เสียงเอฟเฟกต์สำหรับแจ้งเตือนของขวัญ รองรับ .mp3, .wav, .ogg, .m4a</p>
+              </div>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <button onclick="document.getElementById('inline-sound-file-input').click()" class="bg-tik-pink hover:bg-tik-pink-hover text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-lg">
+                <span class="material-symbols-outlined text-[16px]">upload</span>
+                <span>Upload Sound (MP3/WAV)</span>
+              </button>
               <button onclick="loadSoundsList()" class="text-xs text-tik-cyan font-bold hover:underline flex items-center gap-1">
                 <span class="material-symbols-outlined text-[14px]">refresh</span> Refresh Library
               </button>
@@ -2766,8 +2754,8 @@ tailwind.config = {
     // โหลดเวอร์ชันจาก Electron หรือ fallback 1.0.0
     if (window.kiraeveUpdater) {
       window.kiraeveUpdater.getVersion().then(v => {
-        document.getElementById('modal-current-version').innerText = v || '1.0.9';
-        document.getElementById('sidebar-app-version').innerText = v || '1.0.9';
+        document.getElementById('modal-current-version').innerText = v || '1.1.0';
+        document.getElementById('sidebar-app-version').innerText = v || '1.1.0';
       });
     }
     // หากยังไม่เคยเช็กหรืออยู่ในหน้า idle ให้เริ่มเช็กอัปเดตอัตโนมัติทันที
@@ -3802,7 +3790,7 @@ tailwind.config = {
           <td class="py-2.5 px-2 text-right">
             <div class="flex items-center justify-end gap-1">
               <button onclick="previewVideoAlert('/media/Video/' + encodeURIComponent('${m.video_file}'))" class="bg-tik-card-border hover:bg-tik-sidebar text-white px-2 py-1 rounded text-[11px]" title="Preview Video"><span class="material-symbols-outlined text-sm">play_arrow</span></button>
-              <button onclick="removeVideoMappingRow(${idx})" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 px-2 py-1 rounded text-[11px]" title="Remove Row"></button>
+              <button onclick="removeVideoMappingRow(${idx})" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 px-2 py-1 rounded text-[11px] flex items-center justify-center" title="Remove Row"><span class="material-symbols-outlined text-sm">delete</span></button>
             </div>
           </td>
         </tr>
@@ -3845,6 +3833,126 @@ tailwind.config = {
       body: JSON.stringify({ gift_video_mappings: currentVideoMappings })
     });
     appendLog('[SAVE] บันทึกการตั้งค่าวิดีโอแจ้งเตือน (Video Alerts) เรียบร้อยแล้ว!');
+  }
+
+  // ============================================================
+  // Audio Files Library & Sound Upload Management
+  // ============================================================
+  async function loadSoundsList() {
+    try {
+      const res = await fetch('/api/sounds');
+      const data = await res.json();
+      availableSoundFiles = data.sounds || [];
+      renderSoundsLibrary();
+      renderGiftMappingsTable();
+    } catch (e) {
+      console.error('Error loading sounds:', e);
+    }
+  }
+
+  function renderSoundsLibrary() {
+    const container = document.getElementById('sound-library-list');
+    if (!container) return;
+    if (!availableSoundFiles || availableSoundFiles.length === 0) {
+      container.innerHTML = '<div class="text-xs text-on-surface-variant py-4 text-center col-span-full">ยังไม่มีไฟล์เสียงในคลัง Soundeffect/</div>';
+      return;
+    }
+    container.innerHTML = availableSoundFiles.map(s => `
+      <div class="bg-tik-bg border border-tik-card-border rounded-lg p-3 flex items-center justify-between gap-2">
+        <div class="truncate">
+          <div class="font-bold text-white text-xs truncate" title="${s.name}">${s.name}</div>
+          <div class="text-[10px] text-tik-cyan font-mono">${s.size_kb} KB</div>
+        </div>
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+          <button onclick="playAudioPreview('${s.url}')" class="bg-tik-card-border hover:bg-tik-sidebar text-white p-1.5 rounded text-xs flex items-center justify-center" title="Test Sound">
+            <span class="material-symbols-outlined text-[16px] text-tik-emerald">play_arrow</span>
+          </button>
+          <button onclick="deleteSoundFile('${s.name}')" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 p-1.5 rounded text-xs flex items-center justify-center" title="Delete Sound">
+            <span class="material-symbols-outlined text-[16px]">delete</span>
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function triggerInlineAudioPicker() {
+    const input = document.getElementById('inline-sound-file-input');
+    if (input) input.click();
+  }
+
+  async function uploadInlineSoundFile(input) {
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    appendLog(`[UPLOAD] กำลังอัปโหลดไฟล์เสียง "${file.name}"...`);
+    try {
+      const res = await fetch('/api/upload-sound', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.ok) {
+        appendLog(`[OK] อัปโหลดไฟล์เสียงสำเร็จ: ${data.filename}`);
+        input.value = '';
+        await loadSoundsList();
+      } else {
+        alert('อัปโหลดล้มเหลว: ' + (data.error || 'Unknown error'));
+      }
+    } catch(e) {
+      alert('Upload error: ' + e);
+    }
+  }
+
+  async function uploadCustomSound() {
+    const input = document.getElementById('sound-file-input') || document.getElementById('inline-sound-file-input');
+    if (!input || !input.files || input.files.length === 0) {
+      if (document.getElementById('inline-sound-file-input')) {
+        document.getElementById('inline-sound-file-input').click();
+      }
+      return;
+    }
+    await uploadInlineSoundFile(input);
+  }
+
+  async function deleteSoundFile(filename) {
+    if (!confirm(`คุณต้องการลบไฟล์เสียง "${filename}" ใช่หรือไม่?`)) return;
+    try {
+      const res = await fetch(`/api/delete-sound?filename=${encodeURIComponent(filename)}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.ok) {
+        appendLog(`[DELETE] ลบไฟล์เสียง: ${filename}`);
+        await loadSoundsList();
+      } else {
+        alert('ไม่สามารถลบไฟล์ได้: ' + (data.error || 'Unknown error'));
+      }
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  let activeLocalAudio = null;
+  function playAudioPreview(url) {
+    if (activeLocalAudio) {
+      activeLocalAudio.pause();
+      activeLocalAudio.currentTime = 0;
+    }
+    activeLocalAudio = new Audio(url);
+    activeLocalAudio.play().catch(e => {});
+  }
+
+  async function stopAllAudioPlayback() {
+    if (activeLocalAudio) {
+      activeLocalAudio.pause();
+      activeLocalAudio.currentTime = 0;
+      activeLocalAudio = null;
+    }
+    try {
+      await fetch('/api/mock-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_type: 'stop_audio' })
+      });
+    } catch(e) {}
+    appendLog('[AUDIO] สั่งหยุดเล่นเสียงทั้งหมด (Stop All Audio) สำเร็จ!');
   }
 
   // Render Per-Gift Sound Alert Mappings Table (Updated with Searchable Gift Picker)
@@ -3905,7 +4013,7 @@ tailwind.config = {
           <td class="py-2.5 px-2 text-right">
             <div class="flex items-center justify-end gap-1">
               <button onclick="playAudioPreview('/soundeffect/' + '${m.sound_file}')" class="bg-tik-card-border hover:bg-tik-sidebar text-white px-2 py-1 rounded text-[11px]" title="Play Sound"><span class="material-symbols-outlined text-sm">play_arrow</span> PLAY</button>
-              <button onclick="removeGiftMappingRow(${idx})" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 px-2 py-1 rounded text-[11px]" title="Remove Row"></button>
+              <button onclick="removeGiftMappingRow(${idx})" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 px-2 py-1 rounded text-[11px] flex items-center justify-center" title="Remove Row"><span class="material-symbols-outlined text-sm">delete</span></button>
             </div>
           </td>
         </tr>
@@ -4008,7 +4116,7 @@ tailwind.config = {
             <input type="checkbox" ${m.enabled !== false ? 'checked' : ''} onchange="updateTimerMappingField(${idx}, 'enabled', this.checked)" class="toggle-checkbox">
           </td>
           <td class="py-2.5 px-2 text-right">
-            <button onclick="removeTimerMappingRow(${idx})" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 px-2 py-1 rounded text-[11px]" title="Remove Rule"></button>
+            <button onclick="removeTimerMappingRow(${idx})" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 px-2 py-1 rounded text-[11px] flex items-center justify-center" title="Remove Rule"><span class="material-symbols-outlined text-sm">delete</span></button>
           </td>
         </tr>
       `;

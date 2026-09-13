@@ -858,6 +858,7 @@ async def schedule_gacha_gift_drop(delay: float, gift_info: dict, sender: str, p
         "sound_effect": s_url,
         "sound_volume": s_vol,
         "video_alert": video_alert_data,
+        "video_effect": video_alert_data,
         "jar_count": jar_state.item_count,
         "jar_total_coins": jar_state.total_coins,
         "is_gacha_reward": True
@@ -965,6 +966,18 @@ async def handle_list_sounds(request: web.Request) -> web.Response:
             })
     return web.json_response({"sounds": sounds})
 
+def sanitize_upload_filename(raw_name: str, allowed_exts: list) -> str:
+    p = Path(raw_name)
+    ext = p.suffix.lower()
+    if not ext or ext not in allowed_exts:
+        return ""
+    stem = p.stem.strip()
+    # Replace dangerous path characters, preserving Unicode letters, numbers, spaces, and hyphens
+    clean_stem = re.sub(r'[\/\\:\*\?\"<>\|\x00-\x1f]+', '_', stem).strip()
+    if not clean_stem:
+        clean_stem = "upload_" + hashlib.md5(raw_name.encode('utf-8', 'ignore')).hexdigest()[:8]
+    return f"{clean_stem}{ext}"
+
 async def handle_upload_sound(request: web.Request) -> web.Response:
     try:
         reader = await request.multipart()
@@ -972,11 +985,11 @@ async def handle_upload_sound(request: web.Request) -> web.Response:
         if not field or field.name != 'file':
             return web.json_response({"ok": False, "error": "Missing file field"}, status=400)
         
-        filename = field.filename
-        if not filename or not any(filename.lower().endswith(ext) for ext in ['.mp3', '.wav', '.ogg', '.m4a']):
+        filename = field.filename or ""
+        safe_filename = sanitize_upload_filename(filename, ['.mp3', '.wav', '.ogg', '.m4a'])
+        if not safe_filename:
             return web.json_response({"ok": False, "error": "Only audio files (.mp3, .wav, .ogg, .m4a) are allowed"}, status=400)
         
-        safe_filename = re.sub(r'[^\w\.-]', '_', filename)
         file_path = SOUNDEFFECT_DIR / safe_filename
         
         size = 0
@@ -1151,11 +1164,11 @@ async def handle_upload_video(request: web.Request) -> web.Response:
         if not field or field.name != 'file':
             return web.json_response({"ok": False, "error": "Missing file field"}, status=400)
         
-        filename = field.filename
-        if not filename or not any(filename.lower().endswith(ext) for ext in ['.mp4', '.webm', '.mov']):
+        filename = field.filename or ""
+        safe_filename = sanitize_upload_filename(filename, ['.mp4', '.webm', '.mov'])
+        if not safe_filename:
             return web.json_response({"ok": False, "error": "Only video files (.mp4, .webm, .mov) are allowed"}, status=400)
         
-        safe_filename = re.sub(r'[^\w\.-]', '_', filename)
         file_path = VIDEO_DIR / safe_filename
         
         size = 0
@@ -1455,6 +1468,7 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                 "sound_effect": gacha_sound_url,
                 "sound_volume": sound_vol,
                 "video_effect": video_alert_data,
+                "video_alert": video_alert_data,
                 "added_seconds": added_seconds,
                 "timer_seconds": timer_state.seconds,
                 "timer_stats": timer_state.get_stats(),
@@ -1714,6 +1728,14 @@ async def handle_mock_event(request: web.Request) -> web.Response:
             payload = {
                 "type": "vfx_event",
                 "vfx_type": vfx_type,
+                "is_mock": True
+            }
+            await broadcast(payload)
+            return web.json_response({"ok": True, "broadcast": payload})
+
+        elif event_type in ["stop_audio", "stop_media", "stop_video"]:
+            payload = {
+                "type": "stop_audio",
                 "is_mock": True
             }
             await broadcast(payload)

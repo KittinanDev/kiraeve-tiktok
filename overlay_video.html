@@ -96,23 +96,60 @@
 
   const videoQueue = [];
   let isPlaying = false;
+  let currentPlaybackToken = 0;
+  let videoSafetyTimer = null;
 
-  function enqueueVideo(videoData) {
-    if (!videoData || !videoData.url) return;
-    videoQueue.push(videoData);
+  function enqueueVideo(videoData, repeatCount = 1) {
+    if (!videoData) return;
+    const url = videoData.url || (videoData.video_file ? ('/media/Video/' + encodeURIComponent(videoData.video_file)) : '');
+    if (!url) return;
+
+    const count = Math.max(1, Math.min(10, parseInt(repeatCount || videoData.count || 1)));
+    for (let i = 0; i < count; i++) {
+      videoQueue.push({
+        url: url,
+        position: videoData.position || 'center',
+        scale: videoData.scale !== undefined ? parseFloat(videoData.scale) : 1.0,
+        volume: videoData.volume !== undefined ? parseFloat(videoData.volume) : 0.8
+      });
+    }
+
     if (!isPlaying) {
       playNextVideo();
     }
   }
 
+  function stopAllVideoPlayback() {
+    currentPlaybackToken++;
+    if (videoSafetyTimer) {
+      clearTimeout(videoSafetyTimer);
+      videoSafetyTimer = null;
+    }
+    videoQueue.length = 0;
+    videoContainer.classList.remove('visible');
+    try {
+      alertVideo.pause();
+      alertVideo.currentTime = 0;
+      alertVideo.src = '';
+    } catch(e) {}
+    isPlaying = false;
+  }
+
   function playNextVideo() {
     if (videoQueue.length === 0) {
       isPlaying = false;
+      videoContainer.classList.remove('visible');
       return;
     }
 
     isPlaying = true;
+    const myToken = ++currentPlaybackToken;
     const current = videoQueue.shift();
+
+    if (videoSafetyTimer) {
+      clearTimeout(videoSafetyTimer);
+      videoSafetyTimer = null;
+    }
 
     videoContainer.className = '';
     const pos = current.position || 'center';
@@ -121,37 +158,80 @@
     const scale = current.scale !== undefined ? current.scale : 1.0;
     alertVideo.style.transform = 'scale(' + scale + ')';
 
-    alertVideo.volume = current.volume !== undefined ? Math.max(0, Math.min(1, current.volume)) : 1.0;
-    alertVideo.src = current.url;
+    alertVideo.volume = current.volume !== undefined ? Math.max(0, Math.min(1, current.volume)) : 0.8;
+    alertVideo.muted = false;
+
+    // Remove previous listeners
+    alertVideo.onloadedmetadata = null;
+    alertVideo.onended = null;
+    alertVideo.onerror = null;
+
+    let isVideoFinished = false;
+    function finalizeCurrentVideo() {
+      if (isVideoFinished || myToken !== currentPlaybackToken) return;
+      isVideoFinished = true;
+      if (videoSafetyTimer) {
+        clearTimeout(videoSafetyTimer);
+        videoSafetyTimer = null;
+      }
+      finishVideo(myToken);
+    }
 
     alertVideo.onloadedmetadata = () => {
+      if (myToken !== currentPlaybackToken) return;
+      const durationSec = alertVideo.duration;
+      // Set safety watchdog timer (video duration + 2s padding, or fallback 25s)
+      const timeoutMs = (durationSec && !isNaN(durationSec) && durationSec > 0)
+        ? Math.ceil((durationSec + 2) * 1000)
+        : 25000;
+      videoSafetyTimer = setTimeout(() => {
+        finalizeCurrentVideo();
+      }, timeoutMs);
+
       alertVideo.play().then(() => {
-        videoContainer.classList.add('visible');
+        if (myToken === currentPlaybackToken) {
+          videoContainer.classList.add('visible');
+        }
       }).catch(err => {
         console.warn('Auto-play blocked or video failed:', err);
-        finishVideo();
+        finalizeCurrentVideo();
       });
     };
 
     alertVideo.onended = () => {
-      finishVideo();
+      finalizeCurrentVideo();
     };
 
     alertVideo.onerror = () => {
       console.warn('Video failed to load:', current.url);
-      finishVideo();
+      finalizeCurrentVideo();
     };
+
+    // Fallback load timeout if metadata never fires (e.g. 404 or stalled network)
+    videoSafetyTimer = setTimeout(() => {
+      finalizeCurrentVideo();
+    }, 12000);
+
+    alertVideo.src = current.url;
+    alertVideo.load();
   }
 
-  function finishVideo() {
+  function finishVideo(token) {
+    if (token !== currentPlaybackToken) return;
     videoContainer.classList.remove('visible');
     setTimeout(() => {
-      alertVideo.pause();
-      alertVideo.src = '';
+      if (token !== currentPlaybackToken) return;
+      try {
+        alertVideo.pause();
+        alertVideo.currentTime = 0;
+        alertVideo.src = '';
+      } catch(e) {}
       setTimeout(() => {
-        playNextVideo();
-      }, 200);
-    }, 300);
+        if (token === currentPlaybackToken) {
+          playNextVideo();
+        }
+      }, 150);
+    }, 250);
   }
 
   function connectWebSocket() {
@@ -166,10 +246,15 @@
           return;
         }
 
-        if (data.type === 'gift' && data.video_effect) {
-          enqueueVideo(data.video_effect);
-        } else if (data.type === 'video_alert') {
-          enqueueVideo(data);
+        if (data.type === 'stop_audio' || data.type === 'stop_video') {
+          stopAllVideoPlayback();
+          return;
+        }
+
+        const vAlert = data.video_effect || data.video_alert;
+        if (vAlert) {
+          const repeat = data.count || vAlert.count || 1;
+          enqueueVideo(vAlert, repeat);
         }
       } catch(e) {}
     };
