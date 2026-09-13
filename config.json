@@ -85,14 +85,18 @@
   },
   "auction_config": {
     "enabled": true,
-    "title": "ประมูลสด: เล่นเกมตามสั่ง 1 ตา",
-    "target_coins": 500,
+    "title": "ประมูล: ร้องเพลงตามใจผู้ชนะ",
+    "target_coins": 300,
     "duration_seconds": 180,
     "min_increment": 1,
-    "auto_extend_sec": 20,
-    "celebration_duration_sec": 4,
+    "auto_extend_sec": 15,
+    "celebration_duration_sec": 2,
     "auto_hide_on_end": true,
-    "scale": 1.0
+    "scale": 1.0,
+    "unlimited": false,
+    "unlimited_coins": false,
+    "trigger_gift_name": "Rose",
+    "auto_start": true
   },
   "gacha_config": {
     "enabled": true,
