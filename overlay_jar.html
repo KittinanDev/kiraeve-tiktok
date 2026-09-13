@@ -212,17 +212,19 @@
 
   const giftIconsCache = {};
   function loadGiftIconImage(iconUrl, giftName) {
-    let resolvedUrl = iconUrl;
-    if (!resolvedUrl && giftName) {
+    let resolvedUrl = '';
+    if (iconUrl && iconUrl.startsWith('http')) {
+      resolvedUrl = `/api/gift-icon?name=${encodeURIComponent(giftName || 'gift')}&url=${encodeURIComponent(iconUrl)}`;
+    } else if (giftName) {
       resolvedUrl = `/api/gift-icon?name=${encodeURIComponent(giftName)}`;
-    }
-    if (!resolvedUrl) {
+    } else {
       resolvedUrl = "/api/gift-icon?name=rose";
     }
     if (giftIconsCache[resolvedUrl]) return giftIconsCache[resolvedUrl];
     const img = new Image();
     img.src = resolvedUrl;
     img.onerror = () => {
+      img.onerror = null;
       if (!img.src.includes('/api/gift-icon?name=rose')) {
         img.src = "/api/gift-icon?name=rose";
       }

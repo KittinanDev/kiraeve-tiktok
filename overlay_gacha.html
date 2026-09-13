@@ -45,13 +45,13 @@
   /* Reel Outer Frame */
   .reel-container {
     width: 760px;
-    height: 195px;
+    height: 190px;
     position: relative;
     overflow: hidden;
-    background: linear-gradient(180deg, #16181f 0%, #0d0e12 100%);
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(180deg, #14161d 0%, #0a0b0f 100%);
+    border: 2px solid rgba(255, 255, 255, 0.12);
     border-radius: 1rem;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(0, 0, 0, 0.9);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), inset 0 0 40px rgba(0, 0, 0, 0.95);
   }
 
   .reel-content {
@@ -59,7 +59,7 @@
     gap: 12px;
     position: absolute;
     left: 0;
-    top: 15px;
+    top: 14px;
     will-change: transform;
     transform: translate3d(0, 0, 0);
   }
@@ -68,104 +68,134 @@
   .prize-card {
     min-width: 126px;
     width: 126px;
-    height: 162px;
+    height: 158px;
     border-radius: 0.75rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     position: relative;
     box-sizing: border-box;
     opacity: 0.75;
     transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s, box-shadow 0.35s;
     flex-shrink: 0;
-    padding: 8px;
+    padding: 10px 8px 8px 8px;
     user-select: none;
-    border-width: 2px;
+    border-width: 1.5px;
     border-style: solid;
+    background: #181a24;
+    overflow: hidden;
   }
 
-  /* Rarity Tier Themes */
+  /* Bottom Rarity Stripe */
+  .prize-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+  }
+
+  /* Tier Styling */
   .prize-card.legendary {
-    background: linear-gradient(145deg, rgba(64, 40, 5, 0.9) 0%, rgba(120, 75, 10, 0.95) 100%);
-    border-color: #fbbf24;
-    box-shadow: inset 0 0 15px rgba(251, 191, 36, 0.25);
+    background: linear-gradient(180deg, rgba(30, 22, 10, 0.95) 0%, rgba(20, 15, 8, 0.98) 100%);
+    border-color: rgba(245, 158, 11, 0.45);
   }
-  .prize-card.epic {
-    background: linear-gradient(145deg, rgba(40, 15, 75, 0.9) 0%, rgba(85, 25, 140, 0.95) 100%);
-    border-color: #c084fc;
-    box-shadow: inset 0 0 15px rgba(192, 132, 252, 0.25);
-  }
-  .prize-card.rare {
-    background: linear-gradient(145deg, rgba(8, 45, 30, 0.9) 0%, rgba(15, 80, 55, 0.95) 100%);
-    border-color: #34d399;
-    box-shadow: inset 0 0 15px rgba(52, 211, 153, 0.25);
-  }
-  .prize-card.hazard {
-    background: linear-gradient(145deg, rgba(60, 10, 15, 0.9) 0%, rgba(120, 20, 30, 0.95) 100%);
-    border-color: #f87171;
-    box-shadow: inset 0 0 15px rgba(248, 113, 113, 0.25);
-  }
-  .prize-card.common {
-    background: linear-gradient(145deg, rgba(25, 30, 40, 0.9) 0%, rgba(45, 55, 70, 0.95) 100%);
-    border-color: #94a3b8;
-    box-shadow: inset 0 0 10px rgba(148, 163, 184, 0.15);
-  }
-  .prize-card.custom {
-    background: linear-gradient(145deg, rgba(30, 20, 50, 0.9) 0%, rgba(60, 30, 90, 0.95) 100%);
-    border-color: #ec4899;
-    box-shadow: inset 0 0 15px rgba(236, 72, 153, 0.25);
+  .prize-card.legendary::after {
+    background: #f59e0b;
+    box-shadow: 0 0 8px #f59e0b;
   }
 
-  /* Winner Highlight Glow & Pop */
+  .prize-card.epic {
+    background: linear-gradient(180deg, rgba(28, 14, 45, 0.95) 0%, rgba(18, 10, 30, 0.98) 100%);
+    border-color: rgba(192, 132, 252, 0.45);
+  }
+  .prize-card.epic::after {
+    background: #c084fc;
+    box-shadow: 0 0 8px #c084fc;
+  }
+
+  .prize-card.rare {
+    background: linear-gradient(180deg, rgba(8, 30, 24, 0.95) 0%, rgba(6, 20, 16, 0.98) 100%);
+    border-color: rgba(52, 211, 153, 0.45);
+  }
+  .prize-card.rare::after {
+    background: #34d399;
+    box-shadow: 0 0 8px #34d399;
+  }
+
+  .prize-card.hazard {
+    background: linear-gradient(180deg, rgba(35, 10, 14, 0.95) 0%, rgba(22, 6, 9, 0.98) 100%);
+    border-color: rgba(248, 113, 113, 0.45);
+  }
+  .prize-card.hazard::after {
+    background: #f87171;
+    box-shadow: 0 0 8px #f87171;
+  }
+
+  .prize-card.common {
+    background: linear-gradient(180deg, rgba(22, 25, 34, 0.95) 0%, rgba(15, 17, 24, 0.98) 100%);
+    border-color: rgba(148, 163, 184, 0.3);
+  }
+  .prize-card.common::after {
+    background: #94a3b8;
+  }
+
+  .prize-card.gift {
+    background: linear-gradient(180deg, rgba(40, 20, 10, 0.95) 0%, rgba(25, 12, 6, 0.98) 100%);
+    border-color: rgba(251, 191, 36, 0.6);
+  }
+  .prize-card.gift::after {
+    background: linear-gradient(90deg, #f59e0b, #ec4899);
+    box-shadow: 0 0 10px #f59e0b;
+  }
+
+  /* Winner Highlight Glow */
   .prize-card.winner-glow {
     opacity: 1 !important;
-    transform: scale(1.1) translate3d(0, -2px, 0);
+    transform: scale(1.08) translate3d(0, -2px, 0);
     z-index: 35;
     animation: winnerPulse 1.2s infinite alternate ease-in-out;
   }
 
-  .prize-card.legendary.winner-glow {
-    border-color: #ffe066;
-    box-shadow: 0 0 35px rgba(255, 215, 0, 0.8), 0 0 70px rgba(255, 180, 0, 0.4), inset 0 0 25px rgba(255, 215, 0, 0.5);
+  .prize-card.legendary.winner-glow, .prize-card.gift.winner-glow {
+    border-color: #f59e0b;
+    box-shadow: 0 0 35px rgba(245, 158, 11, 0.8), 0 0 65px rgba(245, 158, 11, 0.35);
   }
   .prize-card.epic.winner-glow {
-    border-color: #e9d5ff;
-    box-shadow: 0 0 35px rgba(192, 132, 252, 0.8), 0 0 70px rgba(168, 85, 247, 0.4), inset 0 0 25px rgba(192, 132, 252, 0.5);
+    border-color: #c084fc;
+    box-shadow: 0 0 35px rgba(192, 132, 252, 0.8), 0 0 65px rgba(168, 85, 247, 0.35);
   }
   .prize-card.rare.winner-glow {
-    border-color: #a7f3d0;
-    box-shadow: 0 0 35px rgba(52, 211, 153, 0.8), 0 0 70px rgba(16, 185, 129, 0.4), inset 0 0 25px rgba(52, 211, 153, 0.5);
+    border-color: #34d399;
+    box-shadow: 0 0 35px rgba(52, 211, 153, 0.8), 0 0 65px rgba(16, 185, 129, 0.35);
   }
   .prize-card.hazard.winner-glow {
-    border-color: #fca5a5;
-    box-shadow: 0 0 35px rgba(248, 113, 113, 0.8), 0 0 70px rgba(239, 68, 68, 0.4), inset 0 0 25px rgba(248, 113, 113, 0.5);
+    border-color: #f87171;
+    box-shadow: 0 0 35px rgba(248, 113, 113, 0.8), 0 0 65px rgba(239, 68, 68, 0.35);
   }
   .prize-card.common.winner-glow {
     border-color: #f1f5f9;
-    box-shadow: 0 0 35px rgba(203, 213, 225, 0.8), 0 0 60px rgba(148, 163, 184, 0.4);
-  }
-  .prize-card.custom.winner-glow {
-    border-color: #fbcfe8;
-    box-shadow: 0 0 35px rgba(236, 72, 153, 0.8), 0 0 70px rgba(219, 39, 119, 0.4), inset 0 0 25px rgba(236, 72, 153, 0.5);
+    box-shadow: 0 0 30px rgba(203, 213, 225, 0.7);
   }
 
   @keyframes winnerPulse {
     0% { transform: scale(1.08) translate3d(0, -2px, 0); }
-    100% { transform: scale(1.14) translate3d(0, -4px, 0); }
+    100% { transform: scale(1.12) translate3d(0, -4px, 0); }
   }
 
-  /* Center Indicator Marker */
+  /* Center Indicator Needle */
   .center-marker {
     position: absolute;
     top: 0;
     bottom: 0;
     left: 50%;
-    width: 3px;
-    background: linear-gradient(180deg, #ffd700 0%, #f59e0b 50%, #ffd700 100%);
+    width: 2px;
+    background: #ffd700;
     transform: translateX(-50%);
     z-index: 30;
-    box-shadow: 0 0 16px #ffd700, 0 0 30px rgba(245, 158, 11, 0.6);
+    box-shadow: 0 0 14px #ffd700;
   }
   .center-marker::before {
     content: '';
@@ -173,10 +203,10 @@
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    border-left: 9px solid transparent;
-    border-right: 9px solid transparent;
-    border-top: 14px solid #ffd700;
-    filter: drop-shadow(0 2px 5px rgba(0,0,0,0.8));
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 13px solid #ffd700;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
   }
   .center-marker::after {
     content: '';
@@ -184,10 +214,10 @@
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    border-left: 9px solid transparent;
-    border-right: 9px solid transparent;
-    border-bottom: 14px solid #ffd700;
-    filter: drop-shadow(0 -2px 5px rgba(0,0,0,0.8));
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 13px solid #ffd700;
+    filter: drop-shadow(0 -2px 4px rgba(0,0,0,0.8));
   }
 
   /* Blur Vignette Overlays */
@@ -195,43 +225,32 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 130px;
+    width: 120px;
     pointer-events: none;
     z-index: 25;
   }
   .blur-left {
     left: 0;
-    background: linear-gradient(90deg, #0d0e12 15%, rgba(13, 14, 18, 0.8) 50%, rgba(13, 14, 18, 0) 100%);
+    background: linear-gradient(90deg, #0a0b0f 15%, rgba(10, 11, 15, 0.8) 50%, rgba(10, 11, 15, 0) 100%);
   }
   .blur-right {
     right: 0;
-    background: linear-gradient(270deg, #0d0e12 15%, rgba(13, 14, 18, 0.8) 50%, rgba(13, 14, 18, 0) 100%);
-  }
-
-  /* Card Shimmer Animation */
-  .shimmer-badge {
-    background-size: 200% auto;
-    animation: shimmerGlow 2.5s linear infinite;
-  }
-  @keyframes shimmerGlow {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    background: linear-gradient(270deg, #0a0b0f 15%, rgba(10, 11, 15, 0.8) 50%, rgba(10, 11, 15, 0) 100%);
   }
 </style>
 </head>
 <body id="body-el">
 
   <div id="scale-wrapper">
-    <!-- Viewer Spotlight Banner (Shows who opened the box) -->
-    <div id="viewer-spotlight" class="mb-3 flex items-center gap-3 bg-gray-900/95 border border-purple-500/40 px-4 py-2 rounded-full shadow-2xl backdrop-blur-md transition-all duration-300">
-      <img id="viewer-avatar" src="/api/avatar-proxy?url=https://p16-va-tiktok.ibyteimg.com/img/musically-maliva-obj/default-avatar.jpeg" class="w-8 h-8 rounded-full border-2 border-purple-400 object-cover shadow-sm" onerror="this.src='/api/gift-icon?name=Rose'">
+    <!-- Viewer Spotlight Banner -->
+    <div id="viewer-spotlight" class="mb-3 flex items-center gap-2.5 bg-gray-900/95 border border-amber-500/40 px-3.5 py-1.5 rounded-full shadow-2xl backdrop-blur-md transition-all duration-300">
+      <img id="viewer-avatar" src="/api/avatar-proxy?url=https://p16-va-tiktok.ibyteimg.com/img/musically-maliva-obj/default-avatar.jpeg" class="w-7 h-7 rounded-full border border-amber-400 object-cover shadow-sm" onerror="this.src='/api/gift-icon?name=Rose'">
       <div class="flex items-center gap-2 text-xs">
-        <span class="text-purple-300 font-extrabold text-sm" id="viewer-name">@Kaneo</span>
+        <span class="text-amber-300 font-extrabold text-sm" id="viewer-name">@Supporter</span>
         <span class="text-gray-300">เปิดกล่องสุ่มด้วย</span>
-        <div class="flex items-center gap-1.5 bg-purple-950/60 border border-purple-500/30 px-2.5 py-0.5 rounded-full">
-          <img id="viewer-gift-icon" src="/api/gift-icon?name=Doughnut" class="w-5 h-5 object-contain">
-          <span class="text-amber-300 font-bold" id="viewer-gift-name">โดนัท (Doughnut)</span>
+        <div class="flex items-center gap-1 bg-amber-950/60 border border-amber-500/30 px-2 py-0.5 rounded-full">
+          <img id="viewer-gift-icon" src="/api/gift-icon?name=Doughnut" class="w-4 h-4 object-contain">
+          <span class="text-amber-300 font-bold text-[11px]" id="viewer-gift-name">Doughnut</span>
         </div>
       </div>
     </div>
@@ -241,59 +260,24 @@
       <div class="blur-overlay blur-left"></div>
       <div class="center-marker"></div>
       <div class="reel-content" id="gacha-reel-strip">
-        <!-- Default Initial Showcase Cards -->
-        <div class="prize-card rare">
-          <div class="w-11 h-11 rounded-full bg-emerald-950/70 border border-emerald-500/50 flex items-center justify-center mb-1 shadow">
-            <span class="material-symbols-outlined text-emerald-300 text-[26px]">monetization_on</span>
-          </div>
-          <span class="font-extrabold text-base text-white">+10</span>
-          <span class="font-mono text-[10px] text-emerald-400 font-bold mt-1 tracking-wider uppercase">RARE</span>
-        </div>
-        <div class="prize-card epic">
-          <div class="w-11 h-11 rounded-full bg-purple-950/70 border border-purple-500/50 flex items-center justify-center mb-1 shadow">
-            <span class="material-symbols-outlined text-purple-300 text-[26px]">verified</span>
-          </div>
-          <span class="font-extrabold text-base text-white">+30</span>
-          <span class="font-mono text-[10px] text-purple-300 font-bold mt-1 tracking-wider uppercase">EPIC</span>
-        </div>
-        <div class="prize-card legendary winner-glow">
-          <div class="w-11 h-11 rounded-full bg-amber-950/70 border border-amber-400/60 flex items-center justify-center mb-1 shadow">
-            <span class="material-symbols-outlined text-amber-300 text-[26px]">workspace_premium</span>
-          </div>
-          <span class="font-extrabold text-base text-amber-200">+300</span>
-          <span class="font-mono text-[10px] text-amber-300 font-bold mt-1 tracking-wider uppercase">LEGENDARY</span>
-        </div>
-        <div class="prize-card hazard">
-          <div class="w-11 h-11 rounded-full bg-red-950/70 border border-red-500/50 flex items-center justify-center mb-1 shadow">
-            <span class="material-symbols-outlined text-red-400 text-[26px]">warning</span>
-          </div>
-          <span class="font-extrabold text-base text-white">-30</span>
-          <span class="font-mono text-[10px] text-red-400 font-bold mt-1 tracking-wider uppercase">HAZARD</span>
-        </div>
-        <div class="prize-card common">
-          <div class="w-11 h-11 rounded-full bg-slate-800/80 border border-slate-600/50 flex items-center justify-center mb-1 shadow">
-            <span class="material-symbols-outlined text-slate-300 text-[26px]">category</span>
-          </div>
-          <span class="font-extrabold text-base text-white">+15</span>
-          <span class="font-mono text-[10px] text-slate-400 font-bold mt-1 tracking-wider uppercase">COMMON</span>
-        </div>
+        <!-- Placeholder items -->
       </div>
       <div class="blur-overlay blur-right"></div>
     </div>
 
-    <!-- Result Banner (Below Reel) -->
-    <div id="result-banner" class="mt-3 flex items-center gap-2 bg-gray-900/90 border border-amber-500/40 px-4 py-1.5 rounded-full shadow-lg opacity-0 transition-opacity duration-300">
+    <!-- Result Banner -->
+    <div id="result-banner" class="mt-3 flex items-center gap-2 bg-gray-900/95 border border-amber-500/40 px-4 py-1.5 rounded-full shadow-lg opacity-0 transition-opacity duration-300">
       <span class="material-symbols-outlined text-amber-400 text-[18px]">military_tech</span>
       <span class="text-xs text-gray-300 font-medium">ผลลัพธ์:</span>
       <span id="result-text" class="text-sm font-extrabold text-amber-300 font-mono">+300 วินาที</span>
-      <span id="result-sync-tag" class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold">⏱️ ซิงค์ Subathon สำเร็จ</span>
+      <span id="result-sync-tag" class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold">ซิงค์ Subathon สำเร็จ</span>
     </div>
   </div>
 
-  <!-- HTML5 Canvas Confetti Overlay -->
+  <!-- Confetti Overlay -->
   <canvas id="vfx-confetti-canvas" class="absolute top-0 left-0 w-full h-full pointer-events-none z-[120]"></canvas>
 
-  <!-- Audio Element for Winning Pop -->
+  <!-- Audio Element -->
   <audio id="win-sound" src="/soundeffect/dragon-studio-pop-402324.mp3" preload="auto"></audio>
 
 <script>
@@ -318,7 +302,6 @@
   let autoHideEnabled = true;
   let currentOverlayScale = 1.0;
 
-  // Set initial visibility
   if (isPreview) {
     scaleWrapper.style.opacity = '1';
     scaleWrapper.style.pointerEvents = 'auto';
@@ -333,7 +316,7 @@
     document.documentElement.style.setProperty('--overlay-scale', s);
   }
 
-  // --- Web Audio API Mechanical Ticking Synthesizer ---
+  // Audio Engine for Mechanical Ticking
   let audioCtx = null;
   function getAudioContext() {
     if (!audioCtx) {
@@ -380,8 +363,6 @@
       const ctx = getAudioContext();
       if (!ctx) return;
       const now = ctx.currentTime;
-      
-      // Dual click lock effect
       [600, 950].forEach((freq, i) => {
         const t = now + i * 0.035;
         const osc = ctx.createOscillator();
@@ -399,97 +380,88 @@
     } catch(e) {}
   }
 
-  // --- Card Rarity Classifier ---
-  let currentRarityNames = {
-    legendary: 'LEGENDARY',
-    epic: 'EPIC',
-    rare: 'RARE',
-    common: 'COMMON',
-    hazard: 'HAZARD',
-    custom: 'CUSTOM'
-  };
+  // Known gift icon resolver with clean name and fallback support
+  function getGiftIconUrl(giftName, rawUrl) {
+    if (rawUrl && String(rawUrl).startsWith('http')) {
+      return `/api/gift-icon?name=${encodeURIComponent(giftName || 'gift')}&url=${encodeURIComponent(rawUrl)}`;
+    }
+    if (!giftName) return '/api/gift-icon?name=Rose';
+    const clean = String(giftName)
+      .replace(/^(gift|ของขวัญ|ไอเทม|\ud83c\udf81)\s*[:\-]?\s*/i, '')
+      .replace(/\s*\((?:ลงโหล|gift|jar|ของขวัญ)\)\s*/i, '')
+      .trim();
+    return `/api/gift-icon?name=${encodeURIComponent(clean || giftName)}`;
+  }
 
+  // Parse card rarity and info
   function getRarityInfo(val) {
     let text = '';
+    let isGift = false;
+    let giftName = '';
+    let giftIcon = '';
     let customTier = 'auto';
     let customColor = '';
-    let customRarityName = '';
 
     if (typeof val === 'object' && val !== null) {
       text = String(val.text || val.name || '').trim();
       customTier = String(val.tier || val.rarity || 'auto').trim().toLowerCase();
       customColor = String(val.color || '').trim();
-      customRarityName = String(val.rarity_name || val.rarity_label || val.badge || '').trim();
+      isGift = val.type === 'gift' || val.is_gift || !!val.gift_name;
+      giftName = val.gift_name || (isGift ? text : '');
+      giftIcon = val.gift_icon || (isGift ? getGiftIconUrl(giftName, val.gift_icon) : '');
     } else {
       text = String(val || '').trim();
     }
 
     const s = text.toLowerCase();
 
-    // Standard Tier Metadata Table
+    // Check if item text represents a gift (English & Thai names, or keywords)
+    const commonGiftKeywords = [
+      'rose', 'doughnut', 'donut', 'lion', 'finger heart', 'heart me', 'paper crane',
+      'journey pass', 'galaxy', 'universe', 'fire phoenix', 'dragon', 'coronet', 'money gun',
+      'sports car', 'cap', 'gg', 'ice cream', 'whale', 'swan', 'firework', 'heart',
+      'castle', 'falcon', 'flying jet', 'rocket', 'boxing', 'trophy', 'volcano', 'cake',
+      'flower', 'coffee', 'popcorn', 'balloon', 'goggles', 'mirror', 'panda', 'diamond',
+      'mic', 'wink', 'love', 'perfume', 'crown', 'gamepad', 'chili', 'duck', 'star',
+      'กุหลาบ', 'โดนัท', 'สิงโต', 'หัวใจ', 'มินิฮาร์ท', 'จักรวาล', 'ยูนิเวิร์ส', 'มังกร',
+      'รถสปอร์ต', 'ปืนเงิน', 'หมวก', 'ไอศกรีม', 'นกกระดาษ', 'เค้ก', 'วาฬ', 'หงส์',
+      'พลุ', 'ปราสาท', 'จรวด', 'มวย', 'ถ้วย', 'กาแฟ', 'ป๊อปคอร์น', 'ลูกโป่ง', 'แว่น', 'มงกุฎ'
+    ];
+    if (!isGift && (commonGiftKeywords.some(g => s.includes(g)) || s.includes('ของขวัญ') || s.includes('gift'))) {
+      isGift = true;
+      const clean = text.replace(/^(gift|ของขวัญ|ไอเทม|\ud83c\udf81)\s*[:\-]?\s*/i, '').replace(/\s*\((?:ลงโหล|gift|jar|ของขวัญ)\)\s*/i, '').trim();
+      giftName = clean || text;
+      giftIcon = getGiftIconUrl(giftName);
+      if (customTier === 'auto') customTier = 'gift';
+    }
+
+    if (isGift) {
+      const cleanName = (giftName || text).replace(/^(gift|ของขวัญ|ไอเทม|\ud83c\udf81)\s*[:\-]?\s*/i, '').replace(/\s*\((?:ลงโหล|gift|jar|ของขวัญ)\)\s*/i, '').trim();
+      return {
+        text,
+        isGift: true,
+        giftName: cleanName || text,
+        giftIcon: giftIcon || getGiftIconUrl(cleanName || giftName || text),
+        cls: 'gift',
+        badge: 'GIFT DROP',
+        colorHex: customColor || '#f59e0b',
+        iconColor: 'text-amber-400'
+      };
+    }
+
     const tierMeta = {
-      legendary: {
-        cls: 'legendary',
-        badge: 'LEGENDARY',
-        icon: 'workspace_premium',
-        colorHex: '#fbbf24',
-        iconColor: 'text-amber-300',
-        bgIcon: 'bg-amber-950/70',
-        borderIcon: 'border-amber-400/60'
-      },
-      epic: {
-        cls: 'epic',
-        badge: 'EPIC',
-        icon: 'verified',
-        colorHex: '#c084fc',
-        iconColor: 'text-purple-300',
-        bgIcon: 'bg-purple-950/70',
-        borderIcon: 'border-purple-500/50'
-      },
-      rare: {
-        cls: 'rare',
-        badge: 'RARE',
-        icon: 'monetization_on',
-        colorHex: '#34d399',
-        iconColor: 'text-emerald-300',
-        bgIcon: 'bg-emerald-950/70',
-        borderIcon: 'border-emerald-500/50'
-      },
-      hazard: {
-        cls: 'hazard',
-        badge: 'HAZARD',
-        icon: 'warning',
-        colorHex: '#f87171',
-        iconColor: 'text-red-400',
-        bgIcon: 'bg-red-950/70',
-        borderIcon: 'border-red-500/50'
-      },
-      common: {
-        cls: 'common',
-        badge: 'COMMON',
-        icon: 'category',
-        colorHex: '#94a3b8',
-        iconColor: 'text-slate-300',
-        bgIcon: 'bg-slate-800/80',
-        borderIcon: 'border-slate-600/50'
-      },
-      custom: {
-        cls: 'custom',
-        badge: 'CUSTOM',
-        icon: 'stars',
-        colorHex: customColor || '#ec4899',
-        iconColor: 'text-pink-300',
-        bgIcon: 'bg-pink-950/70',
-        borderIcon: 'border-pink-500/50'
-      }
+      legendary: { cls: 'legendary', badge: 'LEGENDARY', icon: 'workspace_premium', colorHex: '#f59e0b', iconColor: 'text-amber-400' },
+      epic: { cls: 'epic', badge: 'EPIC', icon: 'verified', colorHex: '#c084fc', iconColor: 'text-purple-300' },
+      rare: { cls: 'rare', badge: 'RARE', icon: 'monetization_on', colorHex: '#34d399', iconColor: 'text-emerald-300' },
+      hazard: { cls: 'hazard', badge: 'HAZARD', icon: 'warning', colorHex: '#f87171', iconColor: 'text-red-400' },
+      common: { cls: 'common', badge: 'COMMON', icon: 'category', colorHex: '#94a3b8', iconColor: 'text-slate-300' }
     };
 
     let resolvedTier = 'common';
     if (customTier && customTier !== 'auto' && tierMeta[customTier]) {
       resolvedTier = customTier;
     } else {
-      // Auto detection based on text
-      if (s.startsWith('-') || s.includes('ห้าม') || s.includes('ลงโทษ') || s.includes('วิดพื้น') || s.includes('สควอท')) {
+      if (s.startsWith('-') || s.includes('ห้าม') || s.includes('ลงโทษ') || s.includes('วิดพื้น')) {
         resolvedTier = 'hazard';
       } else {
         const match = s.match(/^\+?(\d+)\s*(s|sec|m|min|h|hr)?$/);
@@ -506,38 +478,55 @@
     }
 
     const base = tierMeta[resolvedTier] || tierMeta.common;
-    const finalColor = customColor || base.colorHex;
-
-    // Effective Rarity Badge Name (Per-item custom name > Global tier custom name > Default tier badge)
-    const effectiveBadge = customRarityName || (currentRarityNames && currentRarityNames[resolvedTier]) || base.badge;
-
-    // Inline styles if custom color specified or custom tier
-    let cardInlineStyle = '';
-    let iconInlineStyle = '';
-    let badgeInlineStyle = '';
-
-    if (customColor || resolvedTier === 'custom') {
-      cardInlineStyle = `border-color: ${finalColor} !important; background: linear-gradient(145deg, ${finalColor}22 0%, ${finalColor}44 100%) !important; box-shadow: inset 0 0 15px ${finalColor}40 !important;`;
-      iconInlineStyle = `background-color: ${finalColor}2e !important; border-color: ${finalColor}88 !important; color: ${finalColor} !important;`;
-      badgeInlineStyle = `color: ${finalColor} !important;`;
-    }
-
     return {
       text,
+      isGift: false,
+      giftName: '',
+      giftIcon: '',
       cls: base.cls,
-      badge: effectiveBadge,
+      badge: base.badge,
       icon: base.icon,
-      colorHex: finalColor,
-      iconColor: (customColor || resolvedTier === 'custom') ? '' : base.iconColor,
-      bgIcon: (customColor || resolvedTier === 'custom') ? '' : base.bgIcon,
-      borderIcon: (customColor || resolvedTier === 'custom') ? '' : base.borderIcon,
-      cardInlineStyle,
-      iconInlineStyle,
-      badgeInlineStyle
+      colorHex: customColor || base.colorHex,
+      iconColor: base.iconColor
     };
   }
 
-  // --- Confetti Engine ---
+  // Render a Single Prize Card HTML
+  function renderCardHtml(val, idx) {
+    const r = getRarityInfo(val);
+    const displayVal = (typeof r.text === 'string' && r.text.startsWith('+')) ? r.text : (!isNaN(Number(r.text)) && Number(r.text) > 0 ? `+${r.text}` : r.text);
+
+    let centerVisual = '';
+    if (r.isGift) {
+      centerVisual = `
+        <div class="w-14 h-14 flex items-center justify-center my-auto">
+          <img src="${r.giftIcon}" class="w-12 h-12 object-contain drop-shadow" alt="${escapeHtml(r.giftName)}" onerror="this.onerror=null; this.src='/api/gift-icon?name=Rose';">
+        </div>
+      `;
+    } else {
+      centerVisual = `
+        <div class="w-11 h-11 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center my-auto shadow">
+          <span class="material-symbols-outlined ${r.iconColor} text-[24px]">${r.icon}</span>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="prize-card ${r.cls}" id="gacha-card-${idx}" data-color="${r.colorHex}">
+        <span class="font-mono text-[9px] ${r.iconColor} font-extrabold tracking-wider uppercase opacity-90 px-1 truncate max-w-full text-center block">${r.badge}</span>
+        ${centerVisual}
+        <span class="font-extrabold text-xs text-white text-center px-1 tracking-tight drop-shadow leading-tight line-clamp-2">${escapeHtml(displayVal)}</span>
+      </div>
+    `;
+  }
+
+  function escapeHtml(str) {
+    return (str || '').replace(/[&<>"']/g, function(m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  }
+
+  // Confetti Engine
   const confettiCanvas = document.getElementById('vfx-confetti-canvas');
   let confettiCtx = confettiCanvas.getContext('2d');
   let confettiParticles = [];
@@ -582,7 +571,7 @@
       const p = confettiParticles[i];
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.35; // gravity
+      p.vy += 0.35;
       p.vx *= 0.98;
       p.rotation += p.rotationSpeed;
       p.life -= p.decay;
@@ -609,7 +598,7 @@
     }
   }
 
-  // --- Reel Spin Engine with Physics & Real-Time Mechanical Ticking ---
+  // Reel Spin Engine
   let isGachaSpinning = false;
   let tickAnimationId = null;
 
@@ -621,12 +610,11 @@
     const winnerIndex = data.winner_index !== undefined ? data.winner_index : 44;
     const durationSec = data.duration || 5;
     const winnerItem = data.winner_item || reelSequence[winnerIndex] || '+10';
-    const sender = data.sender || 'Supporter_VIP';
+    const sender = data.sender || 'Supporter';
     const senderAvatar = data.sender_avatar || '';
     const triggerGift = data.trigger_gift || 'Doughnut';
     const triggerGiftIcon = data.trigger_gift_icon || `/api/gift-icon?name=${encodeURIComponent(triggerGift)}`;
 
-    // Update Spotlight Banner
     if (viewerNameEl) viewerNameEl.innerText = sender.startsWith('@') ? sender : `@${sender}`;
     if (viewerGiftNameEl) viewerGiftNameEl.innerText = triggerGift;
     if (viewerGiftIconEl) viewerGiftIconEl.src = triggerGiftIcon;
@@ -638,24 +626,10 @@
       }
     }
 
-    // Hide result banner
     resultBannerEl.style.opacity = '0';
 
     // Render cards
-    gachaReelStripEl.innerHTML = reelSequence.map((val, idx) => {
-      const rarity = getRarityInfo(val);
-      const isWinner = idx === winnerIndex;
-      const displayVal = (typeof rarity.text === 'string' && rarity.text.startsWith('+')) ? rarity.text : (!isNaN(Number(rarity.text)) && Number(rarity.text) > 0 ? `+${rarity.text}` : rarity.text);
-      return `
-        <div class="prize-card ${rarity.cls}" id="gacha-card-${idx}" style="${rarity.cardInlineStyle}" data-color="${rarity.colorHex}">
-          <div class="w-11 h-11 rounded-full ${rarity.bgIcon} border ${rarity.borderIcon} flex items-center justify-center mb-1.5 shadow" style="${rarity.iconInlineStyle}">
-            <span class="material-symbols-outlined ${rarity.iconColor} text-[26px]" style="${rarity.iconInlineStyle}">${rarity.icon}</span>
-          </div>
-          <span class="font-extrabold text-base text-white text-center px-1 tracking-tight drop-shadow leading-tight line-clamp-2">${displayVal}</span>
-          <span class="font-mono text-[9.5px] ${rarity.iconColor} font-extrabold mt-1 tracking-wider uppercase opacity-95 px-1 truncate max-w-full text-center block" style="${rarity.badgeInlineStyle}">${rarity.badge}</span>
-        </div>
-      `;
-    }).join('');
+    gachaReelStripEl.innerHTML = reelSequence.map((val, idx) => renderCardHtml(val, idx)).join('');
 
     // Reset Strip to Start
     gachaReelStripEl.style.transition = 'none';
@@ -663,7 +637,6 @@
     scaleWrapper.style.opacity = '1';
     scaleWrapper.style.pointerEvents = 'auto';
 
-    // Layout calculation
     requestAnimationFrame(() => {
       const viewportWidth = gachaViewportEl.clientWidth || 760;
       const viewportCenter = viewportWidth / 2;
@@ -676,26 +649,21 @@
         const cardCenter = cardOffsetLeft + (cardWidth / 2);
         targetX = -(cardCenter - viewportCenter);
       } else {
-        // Card width is 126px + 12px gap = 138px pitch
         targetX = -(winnerIndex * 138 - (viewportCenter - 63));
       }
 
-      // Physics deceleration: starts fast, smoothly glides and halts right on center marker
       setTimeout(() => {
         gachaReelStripEl.style.transition = `transform ${durationSec}s cubic-bezier(0.1, 0.88, 0.15, 1)`;
         gachaReelStripEl.style.transform = `translate3d(${targetX}px, 0px, 0px)`;
 
-        // Start real-time mechanical ticking tracking
         let lastCrossedCardIndex = -1;
-        const cardPitch = 138; // 126px card + 12px gap
+        const cardPitch = 138;
         const startTime = performance.now();
         const totalDurationMs = durationSec * 1000;
 
         function trackTicks(now) {
           const elapsed = now - startTime;
-          if (elapsed >= totalDurationMs) {
-            return;
-          }
+          if (elapsed >= totalDurationMs) return;
 
           try {
             const transformMatrix = window.getComputedStyle(gachaReelStripEl).transform;
@@ -718,7 +686,6 @@
         tickAnimationId = requestAnimationFrame(trackTicks);
       }, 50);
 
-      // End of Spin Celebration & Landing
       setTimeout(() => {
         if (tickAnimationId) cancelAnimationFrame(tickAnimationId);
         playMechanicalLock();
@@ -726,37 +693,32 @@
         const winnerCard = document.getElementById(`gacha-card-${winnerIndex}`);
         if (winnerCard) {
           winnerCard.classList.add('winner-glow');
-          const cardColor = winnerCard.getAttribute('data-color');
-          if (cardColor) {
-            winnerCard.style.boxShadow = `0 0 35px ${cardColor}cc, 0 0 70px ${cardColor}66, inset 0 0 25px ${cardColor}88`;
-            winnerCard.style.borderColor = cardColor;
-          }
         }
 
-        // Play Win Sound & Particle Confetti
         if (winSoundEnabled) {
           try {
             winAudioEl.currentTime = 0;
             winAudioEl.play().catch(() => {});
           } catch(e) {}
         }
-        triggerCelebrationConfetti(85);
+        triggerCelebrationConfetti(80);
 
-        // Show Result Banner
-        const winnerText = (typeof winnerItem === 'object' && winnerItem !== null) ? (winnerItem.text || winnerItem.name || '') : String(winnerItem);
-        const displayWinner = (typeof winnerText === 'string' && winnerText.startsWith('+')) ? winnerText : (!isNaN(Number(winnerText)) && Number(winnerText) > 0 ? `+${winnerText}` : winnerText);
-        const isSec = !isNaN(parseInt(winnerText));
-        const wonGift = data.won_gift || (typeof winnerItem === 'object' && (winnerItem.type === 'gift' || winnerItem.is_gift) ? { name: winnerItem.gift_name || winnerItem.text } : null);
+        const winnerRarity = getRarityInfo(winnerItem);
+        const wonGift = data.won_gift || (winnerRarity.isGift ? { name: winnerRarity.giftName, icon: winnerRarity.giftIcon } : null);
 
         if (wonGift) {
-          resultTextEl.innerText = `🎁 ${wonGift.name}`;
-          resultSyncTagEl.innerText = '🫙 ส่งเข้า Jar สำเร็จ';
+          resultTextEl.innerHTML = `<span class="flex items-center gap-1.5"><img src="${wonGift.icon || getGiftIconUrl(wonGift.name)}" class="w-4 h-4 object-contain inline-block"> ${escapeHtml(wonGift.name)}</span>`;
+          resultSyncTagEl.innerText = 'ส่งเข้าขวดโหลสำเร็จ';
           resultSyncTagEl.className = 'text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-bold';
           resultSyncTagEl.style.display = 'inline-block';
         } else {
+          const winnerText = (typeof winnerItem === 'object' && winnerItem !== null) ? (winnerItem.text || winnerItem.name || '') : String(winnerItem);
+          const displayWinner = (typeof winnerText === 'string' && winnerText.startsWith('+')) ? winnerText : (!isNaN(Number(winnerText)) && Number(winnerText) > 0 ? `+${winnerText}` : winnerText);
+          const isSec = !isNaN(parseInt(winnerText));
+
           resultTextEl.innerText = `${displayWinner} ${isSec ? 'วินาที' : ''}`;
           if (isSec) {
-            resultSyncTagEl.innerText = '⏱️ ซิงค์ Subathon สำเร็จ';
+            resultSyncTagEl.innerText = 'ซิงค์ Subathon สำเร็จ';
             resultSyncTagEl.className = 'text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold';
             resultSyncTagEl.style.display = 'inline-block';
           } else {
@@ -765,159 +727,96 @@
         }
         resultBannerEl.style.opacity = '1';
 
-        // Auto Hide after 4 seconds if enabled (unless preview mode)
         setTimeout(() => {
           if (!isPreview && autoHideEnabled) {
-            scaleWrapper.style.transition = 'opacity 0.8s ease-out';
             scaleWrapper.style.opacity = '0';
             scaleWrapper.style.pointerEvents = 'none';
           }
+          isGachaSpinning = false;
         }, 4000);
 
-        isGachaSpinning = false;
-      }, durationSec * 1000 + 150);
-
-    }, 50);
+      }, durationSec * 1000 + 100);
+    });
   }
 
-  function renderStaticPreviewCards(items) {
-    if (!items || items.length === 0 || isGachaSpinning) return;
-    gachaReelStripEl.innerHTML = items.map((val, idx) => {
-      const rarity = getRarityInfo(val);
-      const isCenter = idx === Math.floor(items.length / 2);
-      const displayVal = (typeof rarity.text === 'string' && rarity.text.startsWith('+')) ? rarity.text : (!isNaN(Number(rarity.text)) && Number(rarity.text) > 0 ? `+${rarity.text}` : rarity.text);
-      return `
-        <div class="prize-card ${rarity.cls} ${isCenter ? 'winner-glow' : ''}" style="${rarity.cardInlineStyle}" data-color="${rarity.colorHex}">
-          <div class="w-11 h-11 rounded-full ${rarity.bgIcon} border ${rarity.borderIcon} flex items-center justify-center mb-1.5 shadow" style="${rarity.iconInlineStyle}">
-            <span class="material-symbols-outlined ${rarity.iconColor} text-[26px]" style="${rarity.iconInlineStyle}">${rarity.icon}</span>
-          </div>
-          <span class="font-extrabold text-base text-white text-center px-1 tracking-tight drop-shadow leading-tight line-clamp-2">${displayVal}</span>
-          <span class="font-mono text-[9.5px] ${rarity.iconColor} font-extrabold mt-1 tracking-wider uppercase opacity-95 px-1 truncate max-w-full text-center block" style="${rarity.badgeInlineStyle}">${rarity.badge}</span>
-        </div>
-      `;
-    }).join('');
+  // Populate initial showcase preview if preview mode
+  if (isPreview) {
+    const defaultPreview = [
+      { text: 'Rose', type: 'gift', gift_name: 'Rose' },
+      { text: '+30', tier: 'epic' },
+      { text: 'Lion', type: 'gift', gift_name: 'Lion' },
+      { text: '+300', tier: 'legendary' },
+      { text: '-30', tier: 'hazard' },
+      { text: 'Doughnut', type: 'gift', gift_name: 'Doughnut' },
+      { text: '+15', tier: 'common' }
+    ];
+    gachaReelStripEl.innerHTML = defaultPreview.map((v, i) => renderCardHtml(v, i)).join('');
   }
 
-  // --- WebSocket Connection ---
-  const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
+  // WebSocket Connection
   let ws = null;
+  function connectWs() {
+    const loc = window.location;
+    const wsProto = loc.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProto}//${loc.host}/ws`;
 
-  function connectWS() {
-    ws = new WebSocket(WS_URL);
+    ws = new WebSocket(wsUrl);
 
-    ws.onmessage = (event) => {
+    ws.onopen = () => {
+      fetch('/api/config')
+        .then(r => r.json())
+        .then(cfg => {
+          if (cfg && cfg.gacha_config) {
+            applyConfig(cfg.gacha_config);
+          }
+        })
+        .catch(() => {});
+    };
+
+    ws.onmessage = (evt) => {
       try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'refresh_overlays') {
+        const msg = JSON.parse(evt.data);
+        if (msg.type === 'gacha_spin') {
+          runCSGOGachaSpin(msg);
+        } else if (msg.type === 'config_update' || msg.type === 'config_updated' || msg.type === 'init') {
+          if (msg.config && msg.config.gacha_config) {
+            applyConfig(msg.config.gacha_config);
+          }
+        } else if (msg.type === 'refresh_overlays') {
           window.location.reload();
-          return;
-        }
-        if (data.type === 'init') {
-          if (data.config && data.config.gacha_config) {
-            const gc = data.config.gacha_config;
-            if (gc.scale) setScale(gc.scale);
-            if (gc.tick_sound_enabled !== undefined) tickSoundEnabled = gc.tick_sound_enabled;
-            if (gc.win_sound_enabled !== undefined) winSoundEnabled = gc.win_sound_enabled;
-            if (gc.auto_hide !== undefined) autoHideEnabled = gc.auto_hide;
-            if (gc.rarity_names) currentRarityNames = Object.assign(currentRarityNames, gc.rarity_names);
-            if (isPreview && gc.items && gc.items.length > 0) renderStaticPreviewCards(gc.items);
-          }
-        } else if (data.type === 'config_updated') {
-          if (data.config && data.config.gacha_config) {
-            const gc = data.config.gacha_config;
-            if (gc.scale) setScale(gc.scale);
-            if (gc.tick_sound_enabled !== undefined) tickSoundEnabled = gc.tick_sound_enabled;
-            if (gc.win_sound_enabled !== undefined) winSoundEnabled = gc.win_sound_enabled;
-            if (gc.auto_hide !== undefined) autoHideEnabled = gc.auto_hide;
-            if (gc.rarity_names) currentRarityNames = Object.assign(currentRarityNames, gc.rarity_names);
-            if (isPreview && gc.items && gc.items.length > 0) renderStaticPreviewCards(gc.items);
-          }
-        } else if (data.type === 'gacha_spin') {
-          if (data.config) {
-            if (data.config.scale) setScale(data.config.scale);
-            if (data.config.tick_sound_enabled !== undefined) tickSoundEnabled = data.config.tick_sound_enabled;
-            if (data.config.win_sound_enabled !== undefined) winSoundEnabled = data.config.win_sound_enabled;
-            if (data.config.auto_hide !== undefined) autoHideEnabled = data.config.auto_hide;
-            if (data.config.rarity_names) currentRarityNames = Object.assign(currentRarityNames, data.config.rarity_names);
-          }
-          runCSGOGachaSpin(data);
         }
       } catch(e) {}
     };
 
     ws.onclose = () => {
-      setTimeout(connectWS, 2000);
+      setTimeout(connectWs, 2000);
+    };
+
+    ws.onerror = () => {
+      ws.close();
     };
   }
 
-  connectWS();
-
-  // Demo parameter support for instant visual test and headless screenshots
-  const demoParam = urlParams.get('demo');
-  if (demoParam === 'winner') {
-    setTimeout(() => {
-      runCSGOGachaSpin({
-        reel_sequence: ['+10', '+15', '-30', '+30', '+300', '+60', '-15'],
-        winner_index: 4,
-        winner_item: '+300',
-        duration: 0.05,
-        sender: 'Kaneo_Gamer',
-        trigger_gift: 'Doughnut'
-      });
-    }, 100);
-  } else if (demoParam === 'spin') {
-    setTimeout(() => {
-      runCSGOGachaSpin({
-        reel_sequence: ['+10', '+15', '-30', '+30', '+300', '+60', '-15', '+10', '+45', '-60', '+30', '+15', '+300'],
-        winner_index: 8,
-        winner_item: '+45',
-        duration: 8,
-        sender: 'Alice_VIP',
-        trigger_gift: 'Doughnut'
-      });
-    }, 100);
-  } else if (demoParam === 'custom') {
-    setTimeout(() => {
-      runCSGOGachaSpin({
-        reel_sequence: [
-          { text: '+10', tier: 'rare', color: '#34d399' },
-          { text: '+30', tier: 'epic', color: '#c084fc' },
-          { text: 'เล่นเกมตามสั่ง', tier: 'custom', color: '#06b6d4' },
-          { text: '+60', tier: 'legendary', color: '#fbbf24' },
-          { text: 'แจก VIP 1 เดือน', tier: 'custom', color: '#ec4899' },
-          { text: '+300', tier: 'legendary', color: '#f59e0b' },
-          { text: '-30', tier: 'hazard', color: '#f87171' }
-        ],
-        winner_index: 4,
-        winner_item: { text: 'แจก VIP 1 เดือน', tier: 'custom', color: '#ec4899' },
-        duration: 0.05,
-        sender: 'Queen_VIP',
-        trigger_gift: 'Doughnut'
-      });
-    }, 100);
-  } else if (demoParam === 'custom_rarity') {
-    setTimeout(() => {
-      runCSGOGachaSpin({
-        reel_sequence: [
-          { text: '+30s', tier: 'rare', rarity_name: 'R ⭐', color: '#34d399' },
-          { text: '+60s', tier: 'epic', rarity_name: 'SR ⭐⭐', color: '#c084fc' },
-          { text: '+300s โบนัสใหญ่', tier: 'legendary', rarity_name: 'SSR 👑', color: '#fbbf24' },
-          { text: '-30s ลดเวลา', tier: 'hazard', rarity_name: 'DEBUFF 💀', color: '#f87171' },
-          { text: 'วิดพื้น 10 ครั้ง', tier: 'custom', rarity_name: 'ทำโทษ 🏋️', color: '#ec4899' }
-        ],
-        winner_index: 2,
-        winner_item: { text: '+300s โบนัสใหญ่', tier: 'legendary', rarity_name: 'SSR 👑', color: '#fbbf24' },
-        duration: 0.05,
-        sender: 'Alice_VIP',
-        trigger_gift: 'Doughnut'
-      });
-    }, 100);
+  function applyConfig(cfg) {
+    if (!cfg) return;
+    if (cfg.scale && !urlParams.get('scale')) {
+      setScale(cfg.scale);
+    }
+    if (cfg.tick_sound_enabled !== undefined) {
+      tickSoundEnabled = cfg.tick_sound_enabled;
+    }
+    if (cfg.win_sound_enabled !== undefined) {
+      winSoundEnabled = cfg.win_sound_enabled;
+    }
+    if (cfg.auto_hide !== undefined) {
+      autoHideEnabled = cfg.auto_hide;
+    }
+    if (isPreview && cfg.items && cfg.items.length > 0 && !isGachaSpinning) {
+      gachaReelStripEl.innerHTML = cfg.items.map((v, i) => renderCardHtml(v, i)).join('');
+    }
   }
 
-  // Allow clicking anywhere to unlock Web Audio API if needed
-  window.addEventListener('click', () => {
-    getAudioContext();
-  });
+  connectWs();
 </script>
 </body>
 </html>

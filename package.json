@@ -1,6 +1,6 @@
 {
   "name": "kiraeve-tiktok",
-  "version": "1.0.5",
+  "version": "1.0.8",
   "description": "Kiraeve TikTok — Live Studio & Overlays Manager (Electron Desktop App)",
   "main": "main.js",
   "private": true,

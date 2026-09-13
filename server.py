@@ -269,15 +269,58 @@ ALIASES = {
     "birthday cake": "cake slice",
     "flower bouquet": "xxxl flowers",
     "origami boat": "paper crane",
-    "magic mirror": "mirror"
+    "magic mirror": "mirror",
+    # Thai gift name aliases
+    "กุหลาบ": "rose",
+    "โดนัท": "doughnut",
+    "สิงโต": "lion",
+    "มินิฮาร์ท": "finger heart",
+    "หัวใจ": "finger heart",
+    "จักรวาล": "tiktok universe",
+    "ยูนิเวิร์ส": "tiktok universe",
+    "มังกร": "dragon flame",
+    "รถสปอร์ต": "sports car",
+    "ปืนเงิน": "money gun",
+    "หมวก": "cap",
+    "ไอศกรีม": "ice cream cone",
+    "นกกระดาษ": "paper crane",
+    "เค้ก": "cake slice",
+    "วาฬ": "whale diving",
+    "หงส์": "swan",
+    "พลุ": "fireworks",
+    "ปราสาท": "light castle",
+    "จรวด": "flying jets",
+    "มวย": "boxing",
+    "ถ้วย": "league trophy",
+    "กาแฟ": "coffee magic",
+    "ป๊อปคอร์น": "chatting popcorn",
+    "ลูกโป่ง": "balloons",
+    "แว่น": "vr goggles",
+    "มงกุฎ": "coronet",
+    "เป็ด": "baby chicks",
+    "ดาว": "tiktok stars"
 }
 
+def clean_gift_name(name: str) -> str:
+    if not name:
+        return ""
+    cleaned = re.sub(r'^(gift|ของขวัญ|ไอเทม|\U0001f381)\s*[:\-]?\s*', '', str(name), flags=re.IGNORECASE).strip()
+    cleaned = re.sub(r'\s*\((?:ลงโหล|gift|jar|ของขวัญ)\)\s*', '', cleaned, flags=re.IGNORECASE).strip()
+    return cleaned
+
 def get_real_gift_icon(gift_name: str) -> str:
-    name_lower = gift_name.strip().lower()
+    cleaned = clean_gift_name(gift_name)
+    name_lower = cleaned.strip().lower()
+    if not name_lower:
+        return REAL_TIKTOK_GIFT_ICONS.get("rose", "")
     if name_lower in GIFT_ICONS_MAP:
         return GIFT_ICONS_MAP[name_lower]
-    if name_lower in ALIASES and ALIASES[name_lower] in GIFT_ICONS_MAP:
-        return GIFT_ICONS_MAP[ALIASES[name_lower]]
+    if name_lower in ALIASES:
+        target_alias = ALIASES[name_lower]
+        if target_alias in GIFT_ICONS_MAP:
+            return GIFT_ICONS_MAP[target_alias]
+        if target_alias in REAL_TIKTOK_GIFT_ICONS:
+            return REAL_TIKTOK_GIFT_ICONS[target_alias]
     if name_lower in REAL_TIKTOK_GIFT_ICONS:
         return REAL_TIKTOK_GIFT_ICONS[name_lower]
     for k, v in GIFT_ICONS_MAP.items():
@@ -286,6 +329,12 @@ def get_real_gift_icon(gift_name: str) -> str:
     for k, v in GIFT_ICONS_MAP.items():
         if name_lower in k or k in name_lower:
             return v
+    for alias_k, alias_v in ALIASES.items():
+        if alias_k in name_lower or name_lower in alias_k:
+            if alias_v in GIFT_ICONS_MAP:
+                return GIFT_ICONS_MAP[alias_v]
+            if alias_v in REAL_TIKTOK_GIFT_ICONS:
+                return REAL_TIKTOK_GIFT_ICONS[alias_v]
     return REAL_TIKTOK_GIFT_ICONS.get("rose", "")
 
 def filter_tts_text(text: str, blacklisted_words: List[str], max_length: int = 100) -> Optional[str]:
@@ -599,9 +648,12 @@ class TikFinityAuctionState:
     def to_dict(self) -> dict:
         top_bidders = self.get_top_bidders(5)
         highest = top_bidders[0] if top_bidders else {"sender": "-", "coins": 0, "profile_picture": ""}
+        is_unlimited = bool(self.target_coins <= 0)
         return {
             "title": self.title,
             "target_coins": self.target_coins,
+            "is_unlimited": is_unlimited,
+            "unlimited_coins": is_unlimited,
             "highest_bidder": highest["sender"],
             "highest_bid": highest["coins"],
             "highest_avatar": highest.get("profile_picture", ""),
@@ -635,7 +687,7 @@ async def auto_dismiss_winner_task(delay_sec: int):
         await asyncio.sleep(delay_sec)
         if auction_state.is_winner_announced:
             auction_state.dismiss_winner()
-            log.info("🏆 Auction winner celebration auto-dismissed after %ds", delay_sec)
+            log.info("[AUCTION] Auction winner celebration auto-dismissed after %ds", delay_sec)
             await broadcast({
                 "type": "auction_dismiss_winner",
                 "auction": auction_state.to_dict()
@@ -721,10 +773,12 @@ def resolve_gacha_gift_reward(winner_item: any, cfg: dict) -> Optional[dict]:
         return None
     g_name = ""
     g_count = 1
+    is_explicit_gift = False
     if isinstance(winner_item, dict):
         if winner_item.get("type") == "gift" or winner_item.get("is_gift") or winner_item.get("gift_name"):
             g_name = winner_item.get("gift_name") or winner_item.get("text") or winner_item.get("name") or ""
             g_count = int(winner_item.get("count") or 1)
+            is_explicit_gift = True
         else:
             g_name = str(winner_item.get("text") or winner_item.get("name") or "").strip()
     else:
@@ -736,14 +790,22 @@ def resolve_gacha_gift_reward(winner_item: any, cfg: dict) -> Optional[dict]:
     if parse_time_delta_seconds(g_name) is not None:
         return None
 
-    cleaned = re.sub(r'^(gift|ของขวัญ|ไอเทม|🎁)\s*[:\-]?\s*', '', g_name, flags=re.IGNORECASE).strip()
+    cleaned = re.sub(r'^(gift|ของขวัญ|ไอเทม|\U0001f381)\s*[:\-]?\s*', '', g_name, flags=re.IGNORECASE).strip()
+    cleaned = re.sub(r'\s*\((?:ลงโหล|gift|jar)\)\s*', '', cleaned, flags=re.IGNORECASE).strip()
     lower = cleaned.lower()
+
+    if is_explicit_gift:
+        return {"name": cleaned, "count": g_count}
 
     if lower in GIFT_ICONS_MAP or lower in REAL_TIKTOK_GIFT_ICONS:
         return {"name": cleaned, "count": g_count}
 
     for m in cfg.get("gift_sound_mappings", []):
         if m.get("gift_name", "").strip().lower() == lower:
+            return {"name": cleaned, "count": g_count}
+
+    for vm in cfg.get("gift_video_mappings", []):
+        if vm.get("gift_name", "").strip().lower() == lower:
             return {"name": cleaned, "count": g_count}
 
     return None
@@ -764,22 +826,38 @@ async def schedule_gacha_gift_drop(delay: float, gift_info: dict, sender: str, p
     if not s_url:
         s_url = "/soundeffect/dragon-studio-pop-402324.mp3"
 
+    video_alert_data = None
+    for vm in cfg.get("gift_video_mappings", []):
+        if vm.get("enabled", True) and vm.get("gift_name", "").strip().lower() == g_name.strip().lower():
+            v_file = vm.get("video_file")
+            if v_file:
+                video_alert_data = {
+                    "url": f"/media/Video/{urllib.parse.quote(v_file)}",
+                    "video_file": v_file,
+                    "position": vm.get("position", "center"),
+                    "scale": float(vm.get("scale", 1.0)),
+                    "volume": float(vm.get("volume", 1.0))
+                }
+                break
+
     g_icon = get_real_gift_icon(g_name) or f"/api/gift-icon?name={urllib.parse.quote(g_name)}"
 
     jar_state.item_count += g_count
     jar_state.total_coins += 50 * g_count
 
-    log.info("🎰 CS:GO Gacha Won Gift Dropping into Jar: '%s' x%d for %s (sound=%s)", g_name, g_count, sender, s_url)
+    log.info("[GACHA] CS:GO Gacha Won Gift Dropping into Jar: '%s' x%d for %s (sound=%s, video=%s)", g_name, g_count, sender, s_url, bool(video_alert_data))
     await broadcast({
         "type": "gift",
+        "target_widget": "all",
         "gift_name": g_name,
         "gift_icon": g_icon,
         "count": g_count,
         "coins": 50 * g_count,
-        "sender": f"🎰 Gacha ({sender})",
+        "sender": f"Gacha ({sender})",
         "profile_picture": profile_pic,
         "sound_effect": s_url,
         "sound_volume": s_vol,
+        "video_alert": video_alert_data,
         "jar_count": jar_state.item_count,
         "jar_total_coins": jar_state.total_coins,
         "is_gacha_reward": True
@@ -832,7 +910,10 @@ async def handle_post_config(request: web.Request) -> web.Response:
         if "title" in ac and not auction_state.is_active:
             auction_state.title = ac["title"]
         if "target_coins" in ac and not auction_state.is_active:
-            auction_state.target_coins = int(ac["target_coins"])
+            if ac.get("unlimited") or ac.get("unlimited_coins"):
+                auction_state.target_coins = 0
+            else:
+                auction_state.target_coins = int(ac["target_coins"])
         if "duration_seconds" in ac and not auction_state.is_active:
             auction_state.remaining_seconds = int(ac["duration_seconds"])
             auction_state.initial_duration = int(ac["duration_seconds"])
@@ -924,7 +1005,8 @@ ICON_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 import hashlib
 
 async def handle_gift_icon_proxy(request: web.Request) -> web.Response:
-    gift_name = request.query.get("name", "rose").strip().lower()
+    raw_name = request.query.get("name", "rose").strip()
+    gift_name = clean_gift_name(raw_name).lower() or "rose"
     raw_url = request.query.get("url")
     
     if raw_url and raw_url.startswith("http"):
@@ -937,9 +1019,27 @@ async def handle_gift_icon_proxy(request: web.Request) -> web.Response:
         safe_name = re.sub(r'[^\w\.-]', '_', gift_name)
         cached_file = ICON_CACHE_DIR / f"{safe_name}.webp"
 
+    # 1. Check primary cached file
     if cached_file.exists() and cached_file.stat().st_size > 0:
         with open(cached_file, "rb") as f:
             return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+
+    # 2. Check alias cache file on disk
+    if gift_name in ALIASES:
+        alias_safe = re.sub(r'[^\w\.-]', '_', ALIASES[gift_name])
+        alias_file = ICON_CACHE_DIR / f"{alias_safe}.webp"
+        if alias_file.exists() and alias_file.stat().st_size > 0:
+            with open(alias_file, "rb") as f:
+                return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+
+    # 3. Check partial disk matches in ICON_CACHE_DIR
+    if safe_name:
+        for f_item in ICON_CACHE_DIR.glob("*.webp"):
+            stem = f_item.stem.lower()
+            if stem == safe_name or stem in safe_name or (len(safe_name) >= 4 and safe_name in stem):
+                if f_item.stat().st_size > 0:
+                    with open(f_item, "rb") as f:
+                        return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
 
     if not icon_url or not icon_url.startswith("http"):
         icon_url = get_real_gift_icon("rose")
@@ -974,6 +1074,13 @@ async def handle_gift_icon_proxy(request: web.Request) -> web.Response:
       <text x="50" y="58" font-size="22" font-family="sans-serif" font-weight="bold" fill="#ffffff" text-anchor="middle">{gift_name[:4].upper()}</text>
     </svg>'''
     return web.Response(text=svg_content, content_type="image/svg+xml", headers={"Access-Control-Allow-Origin": "*"})
+
+async def handle_tiktok_coin(request: web.Request) -> web.Response:
+    coin_file = MEDIA_DIR / "tiktok_coin.svg"
+    if coin_file.exists():
+        with open(coin_file, "rb") as f:
+            return web.Response(body=f.read(), content_type="image/svg+xml", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+    return web.Response(status=404, text="Coin icon not found")
 
 AVATAR_CACHE_DIR = BASE_DIR / "media" / "avatars"
 AVATAR_CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -1200,7 +1307,7 @@ async def handle_mock_event(request: web.Request) -> web.Response:
             timer_mappings = cfg.get("timer_gift_mappings", [])
             added_seconds = 0
 
-            log.info("🎁 Incoming Gift: '%s' x%d from %s (coins=%d, target_widget=%s)", gift_name, count, sender, coins, target_widget)
+            log.info("[GIFT] Incoming Gift: '%s' x%d from %s (coins=%d, target_widget=%s)", gift_name, count, sender, coins, target_widget)
 
             if timer_cfg.get("enabled", True):
                 # Calculate time modification strictly based on user-configured gift mappings
@@ -1212,7 +1319,7 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                     else:
                         timer_state.seconds = max(0, timer_state.seconds - added_seconds)
                     log_entry = timer_state.record_change(sender, gift_name, count, added_seconds, timer_state.seconds, icon_url)
-                    log.info("⏱️ Timer updated by '%s': added=%ds, new_total=%ds", gift_name, added_seconds, timer_state.seconds)
+                    log.info("[TIMER] Timer updated by '%s': added=%ds, new_total=%ds", gift_name, added_seconds, timer_state.seconds)
                     await broadcast({
                         "type": "timer_update",
                         "seconds": timer_state.seconds,
@@ -1225,7 +1332,7 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                         "log_entry": log_entry
                     })
                 else:
-                    log.info("⏱️ Gift '%s' has no matching rule or added_seconds=0", gift_name)
+                    log.info("[GIFT] Gift '%s' has no matching rule or added_seconds=0", gift_name)
 
             if target_widget in ["all", "leaderboard"]:
                 leaderboard_state.add_gift(sender, coins, gift_name, profile_picture, icon_url)
@@ -1261,13 +1368,13 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                         timer_state.seconds = max(0, timer_state.seconds - sec_delta)
                     gacha_log_entry = timer_state.record_change(
                         sender,
-                        f"🎰 CS:GO Gacha ({winner_label})",
+                        f"[GACHA] CS:GO Gacha ({winner_label})",
                         1,
                         sec_delta,
                         timer_state.seconds,
                         icon_url
                     )
-                    log.info("🎰 Gacha result '%s': delta=%ds, new_timer=%ds", winner_label, sec_delta, timer_state.seconds)
+                    log.info("[GACHA] Gacha result '%s': delta=%ds, new_timer=%ds", winner_label, sec_delta, timer_state.seconds)
                     await broadcast({
                         "type": "timer_update",
                         "seconds": timer_state.seconds,
@@ -1453,6 +1560,8 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                     auto_dismiss_auction_task.cancel()
                 title = data.get("title", auction_state.title)
                 target = int(data.get("target_coins", auction_state.target_coins))
+                if data.get("unlimited") or data.get("unlimited_coins") or target <= 0:
+                    target = 0
                 duration = int(data.get("duration", 300))
                 min_inc = int(data.get("min_bid_increment", 1))
                 auto_ext = int(data.get("auto_extend_sec", 15))
@@ -1535,13 +1644,13 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                     timer_state.seconds = max(0, min(max_cap, timer_state.seconds - sec_delta))
                 log_entry = timer_state.record_change(
                     sender,
-                    f"🎰 CS:GO Gacha ({winner_label})",
+                    f"[GACHA] CS:GO Gacha ({winner_label})",
                     1,
                     sec_delta,
                     timer_state.seconds,
                     trigger_gift_icon
                 )
-                log.info("🎰 Manual Gacha Spin result '%s': delta=%ds, new_timer=%ds", winner_label, sec_delta, timer_state.seconds)
+                log.info("[GACHA] Manual Gacha Spin result '%s': delta=%ds, new_timer=%ds", winner_label, sec_delta, timer_state.seconds)
                 await broadcast({
                     "type": "timer_update",
                     "seconds": timer_state.seconds,
@@ -1721,7 +1830,10 @@ async def cleanup_background_tasks(app):
         except Exception:
             pass
     app["timer_task"].cancel()
-    await app["timer_task"]
+    try:
+        await app["timer_task"]
+    except asyncio.CancelledError:
+        pass
 
 async def handle_connect_tiktok(request: web.Request) -> web.Response:
     global tiktok_connection_state
@@ -1879,6 +1991,7 @@ def build_app() -> web.Application:
     app.router.add_get("/api/videos", handle_list_videos)
     app.router.add_get("/api/gift-icon", handle_gift_icon_proxy)
     app.router.add_get("/api/avatar-proxy", handle_avatar_proxy)
+    app.router.add_get("/api/tiktok-coin", handle_tiktok_coin)
     app.router.add_post("/api/upload-sound", handle_upload_sound)
     app.router.add_delete("/api/delete-sound", handle_delete_sound)
     app.router.add_post("/api/upload-video", handle_upload_video)

@@ -14,12 +14,16 @@
     --overlay-scale: 1.0;
   }
 
+  * {
+    box-sizing: border-box;
+  }
+
   html, body {
     margin: 0; padding: 0;
     width: 100vw; height: 100vh;
     background: transparent;
     font-family: 'Inter', 'Kanit', sans-serif;
-    color: #e5e2e1;
+    color: #f1f5f9;
     overflow: hidden;
     display: flex;
     -webkit-font-smoothing: antialiased;
@@ -39,7 +43,6 @@
     padding: 12px;
   }
 
-  /* Scalable Container for Crisp High-DPI Rendering */
   #scale-wrapper {
     width: 100%;
     max-width: 440px;
@@ -53,50 +56,33 @@
 
   body.preview-mode #scale-wrapper {
     transform-origin: center center;
-    transform: scale(calc(var(--overlay-scale) * 0.85));
+    transform: scale(calc(var(--overlay-scale) * 0.88));
   }
 
-  /* Obsidian Glass Panel (Spacious 440px base width) */
-  .obsidian-panel {
-    background: rgba(14, 14, 18, 0.94);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+  /* Obsidian Broadcast Glass Panel */
+  .broadcast-panel {
+    background: rgba(13, 14, 18, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 16px 45px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.2) inset;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.2) inset;
   }
 
-  /* Shimmer animation on header */
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-  }
-  .header-shimmer {
-    background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.5), transparent);
-    background-size: 200% 100%;
-    animation: shimmer 3.5s infinite;
+  /* Top accent line */
+  .top-accent-line {
+    background: linear-gradient(90deg, #f59e0b 0%, #ec4899 50%, #8b5cf6 100%);
   }
 
   /* Urgent Timer Pulse */
   @keyframes urgentPulse {
-    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.4)); }
-    50% { transform: scale(1.04); filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.9)); }
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.5)); }
+    50% { transform: scale(1.03); filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.9)); }
   }
   .animate-urgent {
     animation: urgentPulse 0.8s infinite ease-in-out;
   }
 
-  /* Anti-sniping notification toast */
-  @keyframes floatBounce {
-    0% { transform: translateY(10px); opacity: 0; }
-    20% { transform: translateY(0); opacity: 1; }
-    80% { transform: translateY(0); opacity: 1; }
-    100% { transform: translateY(-10px); opacity: 0; }
-  }
-  .animate-toast {
-    animation: floatBounce 3s ease forwards;
-  }
-
-  /* Grand Winner Celebration Overlay */
+  /* Winner Takeover Screen */
   .winner-takeover {
     position: absolute;
     inset: 0;
@@ -104,16 +90,16 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: radial-gradient(circle at center, rgba(30, 20, 45, 0.98) 0%, rgba(10, 10, 15, 0.98) 100%);
+    background: radial-gradient(circle at center, rgba(24, 18, 35, 0.98) 0%, rgba(10, 10, 14, 0.98) 100%);
     border-radius: 1.5rem;
-    border: 2px solid rgba(245, 158, 11, 0.7);
-    box-shadow: 0 0 60px rgba(245, 158, 11, 0.4), 0 0 100px rgba(168, 85, 247, 0.3);
+    border: 1.5px solid rgba(245, 158, 11, 0.6);
+    box-shadow: 0 0 50px rgba(245, 158, 11, 0.3);
     padding: 24px;
     text-align: center;
     opacity: 0;
     pointer-events: none;
-    transform: scale(0.9);
-    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: scale(0.94);
+    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 50;
   }
   .winner-takeover.active {
@@ -125,21 +111,21 @@
   /* Coin bump */
   @keyframes coinBump {
     0% { transform: scale(1); }
-    40% { transform: scale(1.06); filter: brightness(1.3); }
+    35% { transform: scale(1.05); filter: brightness(1.2); }
     100% { transform: scale(1); filter: brightness(1); }
   }
   .animate-coin-bump {
-    animation: coinBump 0.5s ease-out;
+    animation: coinBump 0.4s ease-out;
   }
 
   /* Smooth Fade for Entire Auction Widget */
   #auction-widget {
-    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
   #auction-widget.widget-hidden {
     opacity: 0 !important;
     pointer-events: none !important;
-    transform: translateY(16px) scale(0.96) !important;
+    transform: translateY(12px) scale(0.97) !important;
   }
   #auction-widget.widget-visible {
     opacity: 1 !important;
@@ -155,70 +141,69 @@
 </head>
 <body id="body-el" class="obs-mode">
 
-  <!-- Scalable High-DPI Wrapper -->
   <div id="scale-wrapper" class="relative">
     
-    <!-- Main Auction Card (440px width) -->
-    <div id="auction-widget" class="obsidian-panel w-[440px] rounded-3xl overflow-hidden relative transition-all duration-300">
+    <!-- Main Auction Card -->
+    <div id="auction-widget" class="broadcast-panel w-[440px] rounded-2xl overflow-hidden relative transition-all duration-300">
       
-      <!-- Top Neon Purple Accent Line -->
-      <div class="h-[3px] w-full header-shimmer"></div>
+      <!-- Top Accent Line -->
+      <div class="h-[3px] w-full top-accent-line"></div>
 
       <!-- Header -->
-      <div class="px-5 py-3.5 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <div class="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center shrink-0">
-            <span class="material-symbols-outlined text-purple-400 text-lg" style="font-variation-settings: 'FILL' 1;">gavel</span>
+      <div class="px-4 py-3 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-amber-400 text-base" style="font-variation-settings: 'FILL' 1;">gavel</span>
           </div>
           <div class="flex flex-col min-w-0">
-            <h2 id="auc-title-el" class="font-black text-sm text-white truncate max-w-[240px] mt-0.5 leading-snug">
-              ประมูล: ร้องเพลงตามใจผู้ชนะ
+            <h2 id="auc-title-el" class="font-bold text-sm text-white truncate max-w-[240px] leading-tight">
+              ประมูลสด TikTok LIVE
             </h2>
           </div>
         </div>
 
         <!-- Live Status Pill -->
-        <div id="auc-status-pill" class="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full shrink-0 shadow-sm">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
-          <span id="auc-status-text" class="font-mono text-[11px] font-extrabold text-emerald-400 uppercase tracking-widest">LIVE</span>
+        <div id="auc-status-pill" class="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 rounded-full shrink-0 shadow-sm">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
+          <span id="auc-status-text" class="font-mono text-[10px] font-extrabold text-emerald-400 uppercase tracking-widest">LIVE</span>
         </div>
       </div>
 
       <!-- Main Content Body -->
-      <div class="p-5 flex flex-col gap-4">
+      <div class="p-4 flex flex-col gap-3.5">
         
         <!-- Row 1: Current Highest Bidder & Countdown Timer -->
-        <div class="grid grid-cols-5 gap-3">
+        <div class="grid grid-cols-5 gap-2.5">
           
           <!-- Highest Bidder Spotlight (Cols 3) -->
-          <div id="highest-bidder-card" class="col-span-3 bg-gradient-to-br from-amber-500/15 via-black/40 to-black/60 rounded-2xl p-3.5 border border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.12)] flex flex-col justify-between">
-            <div class="flex items-center justify-between mb-2">
+          <div id="highest-bidder-card" class="col-span-3 bg-gradient-to-br from-amber-500/15 via-black/40 to-black/60 rounded-xl p-3 border border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.08)] flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-1.5">
               <span class="text-[10px] font-extrabold text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                <span>👑</span> HIGHEST BIDDER
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                <span>HIGHEST BIDDER</span>
               </span>
-              <span class="text-[10px] font-mono font-bold text-amber-300/80">#1 LEADER</span>
+              <span class="text-[10px] font-mono font-bold text-amber-300/80 bg-amber-400/10 px-1.5 py-0.5 rounded">#1 LEADER</span>
             </div>
 
-            <div class="flex items-center gap-3">
-              <!-- Avatar with Crown -->
+            <div class="flex items-center gap-2.5">
+              <!-- Avatar -->
               <div class="relative shrink-0">
                 <div id="highest-avatar-container">
-                  <div class="w-[52px] h-[52px] rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-lg font-black text-white border-2 border-amber-400 shadow-lg shadow-amber-500/20">
+                  <div class="w-[48px] h-[48px] rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-lg font-black text-white border-2 border-amber-400 shadow-md">
                     ?
                   </div>
                 </div>
-                <span class="absolute -top-2 -right-1 text-sm leading-none drop-shadow-md">👑</span>
               </div>
 
               <!-- Name & Total Coins -->
               <div class="flex flex-col min-w-0">
-                <span id="auc-highest-bidder" class="text-base font-black text-white truncate max-w-[140px] leading-tight">
+                <span id="auc-highest-bidder" class="text-sm font-extrabold text-white truncate max-w-[145px] leading-tight">
                   @-
                 </span>
-                <div class="flex items-center gap-1.5 mt-1 bg-black/60 px-2.5 py-1 rounded-xl border border-amber-500/30 w-fit">
-                  <span class="material-symbols-outlined text-amber-400 text-[14px]" style="font-variation-settings: 'FILL' 1;">toll</span>
-                  <span id="auc-bid-coins" class="font-mono text-base font-black text-amber-400 tracking-tight leading-none">
-                    0 🪙
+                <div class="flex items-center gap-1.5 mt-1 bg-black/60 px-2.5 py-1 rounded-lg border border-amber-500/30 w-fit">
+                  <img src="/api/tiktok-coin" class="w-4 h-4 object-contain shrink-0" alt="Coin">
+                  <span id="auc-bid-coins" class="font-mono text-sm font-black text-amber-400 tracking-tight leading-none">
+                    0 Coins
                   </span>
                 </div>
               </div>
@@ -226,116 +211,102 @@
           </div>
 
           <!-- Countdown Timer (Cols 2) -->
-          <div id="timer-box" class="col-span-2 bg-white/[0.03] rounded-2xl p-3.5 border border-white/10 flex flex-col items-center justify-center text-center relative overflow-hidden">
+          <div id="timer-box" class="col-span-2 bg-white/[0.03] rounded-xl p-3 border border-white/10 flex flex-col items-center justify-center text-center relative overflow-hidden">
             <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-0.5">
               TIME LEFT
             </span>
-            <div id="auc-timer-el" class="font-mono text-3xl font-black text-emerald-400 tracking-tight leading-tight">
+            <div id="auc-timer-el" class="font-mono text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight leading-tight">
               05:00
             </div>
-            <span id="auc-timer-subtext" class="text-[10px] font-semibold text-gray-400 mt-0.5">
-              AUCTION
+            <span id="auc-timer-subtext" class="text-[10px] font-medium text-gray-400 mt-0.5">
+              เวลาที่เหลือ
             </span>
 
             <!-- Urgent pulse overlay -->
-            <div id="timer-urgent-glow" class="hidden absolute inset-0 bg-rose-500/10 border border-rose-500/40 rounded-2xl pointer-events-none animate-pulse"></div>
+            <div id="timer-urgent-glow" class="hidden absolute inset-0 bg-rose-500/10 border border-rose-500/40 rounded-xl pointer-events-none animate-pulse"></div>
           </div>
         </div>
 
         <!-- Row 2: Reserve Goal Progress Bar -->
-        <div class="bg-black/40 rounded-2xl p-3 border border-white/5 flex flex-col gap-2">
+        <div class="bg-black/35 rounded-xl p-2.5 border border-white/5 flex flex-col gap-1.5">
           <div class="flex justify-between items-center text-xs">
-            <span class="text-[11px] font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-purple-400 text-[15px]">flag</span>
+            <span id="auc-goal-label" class="text-[11px] font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-amber-400 text-[14px]">flag</span>
               <span>เป้าหมาย (Reserve Goal)</span>
             </span>
-            <span id="auc-goal-el" class="font-mono text-xs font-black text-purple-300">
-              0 / 300 🪙 (0%)
+            <span id="auc-goal-el" class="font-mono text-xs font-black text-amber-300">
+              0 / 300 Coins (0%)
             </span>
           </div>
 
-          <!-- Gauge Track -->
-          <div class="h-2.5 w-full bg-gray-950 rounded-full overflow-hidden border border-white/10 relative">
-            <div id="auc-progress-el" class="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 transition-all duration-500 ease-out rounded-full shadow-[0_0_12px_rgba(168,85,247,0.8)]" style="width: 0%;"></div>
+          <!-- Progress Track -->
+          <div class="h-2 w-full bg-gray-950 rounded-full overflow-hidden border border-white/10 relative">
+            <div id="auc-progress-el" class="h-full bg-gradient-to-r from-amber-500 via-orange-400 to-amber-300 transition-all duration-500 ease-out rounded-full shadow-[0_0_8px_rgba(245,158,11,0.6)]" style="width: 0%;"></div>
           </div>
         </div>
 
-        <!-- Row 3: Contenders Mini-Board (Top 2 & Top 3 Bidders) -->
-        <div class="flex flex-col gap-2">
-          <div class="flex justify-between items-center px-1">
+        <!-- Row 3: Contenders (#2 - #5) -->
+        <div class="flex flex-col gap-1.5">
+          <div class="flex justify-between items-center px-0.5">
             <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
-              ⚔️ ผู้ท้าชิงอันดับรอง (CONTENDERS)
+              ผู้ท้าชิงอันดับรอง (CONTENDERS)
             </span>
             <span id="auc-bid-count" class="text-[10px] font-mono text-gray-500">
-              0 bids placed
+              0 bids
             </span>
           </div>
 
           <div id="contenders-container" class="grid grid-cols-2 gap-2">
-            <!-- Rendered by JS: #2 and #3 -->
-            <div class="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 flex items-center gap-2">
-              <span class="text-sm">🥈</span>
-              <span class="text-xs text-gray-500 truncate">รอผู้เสนอราคา...</span>
-            </div>
-            <div class="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 flex items-center gap-2">
-              <span class="text-sm">🥉</span>
-              <span class="text-xs text-gray-500 truncate">รอผู้เสนอราคา...</span>
-            </div>
+            <!-- Rendered by JS -->
           </div>
         </div>
 
       </div>
 
-      <!-- Grand Winner Celebration Screen (Overlay takeover) -->
+      <!-- Grand Winner Celebration Screen -->
       <div id="winner-takeover" class="winner-takeover">
-        <!-- Radial light rays behind trophy -->
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
-          <div class="w-72 h-72 rounded-full bg-gradient-to-tr from-amber-500 to-purple-600 blur-3xl"></div>
-        </div>
-
         <div class="relative z-10 flex flex-col items-center">
-          <div class="w-16 h-16 rounded-2xl bg-amber-400/20 border border-amber-400/50 flex items-center justify-center mb-3 shadow-[0_0_30px_rgba(245,158,11,0.5)]">
-            <span class="text-3xl">🏆</span>
+          <div class="w-12 h-12 rounded-xl bg-amber-400/20 border border-amber-400/50 flex items-center justify-center mb-2 shadow-[0_0_20px_rgba(245,158,11,0.4)]">
+            <span class="material-symbols-outlined text-amber-400 text-2xl" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
           </div>
 
-          <span class="text-xs font-black text-amber-400 uppercase tracking-widest mb-1">
-            🎉 ขอแสดงความยินดีกับผู้ชนะการประมูล! 🎉
+          <span class="text-xs font-black text-amber-400 uppercase tracking-widest mb-0.5">
+            ขอแสดงความยินดีกับผู้ชนะการประมูล
           </span>
-          <h3 class="text-sm font-semibold text-gray-300 max-w-[340px] truncate" id="winner-auc-title">
-            ประมูล: ร้องเพลงตามใจผู้ชนะ
+          <h3 class="text-xs font-medium text-gray-300 max-w-[320px] truncate" id="winner-auc-title">
+            ประมูลสด TikTok LIVE
           </h3>
 
           <!-- Winner Avatar -->
-          <div class="my-4 relative">
+          <div class="my-3 relative">
             <div id="winner-avatar-container">
-              <div class="w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 to-purple-600 flex items-center justify-center text-3xl font-black text-white border-4 border-amber-400 shadow-2xl shadow-amber-500/40">
+              <div class="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-purple-600 flex items-center justify-center text-2xl font-black text-white border-2 border-amber-400 shadow-xl">
                 W
               </div>
             </div>
-            <span class="absolute -top-3 -right-2 text-2xl leading-none drop-shadow-lg">👑</span>
           </div>
 
-          <div id="winner-name-el" class="text-2xl font-black text-white tracking-tight truncate max-w-[320px]">
+          <div id="winner-name-el" class="text-xl font-black text-white tracking-tight truncate max-w-[300px]">
             @Winner
           </div>
 
-          <div class="mt-2 flex items-center gap-2 bg-black/60 px-5 py-2 rounded-2xl border border-amber-400/40 shadow-inner">
-            <span class="material-symbols-outlined text-amber-400 text-xl" style="font-variation-settings: 'FILL' 1;">toll</span>
-            <span id="winner-coins-el" class="font-mono text-2xl font-black text-emerald-400 tracking-tight">
-              0 🪙
+          <div class="mt-2 flex items-center gap-1.5 bg-black/60 px-4 py-1.5 rounded-xl border border-amber-400/40">
+            <img src="/api/tiktok-coin" class="w-5 h-5 object-contain shrink-0" alt="Coin">
+            <span id="winner-coins-el" class="font-mono text-xl font-black text-amber-400 tracking-tight">
+              0 Coins
             </span>
           </div>
 
-          <span class="text-[11px] text-gray-400 mt-4">
-            ขอบคุณทุกท่านที่ร่วมสนับสนุนและประมูลในไลฟ์สด!
+          <span class="text-[10px] text-gray-400 mt-3">
+            ขอบคุณทุกท่านที่ร่วมสนับสนุนและประมูลในไลฟ์สด
           </span>
 
           <!-- Auto-close Countdown Progress Bar & Text -->
-          <div class="w-full max-w-[240px] h-1.5 bg-black/60 rounded-full overflow-hidden mt-3 border border-white/10">
-            <div id="winner-progress-bar" class="h-full bg-gradient-to-r from-amber-400 via-pink-500 to-purple-500 rounded-full" style="width: 100%;"></div>
+          <div class="w-full max-w-[200px] h-1 bg-black/60 rounded-full overflow-hidden mt-2.5 border border-white/10">
+            <div id="winner-progress-bar" class="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full" style="width: 100%;"></div>
           </div>
-          <span id="winner-autoclose-text" class="text-[10px] text-gray-400 font-mono mt-1">
-            กำลังปิดหน้าจออัตโนมัติใน 10s...
+          <span id="winner-autoclose-text" class="text-[9px] text-gray-500 font-mono mt-1">
+            กำลังปิดหน้าจออัตโนมัติ...
           </span>
         </div>
       </div>
@@ -343,7 +314,7 @@
     </div>
   </div>
 
-  <!-- Confetti Canvas for Grand Victory Celebration -->
+  <!-- Confetti Canvas -->
   <canvas id="confetti-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-[100]"></canvas>
 
   <!-- Audio Elements -->
@@ -372,7 +343,6 @@
   const aucProgressEl = document.getElementById('auc-progress-el');
   const aucBidCountEl = document.getElementById('auc-bid-count');
   const contendersContainer = document.getElementById('contenders-container');
-  const snipingToast = document.getElementById('sniping-toast');
 
   // Winner Takeover Elements
   const winnerTakeover = document.getElementById('winner-takeover');
@@ -394,7 +364,6 @@
     aucWidgetEl.classList.add('widget-hidden');
   }
 
-  // Set Scale
   function setScale(scaleVal) {
     const s = parseFloat(scaleVal) || 1.0;
     document.documentElement.style.setProperty('--overlay-scale', s);
@@ -403,7 +372,6 @@
     setScale(scaleParam);
   }
 
-  // Multi-tier Avatar Helpers
   const AVATAR_GRADIENTS = [
     'from-pink-500 to-rose-600',
     'from-purple-500 to-indigo-600',
@@ -466,49 +434,44 @@
   let prevHighestCoins = 0;
   let prevRemainingSec = -1;
   let winnerShown = false;
-  let toastTimeout = null;
 
   function renderAuction(auc) {
     if (!auc) return;
 
-    // Scale from config if not forced via URL
     if (auc.scale && !scaleParam) {
       setScale(auc.scale);
     }
 
-    // Header Title
     aucTitleEl.innerText = auc.title || 'ประมูลสด TikTok LIVE';
 
-    // Status Pill
     if (auc.is_active) {
       if (auc.is_paused) {
-        aucStatusPill.className = 'flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full shrink-0';
-        aucStatusPill.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400"></span><span class="font-mono text-[11px] font-extrabold text-amber-400 uppercase tracking-widest">PAUSED</span>';
+        aucStatusPill.className = 'flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-2.5 py-0.5 rounded-full shrink-0';
+        aucStatusPill.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span class="font-mono text-[10px] font-extrabold text-amber-400 uppercase tracking-widest">PAUSED</span>';
       } else {
-        aucStatusPill.className = 'flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full shrink-0 shadow-sm';
-        aucStatusPill.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span><span class="font-mono text-[11px] font-extrabold text-emerald-400 uppercase tracking-widest">LIVE</span>';
+        aucStatusPill.className = 'flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 rounded-full shrink-0 shadow-sm';
+        aucStatusPill.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span><span class="font-mono text-[10px] font-extrabold text-emerald-400 uppercase tracking-widest">LIVE</span>';
       }
     } else {
-      aucStatusPill.className = 'flex items-center gap-1.5 bg-gray-500/10 border border-gray-500/30 px-3 py-1 rounded-full shrink-0';
-      aucStatusPill.innerHTML = '<span class="w-2 h-2 rounded-full bg-gray-400"></span><span class="font-mono text-[11px] font-extrabold text-gray-400 uppercase tracking-widest">OFF</span>';
+      aucStatusPill.className = 'flex items-center gap-1.5 bg-gray-500/10 border border-gray-500/30 px-2.5 py-0.5 rounded-full shrink-0';
+      aucStatusPill.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span><span class="font-mono text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">OFF</span>';
     }
 
-    // Timer display & urgent styles
     const rem = auc.remaining_seconds || 0;
     aucTimerEl.innerText = formatMinSec(rem);
 
     if (rem <= 15 && auc.is_active && !auc.is_paused) {
-      aucTimerEl.className = 'font-mono text-3xl font-black text-rose-500 tracking-tight leading-tight animate-urgent';
-      aucTimerSubtext.innerText = '⚠️ ช่วงเวลาลุ้นสุดท้าย!';
+      aucTimerEl.className = 'font-mono text-2xl sm:text-3xl font-black text-rose-500 tracking-tight leading-tight animate-urgent';
+      aucTimerSubtext.innerText = 'ช่วงเวลาลุ้นสุดท้าย';
       aucTimerSubtext.className = 'text-[10px] font-bold text-rose-400 mt-0.5 animate-pulse';
       timerUrgentGlow.classList.remove('hidden');
     } else if (rem <= 60 && auc.is_active) {
-      aucTimerEl.className = 'font-mono text-3xl font-black text-amber-400 tracking-tight leading-tight';
+      aucTimerEl.className = 'font-mono text-2xl sm:text-3xl font-black text-amber-400 tracking-tight leading-tight';
       aucTimerSubtext.innerText = 'นับถอยหลัง';
       aucTimerSubtext.className = 'text-[10px] font-semibold text-gray-400 mt-0.5';
       timerUrgentGlow.classList.add('hidden');
     } else {
-      aucTimerEl.className = 'font-mono text-3xl font-black text-emerald-400 tracking-tight leading-tight';
+      aucTimerEl.className = 'font-mono text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight leading-tight';
       aucTimerSubtext.innerText = 'เวลาที่เหลือ';
       aucTimerSubtext.className = 'text-[10px] font-semibold text-gray-400 mt-0.5';
       timerUrgentGlow.classList.add('hidden');
@@ -516,49 +479,57 @@
 
     prevRemainingSec = rem;
 
-    // Highest Bidder Card
     const highestCoins = auc.highest_bid || 0;
     const highestName = auc.highest_bidder || '-';
     const highestPic = auc.highest_avatar || '';
 
-    // Check coin increase for bump animation & sound
     if (highestCoins > prevHighestCoins && prevHighestCoins > 0) {
       highestBidderCard.classList.remove('animate-coin-bump');
-      void highestBidderCard.offsetWidth; // trigger reflow
+      void highestBidderCard.offsetWidth;
       highestBidderCard.classList.add('animate-coin-bump');
       playPopSound();
     }
     prevHighestCoins = highestCoins;
 
     aucHighestBidderEl.innerText = highestName !== '-' ? `@${highestName}` : 'ยังไม่มีผู้เสนอราคา';
-    aucBidCoinsEl.innerText = `${highestCoins.toLocaleString()} 🪙`;
-    highestAvatarContainer.innerHTML = renderAvatarHtml(highestPic, highestName, 52, 'border-2 border-amber-400 shadow-lg shadow-amber-500/20');
+    aucBidCoinsEl.innerText = `${highestCoins.toLocaleString()} Coins`;
+    highestAvatarContainer.innerHTML = renderAvatarHtml(highestPic, highestName, 48, 'border-2 border-amber-400 shadow-md');
 
-    // Reserve Goal Progress Bar
-    const target = auc.target_coins || 1;
-    const pct = Math.min(100, Math.floor((highestCoins / target) * 100));
-    aucProgressEl.style.width = `${pct}%`;
-    aucGoalEl.innerText = `${highestCoins.toLocaleString()} / ${target.toLocaleString()} 🪙 (${pct}%)`;
+    const isUnlimited = auc.unlimited_coins || auc.is_unlimited || !auc.target_coins || auc.target_coins <= 0;
+    const goalLabel = document.getElementById('auc-goal-label');
 
-    // Bid count
+    if (isUnlimited) {
+      if (goalLabel) {
+        goalLabel.innerHTML = '<span class="material-symbols-outlined text-amber-400 text-[14px]">all_inclusive</span><span>ประมูลอิสระ (ไม่จำกัดเหรียญ)</span>';
+      }
+      aucProgressEl.style.width = '100%';
+      aucProgressEl.className = 'h-full bg-gradient-to-r from-amber-500 via-pink-500 to-amber-300 transition-all duration-500 ease-out rounded-full shadow-[0_0_8px_rgba(245,158,11,0.6)]';
+      aucGoalEl.innerText = `${highestCoins.toLocaleString()} Coins สะสม (ไม่จำกัดเป้า)`;
+    } else {
+      if (goalLabel) {
+        goalLabel.innerHTML = '<span class="material-symbols-outlined text-amber-400 text-[14px]">flag</span><span>เป้าหมาย (Reserve Goal)</span>';
+      }
+      const target = auc.target_coins || 1;
+      const pct = Math.min(100, Math.floor((highestCoins / target) * 100));
+      aucProgressEl.style.width = `${pct}%`;
+      aucProgressEl.className = 'h-full bg-gradient-to-r from-amber-500 via-orange-400 to-amber-300 transition-all duration-500 ease-out rounded-full shadow-[0_0_8px_rgba(245,158,11,0.6)]';
+      aucGoalEl.innerText = `${highestCoins.toLocaleString()} / ${target.toLocaleString()} Coins (${pct}%)`;
+    }
+
     const bidCnt = auc.bid_count || 0;
-    aucBidCountEl.innerText = `${bidCnt} การเสนอราคา`;
+    aucBidCountEl.innerText = `${bidCnt} bids`;
 
-    // Contenders (Top 2 and Top 3)
     const topList = auc.top_bidders || [];
     renderContenders(topList, highestCoins);
 
-    // Winner Announcement Takeover & Visibility logic
     const autoHide = auc.auto_hide_on_end !== false;
 
     if (auc.is_active) {
-      // Auction is currently active
       showWidget();
       if (winnerShown) {
         dismissWinner(false);
       }
     } else {
-      // Auction is inactive
       if (auc.is_winner_announced && auc.winner_name && auc.winner_name !== '-') {
         showWinner(auc);
       } else {
@@ -579,7 +550,7 @@
   }
 
   function hideWidget() {
-    if (isPreview) return; // Keep visible in preview iframe
+    if (isPreview) return;
     aucWidgetEl.classList.remove('widget-visible');
     aucWidgetEl.classList.add('widget-hidden');
   }
@@ -588,15 +559,14 @@
     const contenders = topList.slice(1, 5);
     if (contenders.length === 0) {
       contendersContainer.innerHTML = `
-        <div class="col-span-2 bg-white/[0.02] border border-white/5 rounded-xl py-2 px-3 flex items-center justify-center text-xs text-gray-500 gap-2">
-          <span>⚔️</span>
-          <span>รอผู้ท้าชิงอันดับ 2 - 5 เข้าแข่งขัน...</span>
+        <div class="col-span-2 bg-white/[0.02] border border-white/5 rounded-xl py-2.5 px-3 flex items-center justify-center text-xs text-gray-500 gap-2">
+          <span>รอผู้ท้าชิงอันดับ 2 - 5...</span>
         </div>
       `;
       return;
     }
 
-    const rankBadges = ['🥈 #2', '🥉 #3', '4️⃣ #4', '5️⃣ #5'];
+    const rankBadges = ['#2', '#3', '#4', '#5'];
     const borders = ['border-slate-300', 'border-amber-600', 'border-purple-400', 'border-cyan-400'];
 
     let html = '';
@@ -607,20 +577,20 @@
         html += `
           <div class="bg-white/[0.03] border border-white/10 rounded-xl p-2 flex items-center justify-between min-w-0">
             <div class="flex items-center gap-1.5 min-w-0">
-              <span class="text-[11px] font-black shrink-0 text-gray-300">${rankBadges[i]}</span>
+              <span class="text-[10px] font-black shrink-0 text-gray-300">${rankBadges[i]}</span>
               <div class="shrink-0">
-                ${renderAvatarHtml(c.profile_picture, c.sender, 24, 'border ' + borders[i])}
+                ${renderAvatarHtml(c.profile_picture, c.sender, 22, 'border ' + borders[i])}
               </div>
               <div class="flex flex-col min-w-0">
                 <span class="text-xs font-bold text-white truncate max-w-[75px] leading-tight">
                   ${escapeHtml(c.sender)}
                 </span>
                 <span class="text-[9px] text-gray-400 font-mono leading-none mt-0.5">
-                  -${gap.toLocaleString()} 🪙
+                  -${gap.toLocaleString()}
                 </span>
               </div>
             </div>
-            <span class="font-mono text-xs font-extrabold text-emerald-400 shrink-0">
+            <span class="font-mono text-xs font-extrabold text-amber-400 shrink-0">
               ${c.coins.toLocaleString()}
             </span>
           </div>
@@ -637,18 +607,6 @@
     contendersContainer.innerHTML = html;
   }
 
-  function showAntiSnipingToast() {
-    snipingToast.classList.remove('hidden');
-    snipingToast.classList.remove('animate-toast');
-    void snipingToast.offsetWidth;
-    snipingToast.classList.add('animate-toast');
-
-    if (toastTimeout) clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => {
-      snipingToast.classList.add('hidden');
-    }, 3000);
-  }
-
   let celebrationTimeout = null;
   let celebrationInterval = null;
 
@@ -660,16 +618,14 @@
 
     winnerAucTitle.innerText = auc.title || 'ประมูลสด TikTok LIVE';
     winnerNameEl.innerText = `@${auc.winner_name}`;
-    winnerCoinsEl.innerText = `${(auc.winning_coins || 0).toLocaleString()} 🪙`;
-    winnerAvatarContainer.innerHTML = renderAvatarHtml(auc.winner_avatar, auc.winner_name, 80, 'border-4 border-amber-400 shadow-2xl shadow-amber-500/40');
+    winnerCoinsEl.innerText = `${(auc.winning_coins || 0).toLocaleString()} Coins`;
+    winnerAvatarContainer.innerHTML = renderAvatarHtml(auc.winner_avatar, auc.winner_name, 64, 'border-2 border-amber-400 shadow-xl');
 
     winnerTakeover.classList.add('active');
 
-    // Trigger Confetti VFX and Audio
     startConfetti();
     playApplauseSound();
 
-    // Auto-dismiss setup
     const durationSec = Math.max(3, parseInt(auc.celebration_duration_sec || 10));
     const autoHide = auc.auto_hide_on_end !== false;
 
@@ -718,10 +674,6 @@
     }
   }
 
-  function hideWinner() {
-    dismissWinner(false);
-  }
-
   function playPopSound() {
     try {
       sndPop.currentTime = 0;
@@ -751,48 +703,61 @@
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
 
-  function startConfetti() {
-    confettiParticles = [];
-    const colors = ['#f59e0b', '#ec4899', '#8b5cf6', '#10b981', '#3b82f6', '#ffffff', '#fbbf24'];
-    for (let i = 0; i < 150; i++) {
+  function startConfetti(count = 70) {
+    stopConfetti();
+    const colors = ['#f59e0b', '#fbbf24', '#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#ffffff'];
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+
+    for (let i = 0; i < count; i++) {
       confettiParticles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height - canvas.height,
-        r: Math.random() * 6 + 3,
-        d: Math.random() * 150 + 10,
+        x: cx + (Math.random() - 0.5) * 160,
+        y: cy + (Math.random() - 0.5) * 50,
+        vx: (Math.random() - 0.5) * 14,
+        vy: (Math.random() - 0.5) * 14 - 6,
+        size: Math.random() * 7 + 4,
         color: colors[Math.floor(Math.random() * colors.length)],
-        tilt: Math.floor(Math.random() * 10) - 10,
-        tiltAngleInc: (Math.random() * 0.07) + 0.05,
-        tiltAngle: 0
+        rotation: Math.random() * 360,
+        rotationSpeed: (Math.random() - 0.5) * 10,
+        life: 1.0,
+        decay: Math.random() * 0.015 + 0.01
       });
     }
 
-    if (confettiAnimationId) cancelAnimationFrame(confettiAnimationId);
-    animateConfetti();
-  }
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = confettiParticles.length - 1; i >= 0; i--) {
+        const p = confettiParticles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.3;
+        p.vx *= 0.98;
+        p.rotation += p.rotationSpeed;
+        p.life -= p.decay;
 
-  function animateConfetti() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (let i = 0; i < confettiParticles.length; i++) {
-      const p = confettiParticles[i];
-      p.tiltAngle += p.tiltAngleInc;
-      p.y += (Math.cos(p.d) + 3 + p.r / 2) / 1.5;
-      p.x += Math.sin(p.d);
-      p.tilt = Math.sin(p.tiltAngle - (i / 3)) * 15;
+        if (p.life <= 0) {
+          confettiParticles.splice(i, 1);
+          continue;
+        }
 
-      ctx.beginPath();
-      ctx.lineWidth = p.r;
-      ctx.strokeStyle = p.color;
-      ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
-      ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
-      ctx.stroke();
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        ctx.restore();
+      }
 
-      if (p.y > canvas.height) {
-        p.x = Math.random() * canvas.width;
-        p.y = -20;
+      if (confettiParticles.length > 0) {
+        confettiAnimationId = requestAnimationFrame(loop);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        confettiAnimationId = null;
       }
     }
-    confettiAnimationId = requestAnimationFrame(animateConfetti);
+
+    loop();
   }
 
   function stopConfetti() {
@@ -800,60 +765,55 @@
       cancelAnimationFrame(confettiAnimationId);
       confettiAnimationId = null;
     }
+    confettiParticles = [];
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
   // WebSocket Connection
-  const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
   let ws = null;
+  function connectWs() {
+    const loc = window.location;
+    const wsProto = loc.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProto}//${loc.host}/ws`;
 
-  function connectWS() {
-    ws = new WebSocket(WS_URL);
+    ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      console.log("[Auction Overlay] WebSocket connected");
+      fetch('/api/config')
+        .then(r => r.json())
+        .then(cfg => {
+          if (cfg && cfg.auction_config) {
+            renderAuction(cfg.auction_config);
+          }
+        })
+        .catch(() => {});
     };
 
-    ws.onmessage = (event) => {
+    ws.onmessage = (evt) => {
       try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'refresh_overlays') {
-          window.location.reload();
-          return;
-        }
-        if (data.type === 'auction_dismiss_winner') {
-          dismissWinner(true);
-          if (data.auction) {
-            renderAuction(data.auction);
-          }
-        } else if (data.type === 'init' || data.type === 'auction_tick' || data.type === 'auction_update' || data.type === 'auction_winner' || data.type === 'gift') {
-          if (data.auction) {
-            renderAuction(data.auction);
+        const msg = JSON.parse(evt.data);
+        if (msg.type === 'auction_update') {
+          renderAuction(msg.auction);
+        } else if (msg.type === 'auction_winner') {
+          showWinner(msg.auction);
+        } else if (msg.type === 'config_update') {
+          if (msg.config && msg.config.auction_config) {
+            renderAuction(msg.config.auction_config);
           }
         }
-        if (data.type === 'config_updated' && data.config && data.config.auction_config) {
-          const ac = data.config.auction_config;
-          if (ac.scale && !scaleParam) setScale(ac.scale);
-        }
-      } catch(e) {
-        console.error(e);
-      }
+      } catch(e) {}
     };
 
     ws.onclose = () => {
-      setTimeout(connectWS, 2000);
+      setTimeout(connectWs, 2000);
+    };
+
+    ws.onerror = () => {
+      ws.close();
     };
   }
 
-  connectWS();
-
-  // Initial Fetch Status
-  fetch('/api/status')
-    .then(res => res.json())
-    .then(data => {
-      if (data && data.auction) renderAuction(data.auction);
-    })
-    .catch(() => {});
+  connectWs();
 </script>
 </body>
 </html>

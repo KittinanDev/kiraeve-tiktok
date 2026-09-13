@@ -79,12 +79,12 @@
   "leaderboard_config": {
     "enabled": true,
     "top_count": 5,
-    "title": "👑 TOP SUPPORTERS TODAY",
+    "title": "TOP SUPPORTERS TODAY",
     "scale": 2
   },
   "auction_config": {
     "enabled": true,
-    "title": "🎮 ประมูล: เล่นเกมตามสั่ง 1 ตา",
+    "title": "ประมูลสด: เล่นเกมตามสั่ง 1 ตา",
     "target_coins": 500,
     "duration_seconds": 180,
     "min_increment": 1,
@@ -99,47 +99,56 @@
       {
         "text": "+300s โบนัสใหญ่",
         "tier": "legendary",
-        "rarity_name": "SSR 👑",
+        "rarity_name": "LEGENDARY",
         "color": "#fbbf24"
       },
       {
         "text": "+60s",
         "tier": "epic",
-        "rarity_name": "SR ⭐⭐",
+        "rarity_name": "EPIC",
         "color": "#c084fc"
       },
       {
         "text": "+30s",
         "tier": "rare",
-        "rarity_name": "R ⭐",
+        "rarity_name": "RARE",
         "color": "#34d399"
       },
       {
         "text": "-30s ลดเวลา",
         "tier": "hazard",
-        "rarity_name": "DEBUFF 💀",
+        "rarity_name": "HAZARD",
         "color": "#f87171"
       },
       {
         "text": "วิดพื้น 10 ครั้ง",
         "tier": "custom",
-        "rarity_name": "ทำโทษ 🏋️",
+        "rarity_name": "ทำโทษ",
         "color": "#ec4899"
+      },
+      {
+        "text": "Rose",
+        "type": "gift",
+        "gift_name": "Rose",
+        "tier": "legendary",
+        "rarity_name": "GIFT",
+        "color": "#fbbf24",
+        "is_gift": true
       },
       {
         "text": "+15s",
         "tier": "common",
-        "rarity_name": "Normal",
+        "rarity_name": "COMMON",
         "color": "#94a3b8"
       }
     ],
     "rarity_names": {
-      "legendary": "SSR ⭐⭐⭐",
-      "epic": "SR ⭐⭐",
-      "rare": "R ⭐",
-      "common": "Normal",
-      "hazard": "DEBUFF 💀",
-      "custom": "ภารกิจพิเศษ"
+      "legendary": "LEGENDARY",
+      "epic": "EPIC",
+      "rare": "RARE",
+      "common": "COMMON",
+      "hazard": "HAZARD",
+      "custom": "CUSTOM"
     },
     "spin_duration": 4,
     "trigger_gift_name": "Doughnut",

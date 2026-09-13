@@ -320,7 +320,7 @@ tailwind.config = {
       <div class="grid grid-cols-2 gap-2">
         <div class="flex flex-col gap-1 p-2 bg-surface-container-high rounded border border-outline-variant">
           <span class="text-[10px] font-semibold text-on-surface-variant uppercase">CURRENT BID</span>
-          <span id="auc-bid-coins" class="font-mono font-bold text-lg text-secondary">0 🪙</span>
+          <span id="auc-bid-coins" class="font-mono font-bold text-lg text-secondary">0 <img src="/api/tiktok-coin" class="w-3.5 h-3.5 inline-block align-middle shrink-0" alt="Coins"></span>
           <span id="auc-highest-bidder" class="text-xs text-on-surface-variant truncate">by @-</span>
         </div>
         <div class="flex flex-col gap-1 p-2 bg-surface-container-high rounded border border-outline-variant">
@@ -333,7 +333,7 @@ tailwind.config = {
       <div class="flex flex-col gap-1 mt-1">
         <div class="flex justify-between items-end text-xs">
           <span class="text-[11px] font-semibold text-on-surface-variant uppercase">RESERVE GOAL</span>
-          <span id="auc-goal-el" class="font-mono text-[11px] text-on-surface-variant">0 / 300 🪙</span>
+          <span id="auc-goal-el" class="font-mono text-[11px] text-on-surface-variant">0 / 300 <img src="/api/tiktok-coin" class="w-3.5 h-3.5 inline-block align-middle shrink-0" alt="Coins"></span>
         </div>
         <div class="h-2 w-full bg-surface-container-lowest rounded-full overflow-hidden border border-outline-variant">
           <div id="auc-progress-el" class="h-full bg-primary transition-all duration-500 ease-in-out" style="width: 0%;"></div>
@@ -349,7 +349,7 @@ tailwind.config = {
     </div>
     <div class="text-xs font-bold text-secondary uppercase tracking-widest">WINNER OF THE AUCTION!</div>
     <div id="winner-name-el" class="text-2xl font-bold text-on-surface mt-1">@Bidder_King</div>
-    <div id="winner-coins-el" class="font-mono text-3xl font-bold text-tertiary mt-1">29,999 🪙</div>
+    <div id="winner-coins-el" class="font-mono text-3xl font-bold text-tertiary mt-1">29,999 <img src="/api/tiktok-coin" class="w-6 h-6 inline-block align-middle shrink-0" alt="Coins"></div>
   </div>
 
   <!-- Widget 6: Gacha Roulette Reel (Center Screen) -->
@@ -629,9 +629,9 @@ tailwind.config = {
 
     const target = auc.target_coins || 1;
     const highest = auc.highest_bid || 0;
-    aucBidCoinsEl.innerText = `${highest.toLocaleString()} 🪙`;
+    aucBidCoinsEl.innerHTML = `${highest.toLocaleString()} <img src="/api/tiktok-coin" class="w-3.5 h-3.5 inline-block align-middle shrink-0" alt="Coins">`;
     aucHighestBidderEl.innerText = `by @${auc.highest_bidder || '-'}`;
-    aucGoalEl.innerText = `${highest.toLocaleString()} / ${target.toLocaleString()} 🪙`;
+    aucGoalEl.innerHTML = `${highest.toLocaleString()} / ${target.toLocaleString()} <img src="/api/tiktok-coin" class="w-3.5 h-3.5 inline-block align-middle shrink-0" alt="Coins">`;
 
     const pct = Math.min(100, Math.floor((highest / target) * 100));
     aucProgressEl.style.width = `${pct}%`;
@@ -639,7 +639,7 @@ tailwind.config = {
     if (auc.is_winner_announced && auc.winner_name && auc.winner_name !== '-') {
       auctionWidgetEl.style.display = 'none';
       winnerNameEl.innerText = `@${auc.winner_name}`;
-      winnerCoinsEl.innerText = `${auc.winning_coins.toLocaleString()} 🪙`;
+      winnerCoinsEl.innerHTML = `${auc.winning_coins.toLocaleString()} <img src="/api/tiktok-coin" class="w-6 h-6 inline-block align-middle shrink-0" alt="Coins">`;
 
       if (!previousWinnerState) {
         previousWinnerState = true;
