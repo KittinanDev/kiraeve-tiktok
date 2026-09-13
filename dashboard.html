@@ -437,7 +437,7 @@ tailwind.config = {
       <div class="flex items-center justify-between px-1">
         <span class="text-[11px] text-on-surface-variant font-mono flex items-center gap-1">
           <span class="material-symbols-outlined text-[13px]">package_2</span>
-          <span>v</span><span id="sidebar-app-version">1.1.1</span>
+          <span>v</span><span id="sidebar-app-version">1.1.2</span>
         </span>
         <button onclick="openUpdateModal()" id="sidebar-update-btn"
           class="flex items-center gap-1 text-[11px] font-semibold text-amber-500 hover:text-amber-400 transition-colors group">
@@ -2763,8 +2763,8 @@ tailwind.config = {
     // โหลดเวอร์ชันจาก Electron หรือ fallback 1.0.0
     if (window.kiraeveUpdater) {
       window.kiraeveUpdater.getVersion().then(v => {
-        document.getElementById('modal-current-version').innerText = v || '1.1.1';
-        document.getElementById('sidebar-app-version').innerText = v || '1.1.1';
+        document.getElementById('modal-current-version').innerText = v || '1.1.2';
+        document.getElementById('sidebar-app-version').innerText = v || '1.1.2';
       });
     }
     // หากยังไม่เคยเช็กหรืออยู่ในหน้า idle ให้เริ่มเช็กอัปเดตอัตโนมัติทันที
@@ -2986,7 +2986,7 @@ tailwind.config = {
     { text: "-10", tier: "hazard", color: "#f87171" }
   ];
 
-  const popularTikTokGifts = [
+  let popularTikTokGifts = [
     { category: "1 - 99 เหรียญ (ของขวัญทั่วไป)", gifts: [
       { name: "Rose", coins: 1 },
       { name: "TikTok Box", coins: 1 },
@@ -3440,8 +3440,8 @@ tailwind.config = {
       return;
     }
 
-    // Limit display to 64 items for super-fast DOM rendering
-    const displayList = list.slice(0, 64);
+    // Render full gift catalog
+    const displayList = list;
 
     grid.innerHTML = displayList.map(g => {
       const proxiedIcon = `/api/gift-icon?name=${encodeURIComponent(g.name)}&url=${encodeURIComponent(g.icon || '')}`;
@@ -3451,7 +3451,7 @@ tailwind.config = {
         <button type="button" onclick="selectGiftFromModal('${safeName}', '${encodeURIComponent(g.icon || '')}', ${coins})"
           class="flex items-center gap-2.5 p-2 rounded-xl bg-tik-card hover:bg-tik-card-subtle border border-tik-card-border hover:border-amber-500 transition-all text-left group">
           <img src="${proxiedIcon}" loading="lazy" referrerpolicy="no-referrer"
-            onerror="this.onerror=null; this.src='/api/gift-icon?name=Rose';"
+            onerror="this.onerror=null; this.src='/api/gift-icon?name=' + encodeURIComponent('${safeName}');"
             class="w-9 h-9 object-contain rounded-lg bg-tik-bg p-1 border border-tik-card-border flex-shrink-0 group-hover:scale-105 transition-transform" alt="${safeName}">
           <div class="min-w-0 flex-1">
             <p class="text-xs font-bold text-on-surface truncate group-hover:text-amber-500 transition-colors">${safeName}</p>

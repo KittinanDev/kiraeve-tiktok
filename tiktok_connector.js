@@ -171,7 +171,7 @@ async function tryConnect() {
 
         tiktokLiveConnection = new ConnClass(username, {
             processInitialData: false,
-            enableExtendedGiftInfo: true
+            enableExtendedGiftInfo: false
         });
 
         tiktokLiveConnection.on('chat', data => {

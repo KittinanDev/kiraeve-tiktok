@@ -92,6 +92,29 @@ GIFT_CACHE_PATH = BASE_DIR / "gift_cache.json"
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("studio-feature7-vfx")
 
+GIFT_CACHE_MAP: Dict[str, dict] = {}
+GIFT_CATALOG_LIST: List[dict] = []
+
+def load_gift_cache():
+    global GIFT_CACHE_MAP, GIFT_CATALOG_LIST
+    if GIFT_CACHE_PATH.exists():
+        try:
+            with open(GIFT_CACHE_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                GIFT_CATALOG_LIST = data.get("gifts", [])
+                for g in GIFT_CATALOG_LIST:
+                    g_name = (g.get("name") or "").strip()
+                    if g_name:
+                        GIFT_CACHE_MAP[g_name.lower()] = g
+                        clean_k = re.sub(r'[^a-zA-Z0-9]', '', g_name.lower())
+                        if clean_k:
+                            GIFT_CACHE_MAP[clean_k] = g
+            log.info("Loaded %d gifts from gift_cache.json into catalog map", len(GIFT_CATALOG_LIST))
+        except Exception as e:
+            log.warning("Failed to load gift_cache.json: %s", e)
+
+load_gift_cache()
+
 DEFAULT_CONFIG = {
     "tiktok_username": "your_tiktok_username",
     "tts_config": {
@@ -241,6 +264,7 @@ ALIASES = {
     "good game": "gg",
     "universe": "tiktok universe",
     "ice cream": "ice cream cone",
+    "ice cream cone": "ice cream cone",
     "hi": "wink charm",
     "love hand": "finger heart",
     "heart": "finger heart",
@@ -253,24 +277,28 @@ ALIASES = {
     "popcorn": "chatting popcorn",
     "coffee": "coffee magic",
     "balloon": "balloons",
+    "balloons": "balloons",
     "tiktok cap": "cap",
     "goggles": "vr goggles",
-    "boxing gloves": "boxing",
-    "boxing": "boxing",
+    "boxing gloves": "boxing_gloves",
+    "boxing": "boxing_gloves",
     "rock star": "rock star",
-    "magic castle": "castle fantasy",
-    "champion trophy": "league trophy",
-    "trophy": "league trophy",
+    "magic castle": "castle_fantasy",
+    "castle": "castle",
+    "champion trophy": "league_trophy",
+    "trophy": "league_trophy",
     "volcano": "volcano",
     "speedboat": "speed boat",
-    "golden falcon": "falcon",
-    "castle": "light castle",
+    "speed boat": "speed boat",
+    "golden falcon": "golden_falcon",
+    "falcon": "falcon",
     "rocket": "flying jets",
     "dragon": "dragon flame",
     "birthday cake": "cake slice",
     "flower bouquet": "xxxl flowers",
     "origami boat": "paper crane",
-    "magic mirror": "mirror",
+    "magic mirror": "magic_mirror",
+    "mirror": "magic_mirror",
     # Thai gift name aliases
     "กุหลาบ": "rose",
     "โดนัท": "doughnut",
@@ -289,10 +317,10 @@ ALIASES = {
     "วาฬ": "whale diving",
     "หงส์": "swan",
     "พลุ": "fireworks",
-    "ปราสาท": "light castle",
+    "ปราสาท": "castle",
     "จรวด": "flying jets",
-    "มวย": "boxing",
-    "ถ้วย": "league trophy",
+    "มวย": "boxing_gloves",
+    "ถ้วย": "league_trophy",
     "กาแฟ": "coffee magic",
     "ป๊อปคอร์น": "chatting popcorn",
     "ลูกโป่ง": "balloons",
@@ -314,28 +342,41 @@ def get_real_gift_icon(gift_name: str) -> str:
     name_lower = cleaned.strip().lower()
     if not name_lower:
         return REAL_TIKTOK_GIFT_ICONS.get("rose", "")
+
+    # 1. Direct match in GIFT_CACHE_MAP (from gift_cache.json)
+    if name_lower in GIFT_CACHE_MAP and GIFT_CACHE_MAP[name_lower].get("icon"):
+        return GIFT_CACHE_MAP[name_lower]["icon"]
+
+    # 2. Check alias in GIFT_CACHE_MAP
+    if name_lower in ALIASES:
+        target_alias = ALIASES[name_lower].strip().lower()
+        if target_alias in GIFT_CACHE_MAP and GIFT_CACHE_MAP[target_alias].get("icon"):
+            return GIFT_CACHE_MAP[target_alias]["icon"]
+
+    # 3. Cleaned alphanumeric match in GIFT_CACHE_MAP
+    clean_k = re.sub(r'[^a-zA-Z0-9]', '', name_lower)
+    if clean_k in GIFT_CACHE_MAP and GIFT_CACHE_MAP[clean_k].get("icon"):
+        return GIFT_CACHE_MAP[clean_k]["icon"]
+
+    # 4. Check GIFT_ICONS_MAP / REAL_TIKTOK_GIFT_ICONS
     if name_lower in GIFT_ICONS_MAP:
         return GIFT_ICONS_MAP[name_lower]
+    if name_lower in REAL_TIKTOK_GIFT_ICONS:
+        return REAL_TIKTOK_GIFT_ICONS[name_lower]
     if name_lower in ALIASES:
-        target_alias = ALIASES[name_lower]
+        target_alias = ALIASES[name_lower].strip().lower()
         if target_alias in GIFT_ICONS_MAP:
             return GIFT_ICONS_MAP[target_alias]
         if target_alias in REAL_TIKTOK_GIFT_ICONS:
             return REAL_TIKTOK_GIFT_ICONS[target_alias]
-    if name_lower in REAL_TIKTOK_GIFT_ICONS:
-        return REAL_TIKTOK_GIFT_ICONS[name_lower]
-    for k, v in GIFT_ICONS_MAP.items():
-        if k == name_lower:
-            return v
-    for k, v in GIFT_ICONS_MAP.items():
-        if name_lower in k or k in name_lower:
-            return v
-    for alias_k, alias_v in ALIASES.items():
-        if alias_k in name_lower or name_lower in alias_k:
-            if alias_v in GIFT_ICONS_MAP:
-                return GIFT_ICONS_MAP[alias_v]
-            if alias_v in REAL_TIKTOK_GIFT_ICONS:
-                return REAL_TIKTOK_GIFT_ICONS[alias_v]
+
+    # 5. Fuzzy match in GIFT_CACHE_MAP (for partial queries >= 4 chars)
+    if len(name_lower) >= 4:
+        for k, g in GIFT_CACHE_MAP.items():
+            if name_lower in k or k in name_lower:
+                if g.get("icon"):
+                    return g["icon"]
+
     return REAL_TIKTOK_GIFT_ICONS.get("rose", "")
 
 def filter_tts_text(text: str, blacklisted_words: List[str], max_length: int = 100) -> Optional[str]:
@@ -1023,60 +1064,70 @@ async def handle_gift_icon_proxy(request: web.Request) -> web.Response:
     gift_name = clean_gift_name(raw_name).lower() or "rose"
     raw_url = request.query.get("url")
     
+    safe_name = re.sub(r'[^\w\.-]', '_', gift_name)
+    alias_target = ALIASES.get(gift_name, "")
+    alias_safe = re.sub(r'[^\w\.-]', '_', alias_target) if alias_target else ""
+
+    # 1. Determine icon URL
     if raw_url and raw_url.startswith("http"):
         icon_url = raw_url
-        url_hash = hashlib.md5(raw_url.encode('utf-8')).hexdigest()[:10]
-        safe_name = re.sub(r'[^\w\.-]', '_', gift_name)
-        cached_file = ICON_CACHE_DIR / f"{safe_name}_{url_hash}.webp"
     else:
         icon_url = get_real_gift_icon(gift_name)
-        safe_name = re.sub(r'[^\w\.-]', '_', gift_name)
+
+    # 2. Check cached file on disk if icon_url is a CDN URL
+    if icon_url and icon_url.startswith("http"):
+        url_hash = hashlib.md5(icon_url.encode('utf-8')).hexdigest()[:10]
+        cached_file = ICON_CACHE_DIR / f"{safe_name}_{url_hash}.webp"
+        if cached_file.exists() and cached_file.stat().st_size > 0:
+            with open(cached_file, "rb") as f:
+                return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+    else:
         cached_file = ICON_CACHE_DIR / f"{safe_name}.webp"
-
-    # 1. Check primary cached file
-    if cached_file.exists() and cached_file.stat().st_size > 0:
-        with open(cached_file, "rb") as f:
-            return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
-
-    # 2. Check alias cache file on disk
-    if gift_name in ALIASES:
-        alias_safe = re.sub(r'[^\w\.-]', '_', ALIASES[gift_name])
-        alias_file = ICON_CACHE_DIR / f"{alias_safe}.webp"
-        if alias_file.exists() and alias_file.stat().st_size > 0:
-            with open(alias_file, "rb") as f:
+        if cached_file.exists() and cached_file.stat().st_size > 0:
+            with open(cached_file, "rb") as f:
                 return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
 
-    # 3. Check partial disk matches in ICON_CACHE_DIR
-    if safe_name:
-        for f_item in ICON_CACHE_DIR.glob("*.webp"):
-            stem = f_item.stem.lower()
-            if stem == safe_name or stem in safe_name or (len(safe_name) >= 4 and safe_name in stem):
-                if f_item.stat().st_size > 0:
-                    with open(f_item, "rb") as f:
-                        return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+    # 3. Check pre-bundled icon on disk (e.g. media/icons/rose.webp, ice_cream_cone.webp)
+    primary_disk = ICON_CACHE_DIR / f"{safe_name}.webp"
+    if primary_disk.exists() and primary_disk.stat().st_size > 0:
+        with open(primary_disk, "rb") as f:
+            return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
 
-    if not icon_url or not icon_url.startswith("http"):
-        icon_url = get_real_gift_icon("rose")
+    if alias_safe:
+        alias_disk = ICON_CACHE_DIR / f"{alias_safe}.webp"
+        if alias_disk.exists() and alias_disk.stat().st_size > 0:
+            with open(alias_disk, "rb") as f:
+                return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
 
+    # 4. Fetch from TikTok CDN if icon_url is valid
     if icon_url and icon_url.startswith("http"):
         try:
-            req_headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+            req_headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Referer": "https://www.tiktok.com/"
+            }
             async with aiohttp.ClientSession() as session:
                 async with session.get(icon_url, headers=req_headers, ssl=False, timeout=aiohttp.ClientTimeout(total=8)) as resp:
                     if resp.status == 200:
                         data = await resp.read()
                         if len(data) > 0:
-                            with open(cached_file, "wb") as f:
-                                f.write(data)
-                            return web.Response(body=data, content_type=resp.headers.get("Content-Type", "image/webp"), headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+                            try:
+                                with open(cached_file, "wb") as f:
+                                    f.write(data)
+                            except Exception as save_err:
+                                log.warning("Could not cache gift icon to disk: %s", save_err)
+                            content_type = resp.headers.get("Content-Type", "image/webp")
+                            return web.Response(body=data, content_type=content_type, headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
         except Exception as e:
             log.warning("Could not fetch CDN icon for %s (%s): %s", gift_name, icon_url, e)
 
+    # 5. Fallback: Rose icon on disk
     rose_fallback = ICON_CACHE_DIR / "rose.webp"
     if rose_fallback.exists() and rose_fallback.stat().st_size > 0:
         with open(rose_fallback, "rb") as f:
             return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
 
+    # 6. Fallback: SVG placeholder
     svg_content = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <defs>
         <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -1084,10 +1135,10 @@ async def handle_gift_icon_proxy(request: web.Request) -> web.Response:
           <stop offset="100%" stop-color="#25f4ee"/>
         </linearGradient>
       </defs>
-      <circle cx="50" cy="50" r="45" fill="url(#g)"/>
-      <text x="50" y="58" font-size="22" font-family="sans-serif" font-weight="bold" fill="#ffffff" text-anchor="middle">{gift_name[:4].upper()}</text>
+      <rect width="100" height="100" rx="20" fill="url(#g)"/>
+      <text x="50" y="58" font-size="22" font-family="sans-serif" font-weight="bold" fill="#ffffff" text-anchor="middle">{safe_name[:4].upper()}</text>
     </svg>'''
-    return web.Response(text=svg_content, content_type="image/svg+xml", headers={"Access-Control-Allow-Origin": "*"})
+    return web.Response(text=svg_content, content_type="image/svg+xml", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
 
 async def handle_tiktok_coin(request: web.Request) -> web.Response:
     coin_file = MEDIA_DIR / "tiktok_coin.svg"
