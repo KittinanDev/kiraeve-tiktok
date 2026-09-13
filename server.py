@@ -1063,82 +1063,72 @@ async def handle_gift_icon_proxy(request: web.Request) -> web.Response:
     raw_name = request.query.get("name", "rose").strip()
     gift_name = clean_gift_name(raw_name).lower() or "rose"
     raw_url = request.query.get("url")
-    
+    gift_id = request.query.get("id", "").strip()
     safe_name = re.sub(r'[^\w\.-]', '_', gift_name)
-    alias_target = ALIASES.get(gift_name, "")
-    alias_safe = re.sub(r'[^\w\.-]', '_', alias_target) if alias_target else ""
 
-    # 1. Determine icon URL
+    # 1. Determine icon URL — prefer explicit ?url= param, then lookup by gift ID, then by name
     if raw_url and raw_url.startswith("http"):
         icon_url = raw_url
+    elif gift_id and gift_id.isdigit():
+        matched = next((g for g in GIFT_CATALOG_LIST if str(g.get("id")) == gift_id), None)
+        icon_url = matched["icon"] if matched and matched.get("icon") else get_real_gift_icon(gift_name)
     else:
         icon_url = get_real_gift_icon(gift_name)
 
-    # 2. Check cached file on disk if icon_url is a CDN URL
+    # 2. Cache key: use URL hash to guarantee unique file per icon (avoids name collisions)
     if icon_url and icon_url.startswith("http"):
-        url_hash = hashlib.md5(icon_url.encode('utf-8')).hexdigest()[:10]
-        cached_file = ICON_CACHE_DIR / f"{safe_name}_{url_hash}.webp"
-        if cached_file.exists() and cached_file.stat().st_size > 0:
-            with open(cached_file, "rb") as f:
-                return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+        url_hash = hashlib.md5(icon_url.encode('utf-8')).hexdigest()[:12]
+        cached_file = ICON_CACHE_DIR / f"_c{url_hash}.webp"
     else:
         cached_file = ICON_CACHE_DIR / f"{safe_name}.webp"
-        if cached_file.exists() and cached_file.stat().st_size > 0:
-            with open(cached_file, "rb") as f:
-                return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
 
-    # 3. Check pre-bundled icon on disk (e.g. media/icons/rose.webp, ice_cream_cone.webp)
-    primary_disk = ICON_CACHE_DIR / f"{safe_name}.webp"
-    if primary_disk.exists() and primary_disk.stat().st_size > 0:
-        with open(primary_disk, "rb") as f:
-            return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+    # 3. Serve from disk cache if present
+    if cached_file.exists() and cached_file.stat().st_size > 0:
+        with open(cached_file, "rb") as f:
+            return web.Response(body=f.read(), content_type="image/webp",
+                headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=604800"})
 
-    if alias_safe:
-        alias_disk = ICON_CACHE_DIR / f"{alias_safe}.webp"
-        if alias_disk.exists() and alias_disk.stat().st_size > 0:
-            with open(alias_disk, "rb") as f:
-                return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
-
-    # 4. Fetch from TikTok CDN if icon_url is valid
+    # 4. Fetch from TikTok CDN
     if icon_url and icon_url.startswith("http"):
         try:
-            req_headers = {
+            headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                 "Referer": "https://www.tiktok.com/"
             }
             async with aiohttp.ClientSession() as session:
-                async with session.get(icon_url, headers=req_headers, ssl=False, timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                async with session.get(icon_url, headers=headers, ssl=False, timeout=aiohttp.ClientTimeout(total=8)) as resp:
                     if resp.status == 200:
-                        data = await resp.read()
-                        if len(data) > 0:
+                        img_data = await resp.read()
+                        if len(img_data) > 0:
                             try:
-                                with open(cached_file, "wb") as f:
-                                    f.write(data)
-                            except Exception as save_err:
-                                log.warning("Could not cache gift icon to disk: %s", save_err)
-                            content_type = resp.headers.get("Content-Type", "image/webp")
-                            return web.Response(body=data, content_type=content_type, headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+                                with open(cached_file, "wb") as cf:
+                                    cf.write(img_data)
+                            except Exception:
+                                pass
+                            ct = resp.headers.get("Content-Type", "image/webp")
+                            return web.Response(body=img_data, content_type=ct,
+                                headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=604800"})
         except Exception as e:
-            log.warning("Could not fetch CDN icon for %s (%s): %s", gift_name, icon_url, e)
+            log.warning("Gift icon CDN fetch failed for '%s': %s", raw_name, e)
 
-    # 5. Fallback: Rose icon on disk
+    # 5. Fallback: rose.webp on disk
     rose_fallback = ICON_CACHE_DIR / "rose.webp"
     if rose_fallback.exists() and rose_fallback.stat().st_size > 0:
         with open(rose_fallback, "rb") as f:
-            return web.Response(body=f.read(), content_type="image/webp", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+            return web.Response(body=f.read(), content_type="image/webp",
+                headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
 
-    # 6. Fallback: SVG placeholder
-    svg_content = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-      <defs>
-        <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#fe2c55"/>
-          <stop offset="100%" stop-color="#25f4ee"/>
-        </linearGradient>
-      </defs>
+    # 6. SVG placeholder
+    label = (raw_name[:4] if raw_name else "GIFT").upper()
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#fe2c55"/><stop offset="100%" stop-color="#25f4ee"/>
+      </linearGradient></defs>
       <rect width="100" height="100" rx="20" fill="url(#g)"/>
-      <text x="50" y="58" font-size="22" font-family="sans-serif" font-weight="bold" fill="#ffffff" text-anchor="middle">{safe_name[:4].upper()}</text>
+      <text x="50" y="58" font-size="22" font-family="sans-serif" font-weight="bold" fill="#fff" text-anchor="middle">{label}</text>
     </svg>'''
-    return web.Response(text=svg_content, content_type="image/svg+xml", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
+    return web.Response(text=svg, content_type="image/svg+xml",
+        headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=3600"})
 
 async def handle_tiktok_coin(request: web.Request) -> web.Response:
     coin_file = MEDIA_DIR / "tiktok_coin.svg"

@@ -437,7 +437,7 @@ tailwind.config = {
       <div class="flex items-center justify-between px-1">
         <span class="text-[11px] text-on-surface-variant font-mono flex items-center gap-1">
           <span class="material-symbols-outlined text-[13px]">package_2</span>
-          <span>v</span><span id="sidebar-app-version">1.1.3</span>
+          <span>v</span><span id="sidebar-app-version">1.1.4</span>
         </span>
         <button onclick="openUpdateModal()" id="sidebar-update-btn"
           class="flex items-center gap-1 text-[11px] font-semibold text-amber-500 hover:text-amber-400 transition-colors group">
@@ -2763,8 +2763,8 @@ tailwind.config = {
     // โหลดเวอร์ชันจาก Electron หรือ fallback 1.0.0
     if (window.kiraeveUpdater) {
       window.kiraeveUpdater.getVersion().then(v => {
-        document.getElementById('modal-current-version').innerText = v || '1.1.3';
-        document.getElementById('sidebar-app-version').innerText = v || '1.1.3';
+        document.getElementById('modal-current-version').innerText = v || '1.1.4';
+        document.getElementById('sidebar-app-version').innerText = v || '1.1.4';
       });
     }
     // หากยังไม่เคยเช็กหรืออยู่ในหน้า idle ให้เริ่มเช็กอัปเดตอัตโนมัติทันที
@@ -3350,6 +3350,28 @@ tailwind.config = {
           { category: "1,000 - 9,999 Coins (ระดับสูง)", gifts: t3 },
           { category: "10,000+ Coins (อลังการ)", gifts: t4 }
         ];
+
+        // Update category chip labels with counts
+        const chips = document.querySelectorAll('#gift-picker-category-chips button[onclick]');
+        const countMap = { all: data.gifts.length, small: t1.length, med: t2.length, big: t3.length, mega: t4.length };
+        chips.forEach(btn => {
+          const onclickVal = btn.getAttribute('onclick') || '';
+          const m = onclickVal.match(/filterGiftPickerCategory\('(\w+)'\)/);
+          if (m && countMap[m[1]] !== undefined) {
+            const cat = m[1];
+            const count = countMap[cat];
+            const coinImg = `<img src="/api/tiktok-coin" class="w-3.5 h-3.5 inline-block align-middle shrink-0" alt="Coins">`;
+            const labels = {
+              all: `ทั้งหมด (${count.toLocaleString()})`,
+              small: `1 - 99 ${coinImg} (${count})`,
+              med: `100 - 999 ${coinImg} (${count})`,
+              big: `1,000 - 9,999 ${coinImg} (${count})`,
+              mega: `10,000+ ${coinImg} (${count})`
+            };
+            btn.innerHTML = labels[cat] || btn.innerHTML;
+          }
+        });
+
         renderGiftMappingsTable();
         renderVideoMappingsTable();
         renderTimerMappingsTable();
@@ -3444,14 +3466,17 @@ tailwind.config = {
     const displayList = list;
 
     grid.innerHTML = displayList.map(g => {
-      const proxiedIcon = `/api/gift-icon?name=${encodeURIComponent(g.name)}&url=${encodeURIComponent(g.icon || '')}`;
+      const gid = g.id || '';
+      const proxiedIcon = `/api/gift-icon?id=${encodeURIComponent(gid)}&name=${encodeURIComponent(g.name)}&url=${encodeURIComponent(g.icon || '')}`;
       const coins = g.coins || 1;
       const safeName = escapeHtml(g.name);
+      const safeIcon = encodeURIComponent(g.icon || '');
       return `
-        <button type="button" onclick="selectGiftFromModal('${safeName}', '${encodeURIComponent(g.icon || '')}', ${coins})"
+        <button type="button" onclick="selectGiftFromModal('${safeName}', '${safeIcon}', ${coins})"
           class="flex items-center gap-2.5 p-2 rounded-xl bg-tik-card hover:bg-tik-card-subtle border border-tik-card-border hover:border-amber-500 transition-all text-left group">
           <img src="${proxiedIcon}" loading="lazy" referrerpolicy="no-referrer"
-            onerror="this.onerror=null; this.src='/api/gift-icon?name=' + encodeURIComponent('${safeName}');"
+            data-fallback-name="${safeName}"
+            onerror="this.onerror=null; const n=this.dataset.fallbackName; this.src='/api/gift-icon?name='+encodeURIComponent(n);"
             class="w-9 h-9 object-contain rounded-lg bg-tik-bg p-1 border border-tik-card-border flex-shrink-0 group-hover:scale-105 transition-transform" alt="${safeName}">
           <div class="min-w-0 flex-1">
             <p class="text-xs font-bold text-on-surface truncate group-hover:text-amber-500 transition-colors">${safeName}</p>
@@ -3463,6 +3488,10 @@ tailwind.config = {
         </button>
       `;
     }).join('');
+
+    // Update footer count
+    const countEl = document.getElementById('gift-picker-count');
+    if (countEl) countEl.textContent = `${displayList.length.toLocaleString()} ของขวัญ`;
   }
 
   function selectGiftFromModal(name, iconUrl, coins) {
@@ -6040,8 +6069,9 @@ tailwind.config = {
 
     <!-- Modal Footer: Clean Info & Close Action (Custom text input removed) -->
     <div class="px-5 py-3 border-t border-tik-card-border bg-tik-card flex items-center justify-between gap-3">
-      <span class="text-xs text-on-surface-variant font-mono">
-        คลิกที่ของขวัญในตารางเพื่อเลือกใช้งานทันที (เลือกจากของขวัญจริงของ TikTok)
+      <span class="text-xs text-on-surface-variant font-mono flex items-center gap-2">
+        <span>คลิกของขวัญเพื่อเลือก</span>
+        <span class="px-2 py-0.5 bg-tik-card-subtle rounded-full text-[10px] font-bold text-amber-500 border border-amber-500/30" id="gift-picker-count">717 ของขวัญ</span>
       </span>
       <button onclick="closeGiftPickerModal()" class="bg-tik-card hover:bg-tik-card-subtle border border-tik-card-border px-4 py-1.5 rounded-lg text-xs font-semibold text-on-surface transition-colors">
         ปิดหน้าต่าง (Close)
@@ -6058,3 +6088,4 @@ tailwind.config = {
 
 </body>
 </html>
+
