@@ -4,28 +4,47 @@ const http = require('http');
 
 let TikTokLiveClass = null;
 
+function autoPatchLegacyConnector() {
+    const candidates = [
+        path.join(__dirname, 'node_modules', 'tiktok-live-connector', 'dist', 'legacy.js'),
+        path.join(__dirname, '..', 'node_modules', 'tiktok-live-connector', 'dist', 'legacy.js'),
+        path.join(process.cwd(), 'node_modules', 'tiktok-live-connector', 'dist', 'legacy.js'),
+        path.join(process.cwd(), 'resources', 'app', 'node_modules', 'tiktok-live-connector', 'dist', 'legacy.js'),
+        path.join(__dirname, 'python_embed', 'node_modules', 'tiktok-live-connector', 'dist', 'legacy.js')
+    ];
+    for (const file of candidates) {
+        try {
+            if (fs.existsSync(file)) {
+                let code = fs.readFileSync(file, 'utf-8');
+                let modified = false;
+                if (code.includes('function getTopViewerAttributes(topViewers) {\n\treturn topViewers.map')) {
+                    code = code.replace(
+                        'function getTopViewerAttributes(topViewers) {\n\treturn topViewers.map',
+                        'function getTopViewerAttributes(topViewers) {\n\tif (!Array.isArray(topViewers)) return [];\n\treturn topViewers.map'
+                    );
+                    modified = true;
+                }
+                if (code.includes('Object.values(webcastObject.anchorsInfo).forEach')) {
+                    code = code.replace(
+                        'Object.values(webcastObject.anchorsInfo).forEach((anchor) => {',
+                        'if (webcastObject && webcastObject.anchorsInfo) Object.values(webcastObject.anchorsInfo).forEach((anchor) => {'
+                    );
+                    modified = true;
+                }
+                if (modified) {
+                    fs.writeFileSync(file, code, 'utf-8');
+                    console.log('[TikTok-Live-Connector] Applied robustness patch to ' + file);
+                }
+            }
+        } catch (e) {}
+    }
+}
+autoPatchLegacyConnector();
+
 async function getTikTokLiveClass() {
     if (TikTokLiveClass) return TikTokLiveClass;
 
-    // 1. Try legacy export from ES module
-    try {
-        const legacyMod = await import('tiktok-live-connector/legacy');
-        if (legacyMod && (legacyMod.WebcastPushConnection || legacyMod.default)) {
-            TikTokLiveClass = legacyMod.WebcastPushConnection || legacyMod.default;
-            return TikTokLiveClass;
-        }
-    } catch (e) {}
-
-    // 2. Try main export
-    try {
-        const mainMod = await import('tiktok-live-connector');
-        if (mainMod && (mainMod.WebcastPushConnection || mainMod.TikTokLiveConnection || mainMod.default)) {
-            TikTokLiveClass = mainMod.WebcastPushConnection || mainMod.TikTokLiveConnection || mainMod.default;
-            return TikTokLiveClass;
-        }
-    } catch (e) {}
-
-    // 3. Try candidates
+    // 1. Try candidates first (allows local patched file to take precedence)
     const candidates = [
         path.join(__dirname, 'node_modules', 'tiktok-live-connector', 'dist', 'legacy.js'),
         path.join(__dirname, 'node_modules', 'tiktok-live-connector', 'dist', 'index.js'),
@@ -49,6 +68,25 @@ async function getTikTokLiveClass() {
             }
         } catch (e) {}
     }
+
+    // 2. Try legacy export from ES module
+    try {
+        const legacyMod = await import('tiktok-live-connector/legacy');
+        if (legacyMod && (legacyMod.WebcastPushConnection || legacyMod.default)) {
+            TikTokLiveClass = legacyMod.WebcastPushConnection || legacyMod.default;
+            return TikTokLiveClass;
+        }
+    } catch (e) {}
+
+    // 3. Try main export
+    try {
+        const mainMod = await import('tiktok-live-connector');
+        if (mainMod && (mainMod.WebcastPushConnection || mainMod.TikTokLiveConnection || mainMod.default)) {
+            TikTokLiveClass = mainMod.WebcastPushConnection || mainMod.TikTokLiveConnection || mainMod.default;
+            return TikTokLiveClass;
+        }
+    } catch (e) {}
+
     return null;
 }
 
