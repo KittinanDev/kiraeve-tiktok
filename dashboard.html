@@ -108,41 +108,43 @@ tailwind.config = {
   ::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-    /* Fixed Rock-Solid Sidebar (Always 260px - Never Warps or Jitters) */
+    /* Collapsible / Expanding Sidebar with Smooth Hover Animation */
   #main-sidebar {
-    width: 260px !important;
-    min-width: 260px !important;
-    max-width: 260px !important;
-    flex-shrink: 0;
+    width: 68px;
+    transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     overflow-x: hidden;
   }
+  #main-sidebar:hover, #main-sidebar.pinned {
+    width: 260px;
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+  }
   #main-sidebar .sidebar-text {
-    opacity: 1 !important;
-    max-width: 100% !important;
+    opacity: 0;
+    max-width: 0;
     display: inline-block;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #main-sidebar:hover .sidebar-text, #main-sidebar.pinned .sidebar-text {
+    opacity: 1;
+    max-width: 180px;
   }
   #main-sidebar .sidebar-icon-center {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 24px;
+    width: 28px;
     flex-shrink: 0;
   }
-  #main-sidebar .submenu {
-    transition: all 0.2s ease-out;
-  }
-  #main-sidebar .submenu.closed {
-    display: none;
-  }
-  #main-sidebar #sidebar-pin-btn {
+  #main-sidebar:not(:hover):not(.pinned) .submenu {
     display: none !important;
   }
-  #main-sidebar #sidebar-update-badge,
   #main-sidebar .sidebar-footer-expanded {
-    display: block !important;
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #main-sidebar:not(:hover):not(.pinned) .sidebar-footer-expanded {
+    display: none !important;
   }
 
   /* Smooth Page Transition Animation */
@@ -621,7 +623,7 @@ tailwind.config = {
 
 
 <!-- Main Content Area -->
-<div id="main-content-wrapper" class="flex-1 ml-[260px] flex flex-col min-h-screen">
+<div id="main-content-wrapper" class="flex-1 ml-[68px] flex flex-col min-h-screen transition-all duration-300">
 
   <!-- Top Breadcrumb Navigation Bar -->
   <header class="h-16 bg-tik-sidebar border-b border-tik-card-border px-6 flex items-center justify-between sticky top-0 z-40 transition-colors">
@@ -2100,33 +2102,25 @@ tailwind.config = {
               <span class="text-xs text-tik-emerald font-mono">ส่งทดสอบกระตุ้นครบทุกฟังก์ชั่นอัตโนมัติ</span>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
               <!-- Search & Quick Pick Modal Button -->
-              <div class="md:col-span-2 space-y-3">
-                <div class="flex items-center gap-2">
-                  <button type="button" onclick="openGiftPickerModal('universal_test')" class="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all">
-                    <span class="material-symbols-outlined text-base">search</span>
-                    <span>ค้นหาและเลือกของขวัญจากคลัง (เปิด Gift Picker Modal)</span>
-                  </button>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label class="text-xs font-bold text-tik-cyan mb-1 block">ค้นหาด่วน (Quick Search):</label>
-                    <input type="text" id="uni-gift-search" oninput="filterUniversalGifts(this.value)" class="w-full bg-tik-bg border border-tik-card-border rounded-lg px-3 py-2 text-xs text-white placeholder:text-on-surface-variant/60" placeholder="พิมพ์ชื่อของขวัญ...">
-                  </div>
-                  <div>
-                    <label class="text-xs font-bold text-tik-pink mb-1 block">เลือกจากดรอปดาวน์:</label>
-                    <select id="uni-gift-select" onchange="onUniversalGiftSelected()" class="w-full bg-tik-bg border border-tik-card-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tik-pink">
-                      <option value="">-- กำลังโหลดของขวัญ... --</option>
-                    </select>
-                  </div>
-                </div>
+              <div class="space-y-3">
+                <p class="text-xs text-on-surface-variant">
+                  คลิกปุ่มด้านล่างเพื่อเปิดหน้าต่าง Gift Picker Modal ค้นหาของขวัญ TikTok ทางการกว่า 600+ ชิ้นพร้อมไอคอนคมชัดและยอดเหรียญ
+                </p>
+                <button type="button" onclick="openGiftPickerModal('universal_test')" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all">
+                  <span class="material-symbols-outlined text-lg">search</span>
+                  <span>เลือกของขวัญจากคลัง (เปิด Gift Picker Modal 600+ ชิ้น)</span>
+                </button>
+                <!-- Hidden state trackers for selected gift -->
+                <input type="hidden" id="uni-gift-selected-name" value="Rose">
+                <input type="hidden" id="uni-gift-selected-coins" value="1">
+                <input type="hidden" id="uni-gift-selected-icon" value="/api/gift-icon?name=Rose">
               </div>
 
               <!-- Live Selected Preview Box -->
               <div class="bg-tik-bg border border-tik-card-border rounded-xl p-4 flex items-center gap-4">
-                <img id="uni-gift-preview-img" src="/api/gift-icon?name=Rose" class="w-16 h-16 object-contain rounded-lg bg-tik-card p-1 border border-tik-card-border shadow shrink-0">
+                <img id="uni-gift-preview-img" src="/api/gift-icon?name=Rose" class="w-16 h-16 object-contain rounded-lg bg-tik-card p-1 border border-tik-card-border shadow shrink-0" alt="Selected Gift">
                 <div class="space-y-1 min-w-0">
                   <div id="uni-gift-preview-name" class="font-bold text-white text-sm truncate">Rose</div>
                   <div id="uni-gift-preview-coins" class="text-xs text-tik-emerald font-mono font-semibold">1 เหรียญ / ชิ้น</div>
@@ -2851,18 +2845,21 @@ tailwind.config = {
         document.getElementById('upd-new-version').innerText = `v${data.version}`;
         // อัปเดต Sidebar Badge
         document.getElementById('sidebar-update-version').innerText = `v${data.version}`;
-        document.getElementById('sidebar-update-badge').classList.remove('hidden');
+        const badge = document.getElementById('sidebar-update-badge');
+        if (badge) badge.classList.remove('hidden');
         // Release Notes
         if (data.releaseNotes) {
           document.getElementById('upd-release-notes').innerHTML = data.releaseNotes;
           document.getElementById('upd-release-notes-box').classList.remove('hidden');
         }
         updShowState('available');
-        // เปิด Modal อัตโนมัติ (เนื่องจากเช็กอัตโนมัติตอนเปิดแอป)
+        // เปิด Modal อัตโนมัติเฉพาะเมื่อมีเวอร์ชันใหม่ให้ดาวน์โหลด
         openUpdateModal();
 
       } else if (event === 'up-to-date') {
         updShowState('uptodate');
+        const badge = document.getElementById('sidebar-update-badge');
+        if (badge) badge.classList.add('hidden');
 
       } else if (event === 'downloading') {
         updShowState('downloading');
@@ -3535,11 +3532,15 @@ tailwind.config = {
       const nameEl = document.getElementById('uni-gift-preview-name');
       const imgEl = document.getElementById('uni-gift-preview-img');
       const coinsEl = document.getElementById('uni-gift-preview-coins');
-      const selectEl = document.getElementById('uni-gift-select');
+      const hiddenName = document.getElementById('uni-gift-selected-name');
+      const hiddenCoins = document.getElementById('uni-gift-selected-coins');
+      const hiddenIcon = document.getElementById('uni-gift-selected-icon');
       if (nameEl) nameEl.innerText = name;
       if (imgEl) imgEl.src = proxiedIcon;
       if (coinsEl) coinsEl.innerText = `${(coins || 1).toLocaleString()} เหรียญ / ชิ้น`;
-      if (selectEl) selectEl.value = name;
+      if (hiddenName) hiddenName.value = name;
+      if (hiddenCoins) hiddenCoins.value = coins || 1;
+      if (hiddenIcon) hiddenIcon.value = proxiedIcon;
       if (typeof updateUniGiftTotal === 'function') updateUniGiftTotal();
     } else if (type === 'custom_test') {
       const nameInput = document.getElementById('custom-gift-name');
@@ -5557,12 +5558,7 @@ tailwind.config = {
   }
 
   function updateUniGiftTotal() {
-    const selectEl = document.getElementById('uni-gift-select');
-    if (!selectEl || selectEl.options.length === 0) return;
-    const selectedOption = selectEl.options[selectEl.selectedIndex];
-    if (!selectedOption) return;
-
-    const coins = parseInt(selectedOption.getAttribute('data-coins') || 1);
+    const coins = parseInt(document.getElementById('uni-gift-selected-coins')?.value || 1);
     const count = parseInt(document.getElementById('uni-gift-count')?.value || 1);
     const total = coins * count;
 
@@ -5571,14 +5567,9 @@ tailwind.config = {
   }
 
   async function triggerUniversalGiftTest() {
-    const selectEl = document.getElementById('uni-gift-select');
-    if (!selectEl || selectEl.options.length === 0) return;
-    const selectedOption = selectEl.options[selectEl.selectedIndex];
-    if (!selectedOption) return;
-
-    const giftName = selectedOption.value;
-    const coinsPerPiece = parseInt(selectedOption.getAttribute('data-coins') || 1);
-    const iconUrl = selectedOption.getAttribute('data-icon') || `/api/gift-icon?name=${encodeURIComponent(giftName)}`;
+    const giftName = document.getElementById('uni-gift-selected-name')?.value || document.getElementById('uni-gift-preview-name')?.innerText || 'Rose';
+    const coinsPerPiece = parseInt(document.getElementById('uni-gift-selected-coins')?.value || 1);
+    const iconUrl = document.getElementById('uni-gift-selected-icon')?.value || `/api/gift-icon?name=${encodeURIComponent(giftName)}`;
     const count = parseInt(document.getElementById('uni-gift-count')?.value || 1);
     const sender = document.getElementById('uni-gift-sender')?.value || 'Supporter_VIP';
     const totalCoins = coinsPerPiece * count;
