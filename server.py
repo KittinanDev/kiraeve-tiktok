@@ -630,6 +630,10 @@ class TikFinityAuctionState:
 
         extended = False
         self.last_extended = False
+        if not target_reached and self.auto_extend_sec > 0 and self.remaining_seconds <= self.auto_extend_sec:
+            self.remaining_seconds += self.auto_extend_sec
+            extended = True
+            self.last_extended = True
 
         return {
             "accepted": True,

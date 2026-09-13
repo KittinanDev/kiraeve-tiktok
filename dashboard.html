@@ -437,7 +437,7 @@ tailwind.config = {
       <div class="flex items-center justify-between px-1">
         <span class="text-[11px] text-on-surface-variant font-mono flex items-center gap-1">
           <span class="material-symbols-outlined text-[13px]">package_2</span>
-          <span>v</span><span id="sidebar-app-version">1.1.7</span>
+          <span>v</span><span id="sidebar-app-version">1.1.8</span>
         </span>
         <button onclick="openUpdateModal()" id="sidebar-update-btn"
           class="flex items-center gap-1 text-[11px] font-semibold text-amber-500 hover:text-amber-400 transition-colors group">
@@ -2763,8 +2763,8 @@ tailwind.config = {
     // โหลดเวอร์ชันจาก Electron หรือ fallback 1.0.0
     if (window.kiraeveUpdater) {
       window.kiraeveUpdater.getVersion().then(v => {
-        document.getElementById('modal-current-version').innerText = v || '1.1.7';
-        document.getElementById('sidebar-app-version').innerText = v || '1.1.7';
+        document.getElementById('modal-current-version').innerText = v || '1.1.8';
+        document.getElementById('sidebar-app-version').innerText = v || '1.1.8';
       });
     }
     // หากยังไม่เคยเช็กหรืออยู่ในหน้า idle ให้เริ่มเช็กอัปเดตอัตโนมัติทันที
@@ -5910,7 +5910,7 @@ tailwind.config = {
         }
       } else if (data.type === 'timer_stats_cleared') {
         if (data.timer_stats) renderTimerHistoryUI(data.timer_stats);
-      } else if (data.type === 'auction_tick' || data.type === 'auction_update' || data.type === 'auction_winner') {
+      } else if (data.type === 'auction_tick' || data.type === 'auction_update' || data.type === 'auction_winner' || data.type === 'auction_control' || data.type === 'auction_dismiss_winner') {
         if (data.auction) updateAuctionUI(data.auction);
       } else if (data.type === 'gift') {
         // Log all gifts to System Logs in dashboard so streamer can see real-time gift activity

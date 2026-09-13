@@ -951,7 +951,7 @@ tailwind.config = {
         if (data.config && data.config.widgets_visibility) applyWidgetVisibility(data.config.widgets_visibility);
       } else if (data.type === 'timer_tick' || data.type === 'timer_update') {
         timerClockEl.innerText = formatTime(data.seconds);
-      } else if (data.type === 'auction_tick' || data.type === 'auction_update' || data.type === 'auction_winner') {
+      } else if (data.type === 'auction_tick' || data.type === 'auction_update' || data.type === 'auction_winner' || data.type === 'auction_control' || data.type === 'auction_dismiss_winner') {
         if (data.auction) renderAuction(data.auction);
       } else if (data.type === 'gacha_spin') {
         if (currentVisibility.gacha || isGachaMode || (!isJarMode && !isTimerMode && !isLeaderboardMode && !isTTSMode && !isAuctionMode)) {

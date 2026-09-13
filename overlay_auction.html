@@ -413,7 +413,7 @@
   }
 
   function formatMinSec(totalSec) {
-    const s = Math.max(0, totalSec || 0);
+    const s = Math.max(0, Math.floor(Number(totalSec) || 0));
     const m = Math.floor(s / 60).toString().padStart(2, '0');
     const sec = (s % 60).toString().padStart(2, '0');
     return `${m}:${sec}`;
@@ -773,11 +773,11 @@
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      fetch('/api/config')
+      fetch('/api/status')
         .then(r => r.json())
-        .then(cfg => {
-          if (cfg && cfg.auction_config) {
-            renderAuction(cfg.auction_config);
+        .then(st => {
+          if (st && st.auction) {
+            renderAuction(st.auction);
           }
         })
         .catch(() => {});
@@ -786,13 +786,28 @@
     ws.onmessage = (evt) => {
       try {
         const msg = JSON.parse(evt.data);
-        if (msg.type === 'auction_update') {
-          renderAuction(msg.auction);
+        if (msg.type === 'refresh_overlays') {
+          window.location.reload();
+          return;
+        }
+        if (msg.type === 'init') {
+          if (msg.auction) renderAuction(msg.auction);
+        } else if (msg.type === 'auction_tick' || msg.type === 'auction_update' || msg.type === 'auction_control') {
+          if (msg.auction) renderAuction(msg.auction);
+        } else if (msg.type === 'gift') {
+          if (msg.auction) renderAuction(msg.auction);
         } else if (msg.type === 'auction_winner') {
-          showWinner(msg.auction);
-        } else if (msg.type === 'config_update') {
+          if (msg.auction) showWinner(msg.auction);
+        } else if (msg.type === 'auction_dismiss_winner') {
+          dismissWinner(true);
+        } else if (msg.type === 'config_update' || msg.type === 'config_updated') {
           if (msg.config && msg.config.auction_config) {
-            renderAuction(msg.config.auction_config);
+            if (msg.config.auction_config.scale && !scaleParam) {
+              setScale(msg.config.auction_config.scale);
+            }
+          }
+          if (msg.auction) {
+            renderAuction(msg.auction);
           }
         }
       } catch(e) {}
