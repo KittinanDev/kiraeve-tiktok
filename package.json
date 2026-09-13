@@ -1,7 +1,7 @@
 {
   "name": "kiraeve-tiktok",
-  "version": "1.2.1",
-  "description": "Kiraeve TikTok — Live Studio & Overlays Manager (Electron Desktop App)",
+  "version": "1.2.2",
+  "description": "Kiraeve TikTok \u2014 Live Studio & Overlays Manager (Electron Desktop App)",
   "main": "main.js",
   "private": true,
   "scripts": {
@@ -19,25 +19,82 @@
       "icons/**/*"
     ],
     "extraResources": [
-      { "from": "build/install-prereqs.bat", "to": "app/install-prereqs.bat" },
-      { "from": "server.py",             "to": "app/server.py" },
-      { "from": "dashboard.html",        "to": "app/dashboard.html" },
-      { "from": "overlay.html",          "to": "app/overlay.html" },
-      { "from": "overlay_auction.html",  "to": "app/overlay_auction.html" },
-      { "from": "overlay_gacha.html",    "to": "app/overlay_gacha.html" },
-      { "from": "overlay_jar.html",      "to": "app/overlay_jar.html" },
-      { "from": "overlay_leaderboard.html","to": "app/overlay_leaderboard.html" },
-      { "from": "overlay_timer.html",    "to": "app/overlay_timer.html" },
-      { "from": "overlay_tts.html",      "to": "app/overlay_tts.html" },
-      { "from": "overlay_video.html",    "to": "app/overlay_video.html" },
-      { "from": "tiktok_connector.js",   "to": "app/tiktok_connector.js" },
-      { "from": "resolve_avatar.js",     "to": "app/resolve_avatar.js" },
-      { "from": "config.json",           "to": "app/config.json" },
-      { "from": "gift_cache.json",       "to": "app/gift_cache.json" },
-      { "from": "gift_catalog_cache.json","to": "app/gift_catalog_cache.json" },
-      { "from": "requirements.txt",      "to": "app/requirements.txt" },
-      { "from": "media",                 "to": "app/media" },
-      { "from": "Soundeffect",           "to": "app/Soundeffect" }
+      {
+        "from": "build/install-prereqs.bat",
+        "to": "app/install-prereqs.bat"
+      },
+      {
+        "from": "server.py",
+        "to": "app/server.py"
+      },
+      {
+        "from": "dashboard.html",
+        "to": "app/dashboard.html"
+      },
+      {
+        "from": "overlay.html",
+        "to": "app/overlay.html"
+      },
+      {
+        "from": "overlay_auction.html",
+        "to": "app/overlay_auction.html"
+      },
+      {
+        "from": "overlay_gacha.html",
+        "to": "app/overlay_gacha.html"
+      },
+      {
+        "from": "overlay_jar.html",
+        "to": "app/overlay_jar.html"
+      },
+      {
+        "from": "overlay_leaderboard.html",
+        "to": "app/overlay_leaderboard.html"
+      },
+      {
+        "from": "overlay_timer.html",
+        "to": "app/overlay_timer.html"
+      },
+      {
+        "from": "overlay_tts.html",
+        "to": "app/overlay_tts.html"
+      },
+      {
+        "from": "overlay_video.html",
+        "to": "app/overlay_video.html"
+      },
+      {
+        "from": "tiktok_connector.js",
+        "to": "app/tiktok_connector.js"
+      },
+      {
+        "from": "resolve_avatar.js",
+        "to": "app/resolve_avatar.js"
+      },
+      {
+        "from": "config.json",
+        "to": "app/config.json"
+      },
+      {
+        "from": "gift_cache.json",
+        "to": "app/gift_cache.json"
+      },
+      {
+        "from": "gift_catalog_cache.json",
+        "to": "app/gift_catalog_cache.json"
+      },
+      {
+        "from": "requirements.txt",
+        "to": "app/requirements.txt"
+      },
+      {
+        "from": "media",
+        "to": "app/media"
+      },
+      {
+        "from": "Soundeffect",
+        "to": "app/Soundeffect"
+      }
     ],
     "win": {
       "target": [
@@ -80,6 +137,3 @@
     "tiktok-live-connector": "^2.4.4"
   }
 }
-
-
-

@@ -152,7 +152,7 @@
       "custom": "CUSTOM"
     },
     "spin_duration": 4,
-    "trigger_gift_name": "Doughnut",
+    "trigger_gift_name": "Rose",
     "tick_sound_enabled": true,
     "win_sound_enabled": true,
     "scale": 1.0,
@@ -175,6 +175,17 @@
       "gift_name": "Lion",
       "min_count": 1,
       "sound_file": "roesisch-applause-01-253125.mp3",
+      "volume": 1.0,
+      "enabled": true
+    }
+  ],
+  "gift_video_mappings": [
+    {
+      "gift_name": "Lion",
+      "min_count": 1,
+      "video_file": "Homelander Looking at a Big Green Screen.mp4",
+      "position": "center",
+      "scale": 1.0,
       "volume": 1.0,
       "enabled": true
     }

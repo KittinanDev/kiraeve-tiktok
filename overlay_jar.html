@@ -320,7 +320,7 @@
     const itemRadius = getRadiusByCoins(coins);
 
     if (!isPreview) {
-      try { popAudio.cloneNode().play().catch(e=>{}); } catch(e){}
+      // Default sound removed as requested: sound plays only if explicitly configured in gift_sound_mappings
       showSenderToast(sender, name, count, profilePic || iconUrl);
     }
 

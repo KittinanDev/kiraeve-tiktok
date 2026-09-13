@@ -557,6 +557,8 @@ class TikFinityAuctionState:
         self.celebration_duration_sec = 10
         self.auto_hide_on_end = True
         self.scale = 1.0
+        self.trigger_gift_name = ""
+        self.auto_start = True
         self.initial_duration = 300
         self.remaining_seconds = 300
         self.is_active = False
@@ -735,7 +737,9 @@ class TikFinityAuctionState:
             "last_extended": self.last_extended,
             "celebration_duration_sec": self.celebration_duration_sec,
             "auto_hide_on_end": self.auto_hide_on_end,
-            "scale": self.scale
+            "scale": self.scale,
+            "trigger_gift_name": self.trigger_gift_name,
+            "auto_start": self.auto_start
         }
 
 jar_state = JarState()
@@ -886,8 +890,7 @@ async def schedule_gacha_gift_drop(delay: float, gift_info: dict, sender: str, p
                 s_url = f"/soundeffect/{sf}"
                 s_vol = float(m.get("volume", 1.0))
                 break
-    if not s_url:
-        s_url = "/soundeffect/dragon-studio-pop-402324.mp3"
+    # No default sound fallback if unconfigured
 
     video_alert_data = None
     for vm in cfg.get("gift_video_mappings", []):
@@ -991,6 +994,10 @@ async def handle_post_config(request: web.Request) -> web.Response:
             auction_state.auto_hide_on_end = bool(ac["auto_hide_on_end"])
         if "scale" in ac:
             auction_state.scale = float(ac["scale"])
+        if "trigger_gift_name" in ac:
+            auction_state.trigger_gift_name = str(ac["trigger_gift_name"]).strip()
+        if "auto_start" in ac:
+            auction_state.auto_start = bool(ac["auto_start"])
         await broadcast({"type": "auction_update", "auction": auction_state.to_dict()})
     return web.json_response({"ok": True, "config": merged})
 
@@ -1525,9 +1532,54 @@ async def handle_mock_event(request: web.Request) -> web.Response:
             top_cnt = int(cfg.get("leaderboard_config", {}).get("top_count", 5))
             top_list = leaderboard_state.get_top(top_cnt)
 
+            # Auction Gift Check & Auto-start Trigger
+            auc_cfg = cfg.get("auction_config", {})
+            auc_enabled = auc_cfg.get("enabled", True)
+            auc_trigger = (auc_cfg.get("trigger_gift_name") or auction_state.trigger_gift_name or "").strip()
+            auc_auto_start = auc_cfg.get("auto_start", auction_state.auto_start)
+
             bid_result = {}
-            if target_widget in ["all", "auction"]:
-                bid_result = auction_state.process_gift_bid(sender, coins, profile_picture, gift_name, unique_id)
+            if auc_enabled and target_widget in ["all", "auction"]:
+                auc_matched = False
+                if not auc_trigger or auc_trigger.lower() in ["", "all", "all gifts", "ทุกของขวัญ", "-"]:
+                    auc_matched = True
+                else:
+                    norm_auc_trigger = normalize_gift_name(auc_trigger)
+                    if gift_name_clean.lower() == auc_trigger.lower() or (norm_incoming and norm_incoming == norm_auc_trigger):
+                        auc_matched = True
+                    elif len(auc_trigger) >= 3 and (auc_trigger.lower() in gift_name_clean.lower() or gift_name_clean.lower() in auc_trigger.lower()):
+                        auc_matched = True
+                    incoming_id = data.get("gift_id")
+                    if not auc_matched and incoming_id:
+                        cached_g = GIFT_CACHE_MAP.get(str(incoming_id))
+                        if cached_g and cached_g.get("name"):
+                            c_norm = normalize_gift_name(cached_g["name"])
+                            if c_norm == norm_auc_trigger or cached_g["name"].lower() == auc_trigger.lower():
+                                auc_matched = True
+                    if not auc_matched and incoming_id:
+                        for g in GIFT_CACHE_MAP.values():
+                            if g.get("name") and g["name"].strip().lower() == auc_trigger.lower():
+                                if str(g.get("id")) == str(incoming_id):
+                                    auc_matched = True
+                                    break
+
+                if auc_matched:
+                    if not auction_state.is_active and auc_auto_start:
+                        auc_title = auc_cfg.get("title", "ประมูลสด TikTok LIVE")
+                        auc_target = int(auc_cfg.get("target_coins", 300))
+                        auc_duration = int(auc_cfg.get("duration_seconds", 180))
+                        auc_min_inc = int(auc_cfg.get("min_increment", 1))
+                        auc_extend = int(auc_cfg.get("auto_extend_sec", 15))
+                        auction_state.start(auc_title, auc_target, auc_duration, auc_min_inc, auc_extend)
+                        log.info("[AUCTION] Auto-started auction on trigger gift '%s' from %s", gift_name, sender)
+
+                    bid_result = auction_state.process_gift_bid(sender, coins, profile_picture, gift_name, unique_id)
+                    log.info("[AUCTION] Bid processed: sender=%s, coins=%d, accepted=%s", sender, coins, bid_result.get("accepted"))
+                    await broadcast({
+                        "type": "auction_update",
+                        "auction": auction_state.to_dict(),
+                        "bid_result": bid_result
+                    })
 
             # CS:GO Gacha Trigger Check
             gacha_cfg = cfg.get("gacha_config", {})
@@ -1557,6 +1609,12 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                         c_norm = normalize_gift_name(cached_g["name"])
                         if c_norm == norm_trigger or cached_g["name"].lower() == trigger_gift_name.lower():
                             trigger_matched = True
+                if not trigger_matched and incoming_id:
+                    for g in GIFT_CACHE_MAP.values():
+                        if g.get("name") and g["name"].strip().lower() == trigger_gift_name.lower():
+                            if str(g.get("id")) == str(incoming_id):
+                                trigger_matched = True
+                                break
 
             filters = data.get("filters")
             if filters and isinstance(filters, dict):
@@ -1570,57 +1628,62 @@ async def handle_mock_event(request: web.Request) -> web.Response:
             if gacha_enabled and (target_widget == "gacha" or (target_widget == "all" and trigger_matched)):
                 pool_items = gacha_cfg.get("items", ["+30", "+15", "+60", "+300", "-30", "-60", "+10", "-15", "+45", "-10"])
                 duration = int(gacha_cfg.get("spin_duration", 5))
-                winner_item = random.choice(pool_items)
-                reel_sequence, winner_index = generate_gacha_reel_sequence(pool_items, winner_item, reel_length=50)
+                spins_to_run = max(1, count) if target_widget in ["all", "gacha"] else 1
+                for spin_num in range(spins_to_run):
+                    winner_item = random.choice(pool_items)
+                    reel_sequence, winner_index = generate_gacha_reel_sequence(pool_items, winner_item, reel_length=50)
 
-                # Auto Apply to Subathon Timer if item is time delta
-                sec_delta = parse_time_delta_seconds(winner_item)
-                winner_label = winner_item.get("text", "") if isinstance(winner_item, dict) else str(winner_item)
-                if sec_delta is not None:
-                    if timer_state.mode == "countdown":
-                        timer_state.seconds = max(0, timer_state.seconds + sec_delta)
-                    else:
-                        timer_state.seconds = max(0, timer_state.seconds - sec_delta)
-                    gacha_log_entry = timer_state.record_change(
-                        sender,
-                        f"[GACHA] CS:GO Gacha ({winner_label})",
-                        1,
-                        sec_delta,
-                        timer_state.seconds,
-                        icon_url
-                    )
-                    log.info("[GACHA] Gacha result '%s': delta=%ds, new_timer=%ds", winner_label, sec_delta, timer_state.seconds)
-                    await broadcast({
-                        "type": "timer_update",
-                        "seconds": timer_state.seconds,
-                        "is_running": timer_state.is_running,
-                        "mode": timer_state.mode,
-                        "initial_seconds": timer_state.initial_seconds,
-                        "max_seconds": timer_state.max_seconds,
-                        "added_seconds": sec_delta,
-                        "timer_stats": timer_state.get_stats(),
-                        "log_entry": gacha_log_entry
-                    })
+                    # Auto Apply to Subathon Timer if item is time delta
+                    sec_delta = parse_time_delta_seconds(winner_item)
+                    winner_label = winner_item.get("text", "") if isinstance(winner_item, dict) else str(winner_item)
+                    if sec_delta is not None:
+                        if timer_state.mode == "countdown":
+                            timer_state.seconds = max(0, timer_state.seconds + sec_delta)
+                        else:
+                            timer_state.seconds = max(0, timer_state.seconds - sec_delta)
+                        gacha_log_entry = timer_state.record_change(
+                            sender,
+                            f"[GACHA] CS:GO Gacha ({winner_label})",
+                            1,
+                            sec_delta,
+                            timer_state.seconds,
+                            icon_url
+                        )
+                        log.info("[GACHA] Gacha result '%s': delta=%ds, new_timer=%ds", winner_label, sec_delta, timer_state.seconds)
+                        await broadcast({
+                            "type": "timer_update",
+                            "seconds": timer_state.seconds,
+                            "is_running": timer_state.is_running,
+                            "mode": timer_state.mode,
+                            "initial_seconds": timer_state.initial_seconds,
+                            "max_seconds": timer_state.max_seconds,
+                            "added_seconds": sec_delta,
+                            "timer_stats": timer_state.get_stats(),
+                            "log_entry": gacha_log_entry
+                        })
 
-                gacha_spin_data = {
-                    "type": "gacha_spin",
-                    "winner_item": winner_item,
-                    "reel_sequence": reel_sequence,
-                    "winner_index": winner_index,
-                    "duration": duration,
-                    "timer_seconds": timer_state.seconds,
-                    "trigger_gift": gift_name,
-                    "trigger_gift_icon": icon_url,
-                    "sender": sender,
-                    "sender_avatar": profile_picture,
-                    "time_delta_seconds": sec_delta,
-                    "config": gacha_cfg
-                }
-                won_gift = resolve_gacha_gift_reward(winner_item, cfg)
-                if won_gift:
-                    gacha_spin_data["won_gift"] = won_gift
-                    asyncio.create_task(schedule_gacha_gift_drop(duration, won_gift, sender, profile_picture, cfg))
-                await broadcast(gacha_spin_data)
+                    gacha_spin_data = {
+                        "type": "gacha_spin",
+                        "spin_index": spin_num + 1,
+                        "total_spins": spins_to_run,
+                        "winner_item": winner_item,
+                        "reel_sequence": reel_sequence,
+                        "winner_index": winner_index,
+                        "duration": duration,
+                        "timer_seconds": timer_state.seconds,
+                        "trigger_gift": gift_name,
+                        "trigger_gift_icon": icon_url,
+                        "sender": sender,
+                        "sender_avatar": profile_picture,
+                        "time_delta_seconds": sec_delta,
+                        "config": gacha_cfg
+                    }
+                    won_gift = resolve_gacha_gift_reward(winner_item, cfg)
+                    if won_gift:
+                        gacha_spin_data["won_gift"] = won_gift
+                        asyncio.create_task(schedule_gacha_gift_drop(duration, won_gift, sender, profile_picture, cfg))
+                    await broadcast(gacha_spin_data)
+                    await asyncio.sleep(0.1)
 
             # User Configured Per-Gift Sound Mapping Lookup
             gift_mappings = cfg.get("gift_sound_mappings", [])
@@ -1636,8 +1699,7 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                             sound_vol = float(m.get("volume", 1.0))
                             break
 
-            if not gacha_sound_url:
-                gacha_sound_url = "/soundeffect/dragon-studio-pop-402324.mp3"
+            # No default sound fallback if unconfigured (gacha_sound_url remains None)
 
             # User Configured Per-Gift Video Mapping Lookup
             video_mappings = cfg.get("gift_video_mappings", [])

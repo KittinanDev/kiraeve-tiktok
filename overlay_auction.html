@@ -297,7 +297,7 @@
             </span>
           </div>
 
-          <span class="text-[10px] text-gray-400 mt-3">
+          <span class="text-[10px] text-gray-400 mt-3" style="display: none;">
             ขอบคุณทุกท่านที่ร่วมสนับสนุนและประมูลในไลฟ์สด
           </span>
 
@@ -402,7 +402,7 @@
       <img src="${proxyUrl}" 
            referrerpolicy="no-referrer"
            class="w-[${sizePx}px] h-[${sizePx}px] rounded-full object-cover ${borderClass} shadow-md shrink-0"
-           onerror="this.onerror=null; this.src='/api/avatar-proxy?name=${encodeURIComponent(name || \'viewer\')}';">
+           onerror="this.onerror=null; this.src='/api/avatar-proxy?name=' + encodeURIComponent(name || 'viewer');">
     `;
   }
 
@@ -429,6 +429,34 @@
   }
 
   let prevHighestCoins = 0;
+  let localAuctionRem = 0;
+  let localAuctionActive = false;
+  let localAuctionPaused = false;
+  let localAuctionTickTimer = null;
+  
+  function updateAuctionTimerUI(rem) {
+    if (rem <= 15 && localAuctionActive && !localAuctionPaused) {
+      aucTimerEl.className = 'font-mono text-2xl sm:text-3xl font-black text-rose-500 tracking-tight leading-tight animate-urgent';
+      aucTimerSubtext.innerText = 'โค้งสุดท้าย';
+      aucTimerSubtext.className = 'text-[10px] font-bold text-rose-400 mt-0.5 animate-pulse';
+      timerUrgentGlow.classList.remove('hidden');
+    } else if (rem <= 60 && localAuctionActive) {
+      aucTimerEl.className = 'font-mono text-2xl sm:text-3xl font-black text-amber-400 tracking-tight leading-tight';
+      aucTimerSubtext.innerText = 'นับถอยหลัง';
+      aucTimerSubtext.className = 'text-[10px] font-semibold text-gray-400 mt-0.5';
+      timerUrgentGlow.classList.add('hidden');
+    } else {
+      aucTimerEl.className = 'font-mono text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight leading-tight';
+      aucTimerSubtext.innerText = 'นาที';
+      aucTimerSubtext.className = 'text-[10px] font-semibold text-gray-400 mt-0.5';
+      timerUrgentGlow.classList.add('hidden');
+    }
+    localAuctionRem = auc.remaining_seconds || 0;
+    localAuctionActive = auc.is_active;
+    localAuctionPaused = auc.is_paused;
+    updateAuctionTimerUI(localAuctionRem); // Handled by updateAuctionTimerUI locally
+  }
+
   let prevRemainingSec = -1;
   let winnerShown = false;
 
@@ -455,7 +483,10 @@
     }
 
     const rem = auc.remaining_seconds || 0;
-    aucTimerEl.innerText = formatMinSec(rem);
+    localAuctionRem = auc.remaining_seconds || 0;
+    localAuctionActive = auc.is_active;
+    localAuctionPaused = auc.is_paused;
+    updateAuctionTimerUI(localAuctionRem); // Handled by updateAuctionTimerUI locally
 
     if (rem <= 15 && auc.is_active && !auc.is_paused) {
       aucTimerEl.className = 'font-mono text-2xl sm:text-3xl font-black text-rose-500 tracking-tight leading-tight animate-urgent';
@@ -826,6 +857,13 @@
   }
 
   connectWs();
+
+  setInterval(() => {
+    if (localAuctionActive && !localAuctionPaused && localAuctionRem > 0) {
+      localAuctionRem--;
+      updateAuctionTimerUI(localAuctionRem);
+    }
+  }, 1000);
 </script>
 </body>
 </html>

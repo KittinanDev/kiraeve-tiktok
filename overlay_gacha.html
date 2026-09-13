@@ -591,8 +591,14 @@
   let isGachaSpinning = false;
   let tickAnimationId = null;
 
+  let gachaQueue = [];
+  function processGachaQueue() {
+    if (isGachaSpinning || gachaQueue.length === 0) return;
+    const data = gachaQueue.shift();
+    runCSGOGachaSpin(data);
+  }
+
   function runCSGOGachaSpin(data) {
-    if (isGachaSpinning) return;
     isGachaSpinning = true;
 
     const reelSequence = data.reel_sequence || [];
@@ -605,7 +611,13 @@
     const triggerGiftIcon = data.trigger_gift_icon || `/api/gift-icon?name=${encodeURIComponent(triggerGift)}`;
 
     if (viewerNameEl) viewerNameEl.innerText = sender.startsWith('@') ? sender : `@${sender}`;
-    if (viewerGiftNameEl) viewerGiftNameEl.innerText = triggerGift;
+    if (viewerGiftNameEl) {
+      if (gachaQueue.length > 0) {
+        viewerGiftNameEl.innerText = `${triggerGift} (คิวรอ: +${gachaQueue.length})`;
+      } else {
+        viewerGiftNameEl.innerText = triggerGift;
+      }
+    }
     if (viewerGiftIconEl) viewerGiftIconEl.src = triggerGiftIcon;
     if (viewerAvatarEl) {
       if (senderAvatar && senderAvatar.startsWith('http')) {
@@ -617,12 +629,16 @@
 
     resultBannerEl.style.opacity = '0';
 
-    // Render cards
-    gachaReelStripEl.innerHTML = reelSequence.map((val, idx) => renderCardHtml(val, idx)).join('');
-
-    // Reset Strip to Start
+    // 1. Force instant reset to 0px and cancel any previous transition
     gachaReelStripEl.style.transition = 'none';
     gachaReelStripEl.style.transform = 'translate3d(0px, 0px, 0px)';
+    void gachaReelStripEl.offsetWidth; // Force reflow to commit 0px position
+
+    // 2. Render fresh sequence of cards
+    gachaReelStripEl.innerHTML = reelSequence.map((val, idx) => renderCardHtml(val, idx)).join('');
+    void gachaReelStripEl.offsetWidth; // Force reflow so cards are laid out
+
+    // Ensure wrapper is visible
     scaleWrapper.style.opacity = '1';
     scaleWrapper.style.pointerEvents = 'auto';
 
@@ -641,6 +657,7 @@
         targetX = -(winnerIndex * 138 - (viewportCenter - 63));
       }
 
+      // Small delay to allow the browser to paint the reset position cleanly
       setTimeout(() => {
         gachaReelStripEl.style.transition = `transform ${durationSec}s cubic-bezier(0.1, 0.88, 0.15, 1)`;
         gachaReelStripEl.style.transform = `translate3d(${targetX}px, 0px, 0px)`;
@@ -673,8 +690,9 @@
         }
 
         tickAnimationId = requestAnimationFrame(trackTicks);
-      }, 50);
+      }, 60);
 
+      // On spin completed
       setTimeout(() => {
         if (tickAnimationId) cancelAnimationFrame(tickAnimationId);
         playMechanicalLock();
@@ -697,7 +715,7 @@
 
         if (wonGift) {
           resultTextEl.innerHTML = `<span class="flex items-center gap-1.5"><img src="${wonGift.icon || getGiftIconUrl(wonGift.name)}" class="w-4 h-4 object-contain inline-block"> ${escapeHtml(wonGift.name)}</span>`;
-          resultSyncTagEl.innerText = 'ส่งเข้าขวดโหลสำเร็จ';
+          resultSyncTagEl.innerText = 'ลงขวดโหล';
           resultSyncTagEl.className = 'text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-bold';
           resultSyncTagEl.style.display = 'inline-block';
         } else {
@@ -707,7 +725,7 @@
 
           resultTextEl.innerText = `${displayWinner} ${isSec ? 'วินาที' : ''}`;
           if (isSec) {
-            resultSyncTagEl.innerText = 'ซิงค์ Subathon สำเร็จ';
+            resultSyncTagEl.innerText = 'ซิงค์ Subathon แล้ว';
             resultSyncTagEl.className = 'text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold';
             resultSyncTagEl.style.display = 'inline-block';
           } else {
@@ -716,15 +734,24 @@
         }
         resultBannerEl.style.opacity = '1';
 
+        // Check if there are remaining spins in queue
+        const hasMoreInQueue = gachaQueue.length > 0;
+        const displayDurationMs = hasMoreInQueue ? 2200 : 4000;
+
         setTimeout(() => {
-          if (!isPreview && autoHideEnabled) {
-            scaleWrapper.style.opacity = '0';
-            scaleWrapper.style.pointerEvents = 'none';
+          if (!hasMoreInQueue) {
+            if (!isPreview && autoHideEnabled) {
+              scaleWrapper.style.opacity = '0';
+              scaleWrapper.style.pointerEvents = 'none';
+            }
           }
           isGachaSpinning = false;
-        }, 4000);
+          if (gachaQueue.length > 0) {
+            setTimeout(processGachaQueue, 300); // Progress directly to next queued spin
+          }
+        }, displayDurationMs);
 
-      }, durationSec * 1000 + 100);
+      }, durationSec * 1000 + 120);
     });
   }
 
@@ -766,7 +793,8 @@
       try {
         const msg = JSON.parse(evt.data);
         if (msg.type === 'gacha_spin') {
-          runCSGOGachaSpin(msg);
+          gachaQueue.push(msg);
+          processGachaQueue();
         } else if (msg.type === 'config_update' || msg.type === 'config_updated' || msg.type === 'init') {
           if (msg.config && msg.config.gacha_config) {
             applyConfig(msg.config.gacha_config);

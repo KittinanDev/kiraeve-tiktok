@@ -1666,6 +1666,39 @@ tailwind.config = {
           </div>
         </div>
 
+        <!-- Card 2.1: Auction Trigger Gift & Auto Start Setup -->
+        <div class="p-4 bg-tik-bg rounded-xl border border-tik-card-border space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-tik-amber flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm">redeem</span>
+              <span>ของขวัญเปิดประมูล / ร่วมประมูล (Auction Trigger Gift):</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer select-none">
+              <input type="checkbox" id="auc-auto-start" checked class="w-3.5 h-3.5 accent-tik-pink rounded cursor-pointer">
+              <span class="text-[11px] text-emerald-400 font-bold">เปิดประมูลอัตโนมัติเมื่อมีคนส่งของขวัญ (Auto-Start)</span>
+            </label>
+          </div>
+          <div class="flex items-center gap-3">
+            <button type="button" onclick="openGiftPickerModal('auction_trigger')"
+              class="flex-1 flex items-center gap-3 p-2.5 rounded-xl border border-tik-card-border hover:border-amber-500 bg-tik-card transition-all text-left group shadow-sm">
+              <img src="/api/gift-icon?name=Rose" id="auc-trigger-icon-preview" referrerpolicy="no-referrer"
+                class="w-9 h-9 object-contain rounded-lg bg-tik-bg p-1 border border-tik-card-border flex-shrink-0 group-hover:scale-105 transition-transform" alt="Auction Trigger">
+              <div class="min-w-0 flex-1">
+                <p class="text-xs font-bold text-white truncate group-hover:text-amber-500 transition-colors" id="auc-trigger-name-display">รับทุกของขวัญ (Any Gift)</p>
+                <p class="text-[10px] text-amber-500 font-semibold flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[13px]">search</span>
+                  <span>คลิกเพื่อเปลี่ยนของขวัญจุดชนวน / ร่วมประมูล</span>
+                </p>
+              </div>
+            </button>
+            <button type="button" onclick="setAuctionTriggerGiftUI('', '')" class="bg-tik-card border border-tik-card-border hover:bg-gray-800 text-gray-300 text-xs px-3 py-2.5 rounded-xl font-semibold shrink-0" title="ให้ของขวัญทุกชนิดสามารถร่วมประมูลได้">
+              รับทุกของขวัญ (Any)
+            </button>
+          </div>
+          <input type="hidden" id="auc-trigger-hidden-name" value="">
+          <p class="text-[11px] text-on-surface-variant">เมื่อผู้ชมส่งของขวัญนี้ ระบบจะเริ่มนับเวลาประมูลทันที (หรือส่งมาร่วมบิดแข่งเหรียญในขณะที่ประมูลกำลังดำเนินอยู่)</p>
+        </div>
+
         <div class="bg-tik-purple/10 border border-tik-purple/30 rounded-xl p-3 flex items-start gap-2.5 text-xs text-on-surface">
           <span class="material-symbols-outlined text-tik-purple text-base shrink-0 mt-0.5">tips_and_updates</span>
           <div>
@@ -3467,6 +3500,10 @@ tailwind.config = {
         renderTimerMappingsTable();
         triggerAutoSave('timer_mappings');
       }
+    } else if (type === 'auction_trigger') {
+      setAuctionTriggerGiftUI(name, proxiedIcon);
+      triggerAutoSave('auction');
+      appendLog(`[AUCTION] เปลี่ยนของขวัญจุดชนวนประมูลเป็น "${name}" เรียบร้อยแล้ว`);
     } else if (type === 'gacha_trigger') {
       setGachaTriggerGiftUI(name, proxiedIcon);
       triggerAutoSave('gacha');
@@ -4335,6 +4372,8 @@ tailwind.config = {
         if (document.getElementById('auc-scale-select')) document.getElementById('auc-scale-select').value = String(data.auction_config.scale || '1.0');
         if (document.getElementById('auc-celebration-duration')) document.getElementById('auc-celebration-duration').value = String(data.auction_config.celebration_duration_sec || '10');
         if (document.getElementById('auc-auto-hide')) document.getElementById('auc-auto-hide').checked = data.auction_config.auto_hide_on_end !== false;
+        if (document.getElementById('auc-auto-start')) document.getElementById('auc-auto-start').checked = data.auction_config.auto_start !== false;
+        setAuctionTriggerGiftUI(data.auction_config.trigger_gift_name || '');
       }
       if (data.gacha_config) {
         if (data.gacha_config.rarity_names) {
@@ -5047,6 +5086,24 @@ tailwind.config = {
     }
   }
 
+  function setAuctionTriggerGiftUI(name, iconUrl) {
+    const giftName = (name || '').trim();
+    const hiddenEl = document.getElementById('auc-trigger-hidden-name');
+    const displayEl = document.getElementById('auc-trigger-name-display');
+    const iconEl = document.getElementById('auc-trigger-icon-preview');
+    if (hiddenEl) hiddenEl.value = giftName;
+    if (displayEl) displayEl.innerText = giftName ? giftName : 'รับทุกของขวัญ (Any Gift)';
+    if (iconEl) {
+      if (!giftName) {
+        iconEl.src = '/api/gift-icon?name=Rose';
+      } else if (iconUrl) {
+        iconEl.src = iconUrl;
+      } else {
+        iconEl.src = `/api/gift-icon?name=${encodeURIComponent(giftName)}`;
+      }
+    }
+  }
+
   function setGachaTriggerGiftUI(name, iconUrl) {
     const giftName = (name || 'Doughnut').trim();
     const hiddenEl = document.getElementById('gacha-trigger-hidden-name');
@@ -5431,6 +5488,8 @@ tailwind.config = {
     const scale = parseFloat(document.getElementById('auc-scale-select')?.value || 1.0);
     const celebrationDuration = parseInt(document.getElementById('auc-celebration-duration')?.value || 10);
     const autoHide = document.getElementById('auc-auto-hide')?.checked ?? true;
+    const triggerGift = document.getElementById('auc-trigger-hidden-name')?.value || '';
+    const autoStart = document.getElementById('auc-auto-start')?.checked ?? true;
 
     const cfg = {
       auction_config: {
@@ -5443,7 +5502,9 @@ tailwind.config = {
         auto_extend_sec: autoExtend,
         celebration_duration_sec: celebrationDuration,
         auto_hide_on_end: autoHide,
-        scale: scale
+        scale: scale,
+        trigger_gift_name: triggerGift,
+        auto_start: autoStart
       }
     };
     try {
