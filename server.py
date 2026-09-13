@@ -1854,7 +1854,10 @@ async def spawn_tiktok_process(username: str):
             while not stream.at_eof():
                 line = await stream.readline()
                 if line:
-                    log.info("[%s] %s", prefix, line.decode("utf-8", errors="replace").strip())
+                    decoded = line.decode("utf-8", errors="replace").strip()
+                    log.info("[%s] %s", prefix, decoded)
+                    if decoded:
+                        await broadcast({"type": "tiktok_console_log", "prefix": prefix, "text": decoded})
         except Exception:
             pass
 
@@ -1908,11 +1911,14 @@ async def sync_live_tiktok_gifts_task():
                                 "coins": g.get("diamond_count", 1),
                                 "icon": icon_url
                             })
-                        if len(clean_gifts) > 0:
+                        # Only overwrite cache if fetched list is at least 300 gifts to prevent accidental wipes
+                        if len(clean_gifts) >= 300:
                             with open(GIFT_CACHE_PATH, "w", encoding="utf-8") as f:
                                 json.dump({"gifts": clean_gifts}, f, ensure_ascii=False, indent=2)
                             load_gift_cache()
                             log.info("[TIKTOK] Live gift sync completed: %d gifts indexed from official TikTok API", len(clean_gifts))
+                        else:
+                            log.info("[TIKTOK] Live gift sync returned %d gifts (kept %d bundled gifts)", len(clean_gifts), len(GIFT_CATALOG_LIST))
     except Exception as e:
         log.warning("Live TikTok gift catalog sync skipped: %s", e)
 
