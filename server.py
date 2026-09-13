@@ -1313,7 +1313,7 @@ async def handle_mock_event(request: web.Request) -> web.Response:
         return web.json_response({"ok": False, "error": f"Invalid JSON: {exc}"}, status=400)
 
     try:
-        event_type = data.get("event_type", "ping")
+        event_type = data.get("event_type") or data.get("type") or "ping"
 
         if event_type == "ping":
             payload = {"type": "ping", "message": "Pong from Backend Simulator!", "is_mock": True}
@@ -1888,8 +1888,47 @@ async def auto_connect_tiktok_task(username: str):
         tiktok_connection_state["status"] = "error"
         tiktok_connection_state["error"] = str(e)
 
+async def sync_live_tiktok_gifts_task():
+    url = "https://webcast.tiktok.com/webcast/gift/list/?aid=1988&type=1&device_platform=web"
+    req_headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": "https://www.tiktok.com/"
+    }
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=req_headers, ssl=False, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                if resp.status == 200:
+                    raw_data = await resp.json()
+                    raw_gifts = raw_data.get("data", {}).get("gifts", [])
+                    if raw_gifts:
+                        clean_gifts = []
+                        seen_ids = set()
+                        for g in raw_gifts:
+                            g_id = g.get("id")
+                            g_name = g.get("name", "").strip()
+                            if not g_name or g_id in seen_ids:
+                                continue
+                            seen_ids.add(g_id)
+                            img_obj = g.get("icon") or g.get("image") or {}
+                            urls = img_obj.get("url_list", [])
+                            icon_url = urls[0] if urls else ""
+                            clean_gifts.append({
+                                "id": g_id,
+                                "name": g_name,
+                                "coins": g.get("diamond_count", 1),
+                                "icon": icon_url
+                            })
+                        if len(clean_gifts) > 0:
+                            with open(GIFT_CACHE_PATH, "w", encoding="utf-8") as f:
+                                json.dump({"gifts": clean_gifts}, f, ensure_ascii=False, indent=2)
+                            load_gift_cache()
+                            log.info("[TIKTOK] Live gift sync completed: %d gifts indexed from official TikTok API", len(clean_gifts))
+    except Exception as e:
+        log.warning("Live TikTok gift catalog sync skipped: %s", e)
+
 async def start_background_tasks(app):
     app["timer_task"] = asyncio.create_task(timer_background_task())
+    asyncio.create_task(sync_live_tiktok_gifts_task())
     cfg = load_config()
     if cfg.get("auto_connect", False) and cfg.get("tiktok_username"):
         u = cfg["tiktok_username"].strip()

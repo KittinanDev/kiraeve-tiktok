@@ -437,7 +437,7 @@ tailwind.config = {
       <div class="flex items-center justify-between px-1">
         <span class="text-[11px] text-on-surface-variant font-mono flex items-center gap-1">
           <span class="material-symbols-outlined text-[13px]">package_2</span>
-          <span>v</span><span id="sidebar-app-version">1.1.2</span>
+          <span>v</span><span id="sidebar-app-version">1.1.3</span>
         </span>
         <button onclick="openUpdateModal()" id="sidebar-update-btn"
           class="flex items-center gap-1 text-[11px] font-semibold text-amber-500 hover:text-amber-400 transition-colors group">
@@ -2763,8 +2763,8 @@ tailwind.config = {
     // โหลดเวอร์ชันจาก Electron หรือ fallback 1.0.0
     if (window.kiraeveUpdater) {
       window.kiraeveUpdater.getVersion().then(v => {
-        document.getElementById('modal-current-version').innerText = v || '1.1.2';
-        document.getElementById('sidebar-app-version').innerText = v || '1.1.2';
+        document.getElementById('modal-current-version').innerText = v || '1.1.3';
+        document.getElementById('sidebar-app-version').innerText = v || '1.1.3';
       });
     }
     // หากยังไม่เคยเช็กหรืออยู่ในหน้า idle ให้เริ่มเช็กอัปเดตอัตโนมัติทันที
@@ -5641,11 +5641,13 @@ tailwind.config = {
     }
     
     // Sort gifts by coin cost descending
-    const sorted = [...gifts].sort((a, b) => b.coins - a.coins);
+    const sorted = [...gifts].sort((a, b) => (b.coins || 1) - (a.coins || 1));
 
-    selectEl.innerHTML = sorted.map(g => `
-      <option value="${g.name}" data-coins="${g.coins}" data-icon="${g.icon}">${g.name} (${g.coins.toLocaleString()} เหรียญ)</option>
-    `).join('');
+    selectEl.innerHTML = sorted.map(g => {
+      const proxiedIcon = `/api/gift-icon?name=${encodeURIComponent(g.name)}&url=${encodeURIComponent(g.icon || '')}`;
+      const safeName = escapeHtml(g.name);
+      return `<option value="${safeName}" data-coins="${g.coins || 1}" data-icon="${encodeURIComponent(proxiedIcon)}">${safeName} (${(g.coins || 1).toLocaleString()} เหรียญ)</option>`;
+    }).join('');
 
     onUniversalGiftSelected();
   }
@@ -5665,15 +5667,24 @@ tailwind.config = {
 
     const name = selectedOption.value;
     const coins = parseInt(selectedOption.getAttribute('data-coins') || 1);
-    const icon = selectedOption.getAttribute('data-icon') || `/api/gift-icon?name=${encodeURIComponent(name)}`;
+    const rawIcon = selectedOption.getAttribute('data-icon') || '';
+    let icon = '';
+    try { icon = decodeURIComponent(rawIcon); } catch(e) { icon = rawIcon; }
+    if (!icon) icon = `/api/gift-icon?name=${encodeURIComponent(name)}`;
 
     const imgEl = document.getElementById('uni-gift-preview-img');
     const nameEl = document.getElementById('uni-gift-preview-name');
     const coinsEl = document.getElementById('uni-gift-preview-coins');
+    const hiddenName = document.getElementById('uni-gift-selected-name');
+    const hiddenCoins = document.getElementById('uni-gift-selected-coins');
+    const hiddenIcon = document.getElementById('uni-gift-selected-icon');
     
     if (imgEl) imgEl.src = icon;
     if (nameEl) nameEl.innerText = name;
     if (coinsEl) coinsEl.innerText = `${coins.toLocaleString()} เหรียญ / ชิ้น`;
+    if (hiddenName) hiddenName.value = name;
+    if (hiddenCoins) hiddenCoins.value = coins;
+    if (hiddenIcon) hiddenIcon.value = icon;
 
     updateUniGiftTotal();
   }
