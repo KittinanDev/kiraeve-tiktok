@@ -437,7 +437,7 @@ tailwind.config = {
       <div class="flex items-center justify-between px-1">
         <span class="text-[11px] text-on-surface-variant font-mono flex items-center gap-1">
           <span class="material-symbols-outlined text-[13px]">package_2</span>
-          <span>v</span><span id="sidebar-app-version">1.1.8</span>
+          <span>v</span><span id="sidebar-app-version">1.1.9</span>
         </span>
         <button onclick="openUpdateModal()" id="sidebar-update-btn"
           class="flex items-center gap-1 text-[11px] font-semibold text-amber-500 hover:text-amber-400 transition-colors group">
@@ -2037,10 +2037,14 @@ tailwind.config = {
             </span>
           </div>
 
-          <div class="pt-2">
+          <div class="pt-2 space-y-2">
             <button onclick="triggerGachaSpin()" class="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white py-2.5 rounded-lg font-bold text-xs shadow-lg flex items-center justify-center gap-2">
               <span class="material-symbols-outlined text-[18px]">casino</span>
               <span>หมุนวงล้อพรีวิวทันที (Instant Spin Preview)</span>
+            </button>
+            <button onclick="triggerGachaCurrentTriggerGift()" class="w-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-colors">
+              <span class="material-symbols-outlined text-[16px]">redeem</span>
+              <span>ทดสอบยิงของขวัญที่ตั้งไว้ (Test Current Trigger Gift)</span>
             </button>
           </div>
         </div>
@@ -2763,8 +2767,8 @@ tailwind.config = {
     // โหลดเวอร์ชันจาก Electron หรือ fallback 1.0.0
     if (window.kiraeveUpdater) {
       window.kiraeveUpdater.getVersion().then(v => {
-        document.getElementById('modal-current-version').innerText = v || '1.1.8';
-        document.getElementById('sidebar-app-version').innerText = v || '1.1.8';
+        document.getElementById('modal-current-version').innerText = v || '1.1.9';
+        document.getElementById('sidebar-app-version').innerText = v || '1.1.9';
       });
     }
     // หากยังไม่เคยเช็กหรืออยู่ในหน้า idle ให้เริ่มเช็กอัปเดตอัตโนมัติทันที
@@ -2907,7 +2911,7 @@ tailwind.config = {
         else if (section === 'tts' && typeof saveTTSSettings === 'function') await saveTTSSettings();
         else if (section === 'leaderboard' && typeof saveLeaderboardConfig === 'function') await saveLeaderboardConfig();
         else if (section === 'auction' && typeof saveAuctionConfig === 'function') await saveAuctionConfig();
-        else if (section === 'gacha' && typeof saveGachaConfig === 'function') await saveGachaConfig();
+        else if ((section === 'gacha' || section === 'gacha_config') && typeof saveGachaConfig === 'function') await saveGachaConfig();
         else if (section === 'gift_mappings' && typeof saveGiftMappings === 'function') await saveGiftMappings();
         else if (section === 'gift_video_mappings' && typeof saveVideoMappings === 'function') await saveVideoMappings();
         else if (section === 'timer_mappings' && typeof saveTimerMappings === 'function') await saveTimerMappings();
@@ -3464,13 +3468,9 @@ tailwind.config = {
         triggerAutoSave('timer_mappings');
       }
     } else if (type === 'gacha_trigger') {
-      const hiddenEl = document.getElementById('gacha-trigger-hidden-name');
-      const displayEl = document.getElementById('gacha-trigger-name-display');
-      const iconEl = document.getElementById('gacha-trigger-icon-preview');
-      if (hiddenEl) hiddenEl.value = name;
-      if (displayEl) displayEl.innerText = name;
-      if (iconEl) iconEl.src = proxiedIcon;
-      triggerAutoSave('gacha_config');
+      setGachaTriggerGiftUI(name, proxiedIcon);
+      triggerAutoSave('gacha');
+      appendLog(`[GACHA] เปลี่ยนของขวัญเปิดกล่องสุ่ม Gacha เป็น "${name}" เรียบร้อยแล้ว`);
     } else if (type === 'gacha_item') {
       currentGachaItems.push({
         text: name,
@@ -4355,28 +4355,7 @@ tailwind.config = {
         if (document.getElementById('gacha-win-sound')) document.getElementById('gacha-win-sound').checked = data.gacha_config.win_sound_enabled !== false;
         if (document.getElementById('gacha-auto-hide')) document.getElementById('gacha-auto-hide').checked = data.gacha_config.auto_hide !== false;
         if (data.gacha_config.trigger_gift_name) {
-          const name = data.gacha_config.trigger_gift_name;
-          const selectEl = document.getElementById('gacha-trigger-select');
-          const customEl = document.getElementById('gacha-trigger-custom-input');
-          if (selectEl) {
-            let found = false;
-            for (let i = 0; i < selectEl.options.length; i++) {
-              if (selectEl.options[i].value.toLowerCase() === name.toLowerCase()) {
-                selectEl.selectedIndex = i;
-                found = true;
-                break;
-              }
-            }
-            if (!found) {
-              selectEl.value = '__custom__';
-              if (customEl) {
-                customEl.value = name;
-                customEl.classList.remove('hidden');
-              }
-            } else {
-              if (customEl) customEl.classList.add('hidden');
-            }
-          }
+          setGachaTriggerGiftUI(data.gacha_config.trigger_gift_name);
         }
       }
       if (data.gift_sound_mappings) {
@@ -5062,35 +5041,45 @@ tailwind.config = {
       currentGachaItems = p.items.map(normalizeGachaItem);
       renderGachaItemsList();
       if (document.getElementById('gacha-duration-input')) document.getElementById('gacha-duration-input').value = p.duration;
-      
-      const selectEl = document.getElementById('gacha-trigger-select');
-      const customEl = document.getElementById('gacha-trigger-custom-input');
-      if (selectEl) {
-        selectEl.value = p.trigger;
-        if (customEl) customEl.classList.add('hidden');
-      }
+      setGachaTriggerGiftUI(p.trigger);
       appendLog(`[LOG] ใช้งานเทมเพลต Gacha: "${presetKey.toUpperCase()}" (ของขวัญเปิด: ${p.trigger}, มี ${currentGachaItems.length} รางวัล)`);
     }
   }
 
-  function onGachaTriggerSelectChange(val) {
-    const customEl = document.getElementById('gacha-trigger-custom-input');
-    if (!customEl) return;
-    if (val === '__custom__') {
-      customEl.classList.remove('hidden');
-    } else {
-      customEl.classList.add('hidden');
+  function setGachaTriggerGiftUI(name, iconUrl) {
+    const giftName = (name || 'Doughnut').trim();
+    const hiddenEl = document.getElementById('gacha-trigger-hidden-name');
+    const displayEl = document.getElementById('gacha-trigger-name-display');
+    const iconEl = document.getElementById('gacha-trigger-icon-preview');
+    if (hiddenEl) hiddenEl.value = giftName;
+    if (displayEl) displayEl.innerText = giftName;
+    if (iconEl) {
+      if (iconUrl) {
+        iconEl.src = iconUrl;
+      } else {
+        iconEl.src = `/api/gift-icon?name=${encodeURIComponent(giftName)}`;
+      }
     }
   }
 
   function getSelectedGachaTriggerGift() {
+    const hiddenEl = document.getElementById('gacha-trigger-hidden-name');
+    if (hiddenEl && hiddenEl.value && hiddenEl.value.trim()) {
+      return hiddenEl.value.trim();
+    }
+    const displayEl = document.getElementById('gacha-trigger-name-display');
+    if (displayEl && displayEl.innerText && displayEl.innerText.trim()) {
+      return displayEl.innerText.trim();
+    }
     const selectEl = document.getElementById('gacha-trigger-select');
     const customEl = document.getElementById('gacha-trigger-custom-input');
-    if (!selectEl) return 'Doughnut';
-    if (selectEl.value === '__custom__') {
-      return customEl && customEl.value.trim() ? customEl.value.trim() : 'Doughnut';
+    if (selectEl) {
+      if (selectEl.value === '__custom__') {
+        return customEl && customEl.value.trim() ? customEl.value.trim() : 'Doughnut';
+      }
+      return selectEl.value;
     }
-    return selectEl.value;
+    return 'Doughnut';
   }
 
   function refreshGachaPreview() {
@@ -5116,6 +5105,7 @@ tailwind.config = {
 
     const cfg = {
       gacha_config: {
+        enabled: true,
         items: itemsToSave,
         rarity_names: currentGachaRarityNames,
         spin_duration: duration,
@@ -5235,6 +5225,12 @@ tailwind.config = {
     } catch(e) {
       appendLog('[ERROR] ข้อผิดพลาดในการยิงของขวัญ: ' + e);
     }
+  }
+
+  async function triggerGachaCurrentTriggerGift() {
+    const triggerGift = getSelectedGachaTriggerGift();
+    appendLog(`[TEST] ทดสอบยิงของขวัญเปิด Gacha ที่ตั้งค่าไว้: "${triggerGift}"...`);
+    await triggerGachaMockGift('Viewer_GachaTester', triggerGift, 1, 10);
   }
 
   let currentAuctionState = null;

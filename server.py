@@ -109,6 +109,8 @@ def load_gift_cache():
                         clean_k = re.sub(r'[^a-zA-Z0-9]', '', g_name.lower())
                         if clean_k:
                             GIFT_CACHE_MAP[clean_k] = g
+                    if g.get("id"):
+                        GIFT_CACHE_MAP[str(g["id"])] = g
             log.info("Loaded %d gifts from gift_cache.json into catalog map", len(GIFT_CATALOG_LIST))
         except Exception as e:
             log.warning("Failed to load gift_cache.json: %s", e)
@@ -1413,10 +1415,39 @@ async def handle_mock_event(request: web.Request) -> web.Response:
             # CS:GO Gacha Trigger Check
             gacha_cfg = cfg.get("gacha_config", {})
             gacha_enabled = gacha_cfg.get("enabled", True)
-            trigger_gift_name = gacha_cfg.get("trigger_gift_name", "Doughnut").strip().lower()
+            trigger_gift_name = (gacha_cfg.get("trigger_gift_name") or "Doughnut").strip()
 
-            gift_name_lower = gift_name.strip().lower()
-            trigger_matched = (gift_name_lower == trigger_gift_name)
+            gift_name_clean = (gift_name or "").strip()
+            norm_incoming = normalize_gift_name(gift_name_clean)
+            norm_trigger = normalize_gift_name(trigger_gift_name)
+
+            trigger_matched = False
+            if gift_name_clean and trigger_gift_name:
+                if gift_name_clean.lower() == trigger_gift_name.lower():
+                    trigger_matched = True
+                elif norm_incoming and norm_trigger and norm_incoming == norm_trigger:
+                    trigger_matched = True
+                elif len(trigger_gift_name) >= 3 and (trigger_gift_name.lower() in gift_name_clean.lower() or gift_name_clean.lower() in trigger_gift_name.lower()):
+                    trigger_matched = True
+                elif norm_trigger and len(norm_trigger) >= 3 and (norm_trigger in norm_incoming or norm_incoming in norm_trigger):
+                    trigger_matched = True
+
+                # Also match against catalog by gift_id if provided
+                incoming_id = data.get("gift_id")
+                if not trigger_matched and incoming_id:
+                    cached_g = GIFT_CACHE_MAP.get(str(incoming_id))
+                    if cached_g and cached_g.get("name"):
+                        c_norm = normalize_gift_name(cached_g["name"])
+                        if c_norm == norm_trigger or cached_g["name"].lower() == trigger_gift_name.lower():
+                            trigger_matched = True
+
+            filters = data.get("filters")
+            if filters and isinstance(filters, dict):
+                if filters.get("gacha") is False:
+                    trigger_matched = False
+
+            log.info("[GACHA] Gift check: incoming='%s' (id=%s) vs trigger='%s' -> matched=%s, enabled=%s, target=%s",
+                     gift_name_clean, data.get("gift_id"), trigger_gift_name, trigger_matched, gacha_enabled, target_widget)
 
             gacha_spin_data = None
             if gacha_enabled and (target_widget == "gacha" or (target_widget == "all" and trigger_matched)):
@@ -1732,7 +1763,7 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                 })
 
             # Save Config if updated
-            if items_str or items_list or "scale" in data or "tick_sound_enabled" in data:
+            if items_str or items_list or "scale" in data or "tick_sound_enabled" in data or "trigger_gift" in data or "trigger_gift_name" in data:
                 if "gacha_config" not in cfg:
                     cfg["gacha_config"] = {}
                 if items_list and isinstance(items_list, list):
@@ -1743,6 +1774,10 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                     cfg["gacha_config"]["rarity_names"] = data["rarity_names"]
                 if "duration" in data:
                     cfg["gacha_config"]["spin_duration"] = duration
+                if "trigger_gift" in data and data["trigger_gift"]:
+                    cfg["gacha_config"]["trigger_gift_name"] = str(data["trigger_gift"]).strip()
+                elif "trigger_gift_name" in data and data["trigger_gift_name"]:
+                    cfg["gacha_config"]["trigger_gift_name"] = str(data["trigger_gift_name"]).strip()
                 if "scale" in data:
                     cfg["gacha_config"]["scale"] = float(data["scale"])
                 if "tick_sound_enabled" in data:
