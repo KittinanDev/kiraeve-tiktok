@@ -8,7 +8,8 @@
     "start": "electron .",
     "dist": "electron-builder --publish never",
     "dist:win": "electron-builder --win --publish never",
-    "release": "electron-builder --publish always"
+    "release": "node scripts/publish_release.js",
+    "publish-release": "node scripts/publish_release.js"
   },
   "build": {
     "appId": "com.kiraeve.tiktok",
