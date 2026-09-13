@@ -271,10 +271,10 @@
           </div>
 
           <span class="text-xs font-black text-amber-400 uppercase tracking-widest mb-0.5">
-            ขอแสดงความยินดีกับผู้ชนะการประมูล
+            ขอแสดงความยินดีกับผู้ชนะ
           </span>
-          <h3 class="text-xs font-medium text-gray-300 max-w-[320px] truncate" id="winner-auc-title">
-            ประมูลสด TikTok LIVE
+          <h3 class="text-sm font-black text-white tracking-widest uppercase" id="winner-auc-title">
+            MVP
           </h3>
 
           <!-- Winner Avatar -->
@@ -628,7 +628,7 @@
 
     showWidget();
 
-    winnerAucTitle.innerText = auc.title || 'ประมูลสด TikTok LIVE';
+    winnerAucTitle.innerText = 'MVP';
     winnerNameEl.innerText = `@${auc.winner_name}`;
     winnerCoinsEl.innerText = `${(auc.winning_coins || 0).toLocaleString()} Coins`;
     const lookupWinner = auc.winner_unique_id || auc.winner_name;
