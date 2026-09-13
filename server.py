@@ -1039,6 +1039,8 @@ async def handle_post_config(request: web.Request) -> web.Response:
     merged = deep_merge(current_cfg, data)
     save_config(merged)
     await broadcast({"type": "config_updated", "config": merged})
+    if any(k in data for k in ("gift_sound_mappings", "gift_video_mappings", "widgets_visibility", "overlay_config", "general_config")):
+        await broadcast({"type": "refresh_overlays"})
     top_cnt = int(merged.get("leaderboard_config", {}).get("top_count", 5))
     if "auction_config" in merged:
         ac = merged["auction_config"]
@@ -1140,6 +1142,7 @@ async def handle_upload_sound(request: web.Request) -> web.Response:
                 f.write(chunk)
                 
         log.info("Uploaded custom sound: %s (%d bytes)", safe_filename, size)
+        await broadcast({"type": "refresh_overlays"})
         return web.json_response({
             "ok": True, 
             "message": f"Successfully uploaded {safe_filename}", 
@@ -1370,6 +1373,7 @@ async def handle_delete_sound(request: web.Request) -> web.Response:
         if target.exists() and target.is_file():
             target.unlink()
             log.info("Deleted sound file: %s", safe_filename)
+            await broadcast({"type": "refresh_overlays"})
             return web.json_response({"ok": True, "message": f"Deleted {safe_filename}"})
         else:
             return web.json_response({"ok": False, "error": "File not found"}, status=404)
@@ -1412,6 +1416,7 @@ async def handle_upload_video(request: web.Request) -> web.Response:
                 f.write(chunk)
                 
         log.info("Uploaded custom video: %s (%d bytes)", safe_filename, size)
+        await broadcast({"type": "refresh_overlays"})
         return web.json_response({
             "ok": True, 
             "message": f"Successfully uploaded {safe_filename}", 
@@ -1433,25 +1438,18 @@ async def handle_delete_video(request: web.Request) -> web.Response:
         if target.exists() and target.is_file():
             target.unlink()
             log.info("Deleted video file: %s", safe_filename)
+            await broadcast({"type": "refresh_overlays"})
             return web.json_response({"ok": True, "message": f"Deleted {safe_filename}"})
         else:
             return web.json_response({"ok": False, "error": "File not found"}, status=404)
     except Exception as e:
         return web.json_response({"ok": False, "error": str(e)}, status=500)
 
-async def handle_overlay_video(request: web.Request) -> web.Response:
-    path = BASE_DIR / "overlay_video.html"
-    if path.exists():
-        with open(path, "r", encoding="utf-8") as f:
-            return web.Response(text=f.read(), content_type="text/html")
-    return web.Response(status=404, text="overlay_video.html not found")
+async def handle_overlay_video(request: web.Request) -> web.FileResponse:
+    return web.FileResponse(BASE_DIR / "overlay_video.html", headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"})
 
-async def handle_overlay_sound(request: web.Request) -> web.Response:
-    path = BASE_DIR / "overlay_sound.html"
-    if path.exists():
-        with open(path, "r", encoding="utf-8") as f:
-            return web.Response(text=f.read(), content_type="text/html")
-    return web.Response(status=404, text="overlay_sound.html not found")
+async def handle_overlay_sound(request: web.Request) -> web.FileResponse:
+    return web.FileResponse(BASE_DIR / "overlay_sound.html", headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"})
 
 async def handle_tts_audio(request: web.Request) -> web.Response:
     text = request.query.get("text", "").strip()
