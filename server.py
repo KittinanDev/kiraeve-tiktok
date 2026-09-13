@@ -638,10 +638,13 @@ class TikFinityAuctionState:
         target_reached = False
         if self.target_coins > 0 and highest["coins"] >= self.target_coins:
             target_reached = True
+            self.end()
+            if self.is_winner_announced:
+                trigger_winner_announcement()
 
         extended = False
         self.last_extended = False
-        if self.auto_extend_sec > 0 and self.remaining_seconds <= self.auto_extend_sec:
+        if not target_reached and self.auto_extend_sec > 0 and self.remaining_seconds <= self.auto_extend_sec:
             self.remaining_seconds += self.auto_extend_sec
             extended = True
             self.last_extended = True
@@ -1591,6 +1594,16 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                         "auction": auction_state.to_dict(),
                         "bid_result": bid_result
                     })
+                    if bid_result.get("target_reached") or auction_state.is_winner_announced:
+                        log.info("[AUCTION] Target coins reached (%d >= %d)! Auction ended, winner is %s",
+                                 auction_state.winning_coins, auction_state.target_coins, auction_state.winner_name)
+                        await broadcast({
+                            "type": "auction_winner",
+                            "winner": auction_state.winner_name,
+                            "winning_bid": auction_state.winning_coins,
+                            "winner_avatar": auction_state.winner_avatar,
+                            "auction": auction_state.to_dict()
+                        })
 
             # CS:GO Gacha Trigger Check
             gacha_cfg = cfg.get("gacha_config", {})
