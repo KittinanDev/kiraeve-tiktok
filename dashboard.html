@@ -2959,7 +2959,7 @@ tailwind.config = {
         else if (section === 'timer' && typeof saveTimerConfig === 'function') await saveTimerConfig();
         else if (section === 'tts' && typeof saveTTSSettings === 'function') await saveTTSSettings();
         else if (section === 'leaderboard' && typeof saveLeaderboardConfig === 'function') await saveLeaderboardConfig();
-        else if (section === 'auction' && typeof saveAuctionConfig === 'function') await saveAuctionConfig();
+        else if ((section === 'auction' || section === 'auction_config') && typeof saveAuctionConfig === 'function') await saveAuctionConfig();
         else if ((section === 'gacha' || section === 'gacha_config') && typeof saveGachaConfig === 'function') await saveGachaConfig();
         else if (section === 'gift_mappings' && typeof saveGiftMappings === 'function') await saveGiftMappings();
         else if (section === 'gift_video_mappings' && typeof saveVideoMappings === 'function') await saveVideoMappings();
@@ -4389,7 +4389,7 @@ tailwind.config = {
         if (document.getElementById('auc-celebration-duration')) document.getElementById('auc-celebration-duration').value = String(data.auction_config.celebration_duration_sec || '10');
         if (document.getElementById('auc-auto-hide')) document.getElementById('auc-auto-hide').checked = data.auction_config.auto_hide_on_end !== false;
         if (document.getElementById('auc-auto-start')) document.getElementById('auc-auto-start').checked = data.auction_config.auto_start !== false;
-        setAuctionTriggerGiftUI(data.auction_config.trigger_gift_name || '');
+        setAuctionTriggerGiftUI(data.auction_config.trigger_gift_name || '', '', true);
       }
       if (data.gacha_config) {
         if (data.gacha_config.rarity_names) {
@@ -4410,7 +4410,7 @@ tailwind.config = {
         if (document.getElementById('gacha-win-sound')) document.getElementById('gacha-win-sound').checked = data.gacha_config.win_sound_enabled !== false;
         if (document.getElementById('gacha-auto-hide')) document.getElementById('gacha-auto-hide').checked = data.gacha_config.auto_hide !== false;
         if (data.gacha_config.trigger_gift_name) {
-          setGachaTriggerGiftUI(data.gacha_config.trigger_gift_name);
+          setGachaTriggerGiftUI(data.gacha_config.trigger_gift_name, '', true);
         }
       }
       if (data.gift_sound_mappings) {
@@ -5102,7 +5102,7 @@ tailwind.config = {
     }
   }
 
-  function setAuctionTriggerGiftUI(name, iconUrl) {
+  function setAuctionTriggerGiftUI(name, iconUrl, skipSave = false) {
     const giftName = (name || '').trim();
     const hiddenEl = document.getElementById('auc-trigger-hidden-name');
     const displayEl = document.getElementById('auc-trigger-name-display');
@@ -5118,9 +5118,10 @@ tailwind.config = {
         iconEl.src = `/api/gift-icon?name=${encodeURIComponent(giftName)}`;
       }
     }
+    if (!skipSave && typeof triggerAutoSave === 'function') triggerAutoSave('auction_config');
   }
 
-  function setGachaTriggerGiftUI(name, iconUrl) {
+  function setGachaTriggerGiftUI(name, iconUrl, skipSave = false) {
     const giftName = (name || 'Doughnut').trim();
     const hiddenEl = document.getElementById('gacha-trigger-hidden-name');
     const displayEl = document.getElementById('gacha-trigger-name-display');
@@ -5134,6 +5135,7 @@ tailwind.config = {
         iconEl.src = `/api/gift-icon?name=${encodeURIComponent(giftName)}`;
       }
     }
+    if (!skipSave && typeof triggerAutoSave === 'function') triggerAutoSave('gacha_config');
   }
 
   function getSelectedGachaTriggerGift() {
@@ -5772,8 +5774,9 @@ tailwind.config = {
           gift_name: giftName,
           gift_icon: iconUrl,
           count: count,
-          coins: totalCoins,
-          sender: sender
+          coins: coinsPerPiece,
+          sender: sender,
+          unique_id: sender
         })
       });
       const data = await res.json();

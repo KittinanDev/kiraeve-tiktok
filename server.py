@@ -638,13 +638,10 @@ class TikFinityAuctionState:
         target_reached = False
         if self.target_coins > 0 and highest["coins"] >= self.target_coins:
             target_reached = True
-            self.end()
-            if self.is_winner_announced:
-                trigger_winner_announcement()
 
         extended = False
         self.last_extended = False
-        if not target_reached and self.auto_extend_sec > 0 and self.remaining_seconds <= self.auto_extend_sec:
+        if self.auto_extend_sec > 0 and self.remaining_seconds <= self.auto_extend_sec:
             self.remaining_seconds += self.auto_extend_sec
             extended = True
             self.last_extended = True
@@ -758,7 +755,8 @@ async def auto_dismiss_winner_task(delay_sec: int):
         await asyncio.sleep(delay_sec)
         if auction_state.is_winner_announced:
             auction_state.dismiss_winner()
-            log.info("[AUCTION] Auction winner celebration auto-dismissed after %ds", delay_sec)
+            auction_state.reset()
+            log.info("[AUCTION] Auction winner celebration auto-dismissed after %ds (state reset)", delay_sec)
             await broadcast({
                 "type": "auction_dismiss_winner",
                 "auction": auction_state.to_dict()
@@ -1436,7 +1434,7 @@ async def handle_tts_audio(request: web.Request) -> web.Response:
         return web.Response(status=500, text=str(e))
 
 async def handle_mock_event(request: web.Request) -> web.Response:
-    global last_gacha_play_time
+    global last_gacha_play_time, auto_dismiss_auction_task
 
     try:
         data = await request.json()
@@ -1546,39 +1544,46 @@ async def handle_mock_event(request: web.Request) -> web.Response:
 
             bid_result = {}
             if auc_enabled and target_widget in ["all", "auction"]:
-                auc_matched = False
-                if not auc_trigger or auc_trigger.lower() in ["", "all", "all gifts", "ทุกของขวัญ", "-"]:
-                    auc_matched = True
-                else:
-                    norm_auc_trigger = normalize_gift_name(auc_trigger)
-                    if gift_name_clean.lower() == auc_trigger.lower() or (norm_incoming and norm_incoming == norm_auc_trigger):
+                # 1. If auction is NOT active and auto_start is enabled, check if this gift starts the auction
+                if not auction_state.is_active and auc_auto_start:
+                    auc_matched = False
+                    if not auc_trigger or auc_trigger.lower() in ["", "all", "all gifts", "ทุกของขวัญ", "-"]:
                         auc_matched = True
-                    elif len(auc_trigger) >= 3 and (auc_trigger.lower() in gift_name_clean.lower() or gift_name_clean.lower() in auc_trigger.lower()):
-                        auc_matched = True
-                    incoming_id = data.get("gift_id")
-                    if not auc_matched and incoming_id:
-                        cached_g = GIFT_CACHE_MAP.get(str(incoming_id))
-                        if cached_g and cached_g.get("name"):
-                            c_norm = normalize_gift_name(cached_g["name"])
-                            if c_norm == norm_auc_trigger or cached_g["name"].lower() == auc_trigger.lower():
-                                auc_matched = True
-                    if not auc_matched and incoming_id:
-                        for g in GIFT_CACHE_MAP.values():
-                            if g.get("name") and g["name"].strip().lower() == auc_trigger.lower():
-                                if str(g.get("id")) == str(incoming_id):
+                    else:
+                        norm_auc_trigger = normalize_gift_name(auc_trigger)
+                        if gift_name_clean.lower() == auc_trigger.lower() or (norm_incoming and norm_incoming == norm_auc_trigger):
+                            auc_matched = True
+                        elif len(auc_trigger) >= 3 and (auc_trigger.lower() in gift_name_clean.lower() or gift_name_clean.lower() in auc_trigger.lower()):
+                            auc_matched = True
+                        incoming_id = data.get("gift_id")
+                        if not auc_matched and incoming_id:
+                            cached_g = GIFT_CACHE_MAP.get(str(incoming_id))
+                            if cached_g and cached_g.get("name"):
+                                c_norm = normalize_gift_name(cached_g["name"])
+                                if c_norm == norm_auc_trigger or cached_g["name"].lower() == auc_trigger.lower():
                                     auc_matched = True
-                                    break
+                        if not auc_matched and incoming_id:
+                            for g in GIFT_CACHE_MAP.values():
+                                if g.get("name") and g["name"].strip().lower() == auc_trigger.lower():
+                                    if str(g.get("id")) == str(incoming_id):
+                                        auc_matched = True
+                                        break
 
-                if auc_matched:
-                    if not auction_state.is_active and auc_auto_start:
+                    if auc_matched:
+                        if auto_dismiss_auction_task and not auto_dismiss_auction_task.done():
+                            auto_dismiss_auction_task.cancel()
                         auc_title = auc_cfg.get("title", "ประมูลสด TikTok LIVE")
                         auc_target = int(auc_cfg.get("target_coins", 300))
+                        if auc_cfg.get("unlimited") or auc_cfg.get("unlimited_coins") or auc_target <= 0:
+                            auc_target = 0
                         auc_duration = int(auc_cfg.get("duration_seconds", 180))
                         auc_min_inc = int(auc_cfg.get("min_increment", 1))
                         auc_extend = int(auc_cfg.get("auto_extend_sec", 15))
                         auction_state.start(auc_title, auc_target, auc_duration, auc_min_inc, auc_extend)
-                        log.info("[AUCTION] Auto-started auction on trigger gift '%s' from %s", gift_name, sender)
+                        log.info("[AUCTION] Auto-started auction round on trigger gift '%s' from %s", gift_name, sender)
 
+                # 2. If auction is ACTIVE, ANY gift with coins >= 1 contributes to bidding
+                if auction_state.is_active:
                     bid_result = auction_state.process_gift_bid(sender, coins, profile_picture, gift_name, unique_id)
                     log.info("[AUCTION] Bid processed: sender=%s, coins=%d, accepted=%s", sender, coins, bid_result.get("accepted"))
                     await broadcast({
@@ -1839,7 +1844,6 @@ async def handle_mock_event(request: web.Request) -> web.Response:
 
         elif event_type == "auction_control":
             action = data.get("action", "start")
-            global auto_dismiss_auction_task
             if action == "start":
                 if auto_dismiss_auction_task and not auto_dismiss_auction_task.done():
                     auto_dismiss_auction_task.cancel()
@@ -1847,8 +1851,8 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                 target = int(data.get("target_coins", auction_state.target_coins))
                 if data.get("unlimited") or data.get("unlimited_coins") or target <= 0:
                     target = 0
-                duration = int(data.get("duration", 300))
-                min_inc = int(data.get("min_bid_increment", 1))
+                duration = int(data.get("duration") or data.get("duration_seconds") or auction_state.initial_duration or 300)
+                min_inc = int(data.get("min_bid_increment", data.get("min_increment", 1)))
                 auto_ext = int(data.get("auto_extend_sec", 15))
                 auction_state.start(title, target, duration, min_increment=min_inc, auto_extend_sec=auto_ext)
             elif action == "pause":
