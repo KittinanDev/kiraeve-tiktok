@@ -615,6 +615,11 @@ tailwind.config = {
           <span class="material-symbols-outlined text-[16px]">refresh</span>
           <span>ลองอีกครั้ง</span>
         </button>
+        <a href="https://github.com/KittinanDev/kiraeve-tiktok/releases/latest" target="_blank"
+          class="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-black font-bold py-2.5 rounded-xl transition-all text-xs shadow">
+          <span class="material-symbols-outlined text-[16px]">download</span>
+          <span>ดาวน์โหลดตัวติดตั้งเวอร์ชันล่าสุดจาก GitHub Releases</span>
+        </a>
       </div>
 
     </div>
@@ -2925,8 +2930,13 @@ tailwind.config = {
 
       } else if (event === 'error') {
         updShowState('error');
-        document.getElementById('upd-error-msg').innerText = data.message || 'Unknown error';
-        console.error('[Updater] Error:', data.message);
+        let rawMsg = data.message || 'Unknown error';
+        let friendlyMsg = rawMsg;
+        if (rawMsg.includes('latest.yml') || rawMsg.includes('404')) {
+          friendlyMsg = 'ยังไม่พบไฟล์ระบุเวอร์ชันล่าสุดบน GitHub Releases หรือเครือข่ายขัดข้อง กรุณากด "ลองอีกครั้ง" หรือดาวน์โหลดตัวติดตั้งเวอร์ชันล่าสุดโดยตรงจากลิงก์ด้านล่าง';
+        }
+        document.getElementById('upd-error-msg').innerText = friendlyMsg;
+        console.error('[Updater] Error:', rawMsg);
       }
     });
   }
