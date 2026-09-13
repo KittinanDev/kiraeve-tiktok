@@ -993,7 +993,7 @@ tailwind.config = {
           <div class="flex gap-2 pt-1">
             <input type="text" readonly class="flex-1 bg-tik-bg border border-tik-card-border rounded-lg px-2.5 py-1.5 font-mono text-[11px] text-on-surface-variant truncate" value="http://localhost:8765/overlay_sound.html">
             <button onclick="copyToClipboard('http://localhost:8765/overlay_sound.html')" class="bg-emerald-500 hover:bg-emerald-600 text-black px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">COPY</button>
-            <button onclick="switchTab('alert-sound', 'nav-alert-sound')" class="bg-tik-card-border hover:bg-tik-sidebar text-white px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"><span class="material-symbols-outlined text-[14px]">settings</span> <span>ตั้งค่าเสียง</span></button>
+            <button onclick="showSubTab('sound-mapping', 'btn-sound-mapping'); switchAlertMediaType('sound');" class="bg-tik-card-border hover:bg-tik-sidebar text-white px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"><span class="material-symbols-outlined text-[14px]">settings</span> <span>ตั้งค่าเสียง</span></button>
           </div>
         </div>
 
@@ -1022,7 +1022,7 @@ tailwind.config = {
           <div class="flex gap-2 pt-1">
             <input type="text" readonly class="flex-1 bg-tik-bg border border-tik-card-border rounded-lg px-2.5 py-1.5 font-mono text-[11px] text-on-surface-variant truncate" value="http://localhost:8765/overlay_video.html">
             <button onclick="copyToClipboard('http://localhost:8765/overlay_video.html')" class="bg-amber-500 hover:bg-amber-600 text-black px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">COPY</button>
-            <button onclick="switchTab('alert-video', 'nav-alert-video')" class="bg-tik-card-border hover:bg-tik-sidebar text-white px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"><span class="material-symbols-outlined text-[14px]">settings</span> <span>ตั้งค่าวิดีโอ</span></button>
+            <button onclick="showSubTab('sound-mapping', 'btn-sound-mapping'); switchAlertMediaType('video');" class="bg-tik-card-border hover:bg-tik-sidebar text-white px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"><span class="material-symbols-outlined text-[14px]">settings</span> <span>ตั้งค่าวิดีโอ</span></button>
           </div>
         </div>
 
@@ -3195,6 +3195,11 @@ tailwind.config = {
       }
     }
 
+    if (subTabId === 'sound-mapping') {
+      if (typeof loadSoundsList === 'function') loadSoundsList();
+      if (typeof loadVideosList === 'function') loadVideosList();
+    }
+
     const breadcrumbMap = {
       'start-welcome': { main: 'Start & Setup', sub: 'Welcome Overview' },
       'start-connection': { main: 'Start & Setup', sub: 'TikTok Connection' },
@@ -3401,6 +3406,7 @@ tailwind.config = {
       if (videoBtn) {
         videoBtn.className = 'alert-media-tab-btn px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all text-on-surface-variant hover:text-on-surface hover:bg-tik-card-subtle';
       }
+      loadSoundsList();
     } else {
       if (soundPanel) soundPanel.classList.add('hidden');
       if (videoPanel) videoPanel.classList.remove('hidden');
@@ -6114,6 +6120,18 @@ tailwind.config = {
           currentTimerMappings = data.config.timer_gift_mappings;
           renderTimerMappingsTable();
         }
+        if (data.config && data.config.gift_sound_mappings) {
+          currentGiftMappings = data.config.gift_sound_mappings;
+          renderGiftMappingsTable();
+        }
+        if (data.config && data.config.gift_video_mappings) {
+          currentVideoMappings = data.config.gift_video_mappings;
+          renderVideoMappingsTable();
+        }
+      } else if (data.type === 'refresh_overlays' || data.type === 'media_updated') {
+        // Auto-refresh sound & video library lists and dropdown options without reloading whole page
+        if (typeof loadSoundsList === 'function') loadSoundsList();
+        if (typeof loadVideosList === 'function') loadVideosList();
       } else if (data.type === 'tts_chat') {
         // Siri TTS only plays in the OBS overlay (overlay_tts.html), muted inside dashboard app
         appendLog(`[TTS] [Siri TTS] อ่านแชทจาก "${data.sender}": "${data.text}"  OBS Overlay`);
