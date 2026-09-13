@@ -437,7 +437,7 @@ tailwind.config = {
       <div class="flex items-center justify-between px-1">
         <span class="text-[11px] text-on-surface-variant font-mono flex items-center gap-1">
           <span class="material-symbols-outlined text-[13px]">package_2</span>
-          <span>v</span><span id="sidebar-app-version">1.0.8</span>
+          <span>v</span><span id="sidebar-app-version">1.0.9</span>
         </span>
         <button onclick="openUpdateModal()" id="sidebar-update-btn"
           class="flex items-center gap-1 text-[11px] font-semibold text-amber-500 hover:text-amber-400 transition-colors group">
@@ -450,7 +450,7 @@ tailwind.config = {
         <span class="material-symbols-outlined text-[15px] text-amber-500 animate-bounce">system_update</span>
         <div class="flex-1 min-w-0">
           <p class="text-[11px] font-semibold text-amber-500 truncate">อัปเดตใหม่พร้อมแล้ว!</p>
-          <p class="text-[10px] text-on-surface-variant truncate" id="sidebar-update-version">v1.0.8</p>
+          <p class="text-[10px] text-on-surface-variant truncate" id="sidebar-update-version">v1.0.9</p>
         </div>
       </div>
     </div>
@@ -2766,8 +2766,8 @@ tailwind.config = {
     // โหลดเวอร์ชันจาก Electron หรือ fallback 1.0.0
     if (window.kiraeveUpdater) {
       window.kiraeveUpdater.getVersion().then(v => {
-        document.getElementById('modal-current-version').innerText = v || '1.0.8';
-        document.getElementById('sidebar-app-version').innerText = v || '1.0.8';
+        document.getElementById('modal-current-version').innerText = v || '1.0.9';
+        document.getElementById('sidebar-app-version').innerText = v || '1.0.9';
       });
     }
     // หากยังไม่เคยเช็กหรืออยู่ในหน้า idle ให้เริ่มเช็กอัปเดตอัตโนมัติทันที
