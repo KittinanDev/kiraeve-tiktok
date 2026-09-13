@@ -522,10 +522,11 @@ class LeaderboardState:
     def __init__(self):
         self.gifters: Dict[str, dict] = {}
 
-    def add_gift(self, sender: str, coins: int, gift_name: str, profile_picture: str = "", gift_icon: str = ""):
+    def add_gift(self, sender: str, coins: int, gift_name: str, profile_picture: str = "", gift_icon: str = "", unique_id: str = ""):
         if sender not in self.gifters:
             self.gifters[sender] = {
                 "sender": sender,
+                "unique_id": unique_id or sender,
                 "coins": 0,
                 "last_gift": gift_name,
                 "profile_picture": profile_picture,
@@ -533,6 +534,8 @@ class LeaderboardState:
             }
         self.gifters[sender]["coins"] += coins
         self.gifters[sender]["last_gift"] = gift_name
+        if unique_id:
+            self.gifters[sender]["unique_id"] = unique_id
         if profile_picture:
             self.gifters[sender]["profile_picture"] = profile_picture
         if gift_icon:
@@ -562,9 +565,11 @@ class TikFinityAuctionState:
 
         self.bids: Dict[str, int] = {}
         self.bidder_avatars: Dict[str, str] = {}
+        self.bidder_unique_ids: Dict[str, str] = {}
         self.bidder_last_gifts: Dict[str, str] = {}
         self.bid_history: List[dict] = []
         self.winner_name = "-"
+        self.winner_unique_id = ""
         self.winning_coins = 0
         self.winner_avatar = ""
         self.last_extended = False
@@ -578,9 +583,11 @@ class TikFinityAuctionState:
         self.remaining_seconds = duration_seconds
         self.bids.clear()
         self.bidder_avatars.clear()
+        self.bidder_unique_ids.clear()
         self.bidder_last_gifts.clear()
         self.bid_history.clear()
         self.winner_name = "-"
+        self.winner_unique_id = ""
         self.winning_coins = 0
         self.winner_avatar = ""
         self.is_active = True
@@ -599,7 +606,7 @@ class TikFinityAuctionState:
     def adjust_time(self, seconds: int):
         self.remaining_seconds = max(0, self.remaining_seconds + seconds)
 
-    def process_gift_bid(self, sender: str, coins: int, profile_picture: str = "", gift_name: str = "") -> dict:
+    def process_gift_bid(self, sender: str, coins: int, profile_picture: str = "", gift_name: str = "", unique_id: str = "") -> dict:
         if not self.is_active or self.is_paused:
             return {"accepted": False, "reason": "Auction is not active or paused"}
 
@@ -607,6 +614,8 @@ class TikFinityAuctionState:
         new_bid = current_bid + coins
         self.bids[sender] = new_bid
 
+        if unique_id:
+            self.bidder_unique_ids[sender] = unique_id
         if profile_picture:
             self.bidder_avatars[sender] = profile_picture
         if gift_name:
@@ -614,6 +623,7 @@ class TikFinityAuctionState:
 
         self.bid_history.append({
             "sender": sender,
+            "unique_id": unique_id or sender,
             "coins": coins,
             "new_total": new_bid,
             "gift_name": gift_name,
@@ -621,7 +631,7 @@ class TikFinityAuctionState:
         })
 
         top_bidders = self.get_top_bidders(5)
-        highest = top_bidders[0] if top_bidders else {"sender": "-", "coins": 0, "profile_picture": ""}
+        highest = top_bidders[0] if top_bidders else {"sender": "-", "unique_id": "-", "coins": 0, "profile_picture": ""}
 
         target_reached = False
         if self.target_coins > 0 and highest["coins"] >= self.target_coins:
@@ -640,8 +650,10 @@ class TikFinityAuctionState:
         return {
             "accepted": True,
             "sender": sender,
+            "unique_id": unique_id or self.bidder_unique_ids.get(sender, sender),
             "new_bid": new_bid,
             "highest_bidder": highest["sender"],
+            "highest_unique_id": highest.get("unique_id", highest["sender"]),
             "highest_coins": highest["coins"],
             "highest_avatar": highest.get("profile_picture", ""),
             "target_reached": target_reached,
@@ -654,6 +666,7 @@ class TikFinityAuctionState:
         return [
             {
                 "sender": k,
+                "unique_id": self.bidder_unique_ids.get(k, k),
                 "coins": v,
                 "profile_picture": self.bidder_avatars.get(k, ""),
                 "last_gift": self.bidder_last_gifts.get(k, "")
@@ -667,11 +680,13 @@ class TikFinityAuctionState:
         top = self.get_top_bidders(1)
         if top and top[0]["coins"] > 0:
             self.winner_name = top[0]["sender"]
+            self.winner_unique_id = top[0].get("unique_id", top[0]["sender"])
             self.winning_coins = top[0]["coins"]
             self.winner_avatar = top[0].get("profile_picture", "")
             self.is_winner_announced = True
         else:
             self.winner_name = "-"
+            self.winner_unique_id = ""
             self.winning_coins = 0
             self.winner_avatar = ""
             self.is_winner_announced = False
@@ -1162,9 +1177,46 @@ DEFAULT_EMBEDDED_AVATAR = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 
 async def handle_avatar_proxy(request: web.Request) -> web.Response:
     raw_url = request.query.get("url", "").strip()
     user_name = request.query.get("name", "").strip()
+    clean_user = re.sub(r'[^a-zA-Z0-9_\.]', '', user_name.lower().replace('@', ''))
     safe_user = re.sub(r'[^\w\.-]', '_', user_name.lower()) if user_name else "supporter"
 
-    # 1. If explicit URL provided, check URL cache
+    # 1. Check if real TikTok avatar already exists on local disk
+    if clean_user:
+        local_real_avatar = AVATAR_CACHE_DIR / f"avatar_{clean_user}.webp"
+        if local_real_avatar.exists() and local_real_avatar.stat().st_size > 100:
+            with open(local_real_avatar, "rb") as f:
+                return web.Response(
+                    body=f.read(),
+                    content_type="image/webp",
+                    headers={
+                        "Access-Control-Allow-Origin": "*",
+                        "Cache-Control": "public, max-age=86400"
+                    }
+                )
+
+    # 2. Try on-demand resolution via local Node.js avatar resolver
+    if clean_user:
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"http://127.0.0.1:8766/resolve-avatar?user={clean_user}", timeout=aiohttp.ClientTimeout(total=3)) as r:
+                    if r.status == 200:
+                        r_data = await r.json()
+                        if r_data.get("ok"):
+                            local_real_avatar = AVATAR_CACHE_DIR / f"avatar_{clean_user}.webp"
+                            if local_real_avatar.exists() and local_real_avatar.stat().st_size > 100:
+                                with open(local_real_avatar, "rb") as f:
+                                    return web.Response(
+                                        body=f.read(),
+                                        content_type="image/webp",
+                                        headers={
+                                            "Access-Control-Allow-Origin": "*",
+                                            "Cache-Control": "public, max-age=86400"
+                                        }
+                                    )
+        except Exception:
+            pass
+
+    # 3. If explicit URL provided, check URL cache
     if raw_url and raw_url.startswith("http"):
         url_hash = hashlib.md5(raw_url.encode('utf-8')).hexdigest()[:12]
         cached_file = AVATAR_CACHE_DIR / f"avatar_{url_hash}.webp"
@@ -1214,13 +1266,13 @@ async def handle_avatar_proxy(request: web.Request) -> web.Response:
                 except Exception:
                     pass
 
-    # 2. Check user-specific cached portrait
+    # 4. Check user-specific cached portrait
     user_cached_file = AVATAR_CACHE_DIR / f"user_{safe_user}.svg"
     if user_cached_file.exists() and user_cached_file.stat().st_size > 100:
         with open(user_cached_file, "rb") as f:
             return web.Response(body=f.read(), content_type="image/svg+xml", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
 
-    # 3. Try fetching personalized character portrait from Dicebear
+    # 5. Try fetching personalized character portrait from Dicebear
     seed = urllib.parse.quote(user_name or "supporter")
     dicebear_url = f"https://api.dicebear.com/7.x/adventurer/svg?seed={seed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
     try:
@@ -1238,14 +1290,14 @@ async def handle_avatar_proxy(request: web.Request) -> web.Response:
     except Exception:
         pass
 
-    # 4. Bundled 8 offline character presets mapped by username hash
+    # 6. Bundled 8 offline character presets mapped by username hash
     preset_idx = abs(hash(user_name or "supporter")) % 8
     preset_file = AVATAR_CACHE_DIR / f"preset_{preset_idx}.svg"
     if preset_file.exists() and preset_file.stat().st_size > 50:
         with open(preset_file, "rb") as f:
             return web.Response(body=f.read(), content_type="image/svg+xml", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
 
-    # 5. Last resort: Embedded vector character portrait
+    # 7. Last resort: Embedded vector character portrait
     return web.Response(text=DEFAULT_EMBEDDED_AVATAR, content_type="image/svg+xml", headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400"})
 
 async def handle_delete_sound(request: web.Request) -> web.Response:
@@ -1421,6 +1473,7 @@ async def handle_mock_event(request: web.Request) -> web.Response:
             target_widget = data.get("target_widget", "all")
             gift_name = data.get("gift_name", "Rose")
             sender = data.get("sender", "Supporter_007")
+            unique_id = data.get("unique_id") or data.get("uniqueId") or sender
             profile_picture = data.get("profile_picture") or data.get("profilePictureUrl") or ""
             count = int(data.get("count", 1))
             coins = int(data.get("coins", 1)) * count
@@ -1440,7 +1493,7 @@ async def handle_mock_event(request: web.Request) -> web.Response:
             timer_mappings = cfg.get("timer_gift_mappings", [])
             added_seconds = 0
 
-            log.info("[GIFT] Incoming Gift: '%s' x%d from %s (coins=%d, target_widget=%s)", gift_name, count, sender, coins, target_widget)
+            log.info("[GIFT] Incoming Gift: '%s' x%d from %s (@%s) (coins=%d, target_widget=%s)", gift_name, count, sender, unique_id, coins, target_widget)
 
             if timer_cfg.get("enabled", True):
                 # Calculate time modification strictly based on user-configured gift mappings
@@ -1468,13 +1521,13 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                     log.info("[GIFT] Gift '%s' has no matching rule or added_seconds=0", gift_name)
 
             if target_widget in ["all", "leaderboard"]:
-                leaderboard_state.add_gift(sender, coins, gift_name, profile_picture, icon_url)
+                leaderboard_state.add_gift(sender, coins, gift_name, profile_picture, icon_url, unique_id)
             top_cnt = int(cfg.get("leaderboard_config", {}).get("top_count", 5))
             top_list = leaderboard_state.get_top(top_cnt)
 
             bid_result = {}
             if target_widget in ["all", "auction"]:
-                bid_result = auction_state.process_gift_bid(sender, coins, profile_picture, gift_name)
+                bid_result = auction_state.process_gift_bid(sender, coins, profile_picture, gift_name, unique_id)
 
             # CS:GO Gacha Trigger Check
             gacha_cfg = cfg.get("gacha_config", {})
@@ -1609,6 +1662,7 @@ async def handle_mock_event(request: web.Request) -> web.Response:
                 "gift_name": gift_name,
                 "gift_icon": icon_url,
                 "sender": sender,
+                "unique_id": unique_id,
                 "profile_picture": profile_picture,
                 "count": count,
                 "coins": coins,
@@ -2033,8 +2087,29 @@ async def sync_live_tiktok_gifts_task():
     except Exception as e:
         log.warning("Live TikTok gift catalog sync skipped: %s", e)
 
+active_avatar_helper_process = None
+
+async def spawn_avatar_helper():
+    global active_avatar_helper_process
+    embedded_node = BASE_DIR / "python_embed" / "node.exe"
+    node_cmd = str(embedded_node) if embedded_node.exists() else "node"
+    script = BASE_DIR / "resolve_avatar.js"
+    if script.exists():
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                node_cmd, str(script), "--server",
+                cwd=str(BASE_DIR),
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            active_avatar_helper_process = proc
+            log.info("[Avatar Helper] Started real TikTok avatar resolver on http://127.0.0.1:8766 (PID: %s)", proc.pid)
+        except Exception as e:
+            log.warning("[Avatar Helper] Could not start avatar helper service: %s", e)
+
 async def start_background_tasks(app):
     app["timer_task"] = asyncio.create_task(timer_background_task())
+    asyncio.create_task(spawn_avatar_helper())
     asyncio.create_task(sync_live_tiktok_gifts_task())
     cfg = load_config()
     if cfg.get("auto_connect", False) and cfg.get("tiktok_username"):
@@ -2043,7 +2118,12 @@ async def start_background_tasks(app):
         asyncio.create_task(auto_connect_tiktok_task(u))
 
 async def cleanup_background_tasks(app):
-    global active_tiktok_process
+    global active_tiktok_process, active_avatar_helper_process
+    if active_avatar_helper_process and active_avatar_helper_process.returncode is None:
+        try:
+            active_avatar_helper_process.terminate()
+        except Exception:
+            pass
     if active_tiktok_process and active_tiktok_process.returncode is None:
         try:
             active_tiktok_process.terminate()

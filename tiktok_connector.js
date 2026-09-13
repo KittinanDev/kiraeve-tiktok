@@ -237,6 +237,143 @@ function extractAvatarUrl(data) {
 
 const streakMap = new Map();
 
+const https = require('https');
+const userAvatarCache = new Map();
+let webClientInstance = null;
+
+async function getWebClient() {
+    if (webClientInstance) return webClientInstance;
+    try {
+        const candidates = [
+            path.join(__dirname, 'node_modules', 'tiktok-live-connector', 'dist', 'lib-QI8aOkkz.js'),
+            path.join(process.cwd(), 'node_modules', 'tiktok-live-connector', 'dist', 'lib-QI8aOkkz.js'),
+            path.join(__dirname, '..', 'node_modules', 'tiktok-live-connector', 'dist', 'lib-QI8aOkkz.js')
+        ];
+        for (const cand of candidates) {
+            if (fs.existsSync(cand)) {
+                const fileUrl = 'file:///' + cand.replace(/\\/g, '/');
+                const mod = await import(fileUrl);
+                const presets = mod.a();
+                const webConfig = mod.o(presets);
+                webClientInstance = new mod.r(webConfig);
+                return webClientInstance;
+            }
+        }
+    } catch (e) {
+        console.error('[Avatar Resolver] Failed to initialize WebClient:', e.message);
+    }
+    return null;
+}
+
+async function resolveRealTikTokAvatar(uniqueId) {
+    if (!uniqueId) return '';
+    const cleanId = uniqueId.replace('@', '').trim().toLowerCase();
+    if (!cleanId) return '';
+
+    if (userAvatarCache.has(cleanId)) {
+        return userAvatarCache.get(cleanId);
+    }
+
+    const avatarsDir = path.join(__dirname, 'media', 'avatars');
+    if (!fs.existsSync(avatarsDir)) {
+        try { fs.mkdirSync(avatarsDir, { recursive: true }); } catch (e) {}
+    }
+    const dest = path.join(avatarsDir, `avatar_${cleanId}.webp`);
+    if (fs.existsSync(dest) && fs.statSync(dest).size > 100) {
+        const localUrl = `/media/avatars/avatar_${cleanId}.webp`;
+        userAvatarCache.set(cleanId, localUrl);
+        return localUrl;
+    }
+
+    try {
+        const client = await getWebClient();
+        if (!client) return '';
+        const data = await client.getJsonObjectFromTikTokApi("api-live/user/room/", {
+            ...client.clientParams,
+            uniqueId: cleanId,
+            sourceType: "54"
+        });
+
+        const user = data.data?.user;
+        const avatarUrl = user?.avatarThumb || user?.avatarMedium || user?.avatarLarger;
+        if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.startsWith('http')) {
+            await new Promise((resolve) => {
+                https.get(avatarUrl, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+                        'Referer': 'https://www.tiktok.com/'
+                    }
+                }, res => {
+                    if (res.statusCode === 200) {
+                        const chunks = [];
+                        res.on('data', c => chunks.push(c));
+                        res.on('end', () => {
+                            try {
+                                const buf = Buffer.concat(chunks);
+                                if (buf.length > 100) {
+                                    fs.writeFileSync(dest, buf);
+                                    console.log(`[Avatar] Saved real TikTok avatar for @${cleanId} (${buf.length} bytes)`);
+                                }
+                            } catch (e) {}
+                            resolve();
+                        });
+                    } else {
+                        resolve();
+                    }
+                }).on('error', () => resolve());
+            });
+
+            if (fs.existsSync(dest) && fs.statSync(dest).size > 100) {
+                const localUrl = `/media/avatars/avatar_${cleanId}.webp`;
+                userAvatarCache.set(cleanId, localUrl);
+                return localUrl;
+            }
+            userAvatarCache.set(cleanId, avatarUrl);
+            return avatarUrl;
+        }
+    } catch (e) {
+        // Silently handle if user profile is unavailable
+    }
+    return '';
+}
+
+// Start local avatar resolver server on 127.0.0.1:8766
+try {
+    const helperServer = http.createServer(async (req, res) => {
+        try {
+            const reqUrl = new URL(req.url, 'http://127.0.0.1:8766');
+            if (reqUrl.pathname === '/resolve-avatar') {
+                const user = (reqUrl.searchParams.get('user') || '').replace('@', '').trim();
+                if (!user) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    return res.end(JSON.stringify({ ok: false, error: 'Missing user' }));
+                }
+                const avatar = await resolveRealTikTokAvatar(user);
+                res.writeHead(200, {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                });
+                return res.end(JSON.stringify({ ok: true, avatar: avatar, username: user }));
+            }
+            res.writeHead(404);
+            res.end();
+        } catch (e) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ ok: false, error: e.message }));
+        }
+    });
+
+    helperServer.on('error', (err) => {
+        if (err.code !== 'EADDRINUSE') {
+            console.error('[Avatar Helper] Server error:', err.message);
+        }
+    });
+
+    helperServer.listen(8766, '127.0.0.1', () => {
+        console.log('[Avatar Helper] Real TikTok avatar resolver listening on http://127.0.0.1:8766');
+    });
+} catch (e) {}
+
 async function tryConnect() {
     if (isConnected || isPolling) return;
     isPolling = true;
@@ -252,20 +389,29 @@ async function tryConnect() {
             enableExtendedGiftInfo: false
         });
 
-        tiktokLiveConnection.on('chat', data => {
-            const sender = (data.user && (data.user.nickname || data.user.displayId || data.user.uniqueId)) || data.nickname || data.uniqueId || 'Anonymous';
+        tiktokLiveConnection.on('chat', async data => {
+            const nickname = (data.user && data.user.nickname) || data.nickname || '';
+            const uniqueId = data.uniqueId || (data.user && (data.user.uniqueId || data.user.displayId)) || data.displayId || '';
+            const sender = nickname || uniqueId || 'Anonymous';
             const text = data.content || data.comment || data.text || '';
             if (!text) return;
-            console.log('[Chat] ' + sender + ': ' + text);
+            let profilePic = extractAvatarUrl(data);
+            if (!profilePic && uniqueId) {
+                profilePic = await resolveRealTikTokAvatar(uniqueId);
+            }
+            console.log('[Chat] ' + sender + ' (@' + uniqueId + '): ' + text);
             postEventToServer('chat', {
                 sender: sender,
+                unique_id: uniqueId,
                 text: text,
-                profilePictureUrl: extractAvatarUrl(data)
+                profilePictureUrl: profilePic
             });
         });
 
-        tiktokLiveConnection.on('gift', data => {
-            const sender = (data.user && (data.user.nickname || data.user.displayId || data.user.uniqueId)) || data.nickname || data.uniqueId || 'ผู้สนับสนุน';
+        tiktokLiveConnection.on('gift', async data => {
+            const nickname = (data.user && data.user.nickname) || data.nickname || '';
+            const uniqueId = data.uniqueId || (data.user && (data.user.uniqueId || data.user.displayId)) || data.displayId || '';
+            const sender = nickname || uniqueId || 'ผู้สนับสนุน';
             const giftId = data.giftId || (data.gift && data.gift.gift_id) || 1;
             const streakKey = `${sender}_${giftId}`;
             const repeatCount = data.repeatCount || data.count || 1;
@@ -289,12 +435,19 @@ async function tryConnect() {
             const unitCoins = (data.diamondCount || (cached && (cached.diamond_count || cached.coins)) || 1);
             const coins = unitCoins * spawnCount;
             const iconUrl = (cached && (cached.icon || cached.image_url)) || data.giftPictureUrl || extractGiftIcon(data) || '';
-            const profilePic = extractAvatarUrl(data);
+            
+            let profilePic = extractAvatarUrl(data);
+            if (!profilePic && uniqueId) {
+                profilePic = await resolveRealTikTokAvatar(uniqueId);
+            } else if (uniqueId && !userAvatarCache.has(uniqueId.toLowerCase())) {
+                resolveRealTikTokAvatar(uniqueId).catch(() => {});
+            }
 
-            console.log(`[Gift Received] ${sender} sent ${giftName} (ID: ${giftId}) x${spawnCount} (${coins} coins)`);
+            console.log(`[Gift Received] ${sender} (@${uniqueId}) sent ${giftName} (ID: ${giftId}) x${spawnCount} (${coins} coins) | Avatar: ${profilePic ? 'YES' : 'PENDING'}`);
             postEventToServer('gift', {
                 gift_id: giftId,
                 sender: sender,
+                unique_id: uniqueId,
                 gift_name: giftName,
                 count: spawnCount,
                 coins: coins,

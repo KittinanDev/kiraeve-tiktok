@@ -174,6 +174,9 @@
 
   function getAvatarUrl(rawUrl, name) {
     const safeName = encodeURIComponent(name || '');
+    if (rawUrl && typeof rawUrl === 'string' && rawUrl.startsWith('/media/avatars/')) {
+      return rawUrl;
+    }
     if (!rawUrl || typeof rawUrl !== 'string' || !rawUrl.startsWith('http')) {
       return `/api/avatar-proxy?name=${safeName}`;
     }
@@ -226,11 +229,10 @@
       prevScores[g.sender] = g.coins;
       const bumpAnim = isBumped ? 'animate-coin-bump' : '';
 
-      const firstLetter = (g.sender || 'U').trim().charAt(0).toUpperCase();
-      const gradClass = AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length];
+      const lookupUser = g.unique_id || g.sender || 'viewer';
       const directPic = g.profile_picture || '';
-      const proxyPic = getAvatarUrl(directPic, g.sender);
-      const safeName = encodeURIComponent(g.sender || 'viewer');
+      const proxyPic = getAvatarUrl(directPic, lookupUser);
+      const safeName = encodeURIComponent(lookupUser);
 
       let avatarHtml = `
         <img src="${proxyPic}" 

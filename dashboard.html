@@ -4597,13 +4597,13 @@ tailwind.config = {
 
   async function triggerLeaderboardTest(sender, giftName, count, coins) {
     appendLog(`[TEST] ทดสอบส่งของขวัญอันดับจาก "${sender}": "${giftName}" x${count} (${coins.toLocaleString()} เหรียญ)`);
-    const sampleAvatars = {
-      'Alice_TopGifter': 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp',
-      'Bob_VIP': 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/4e7ad6bdf0a1d860c538f38026d4e812~tplv-obj.webp',
-      'Charlie_Fan': 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-      'Dave_Rose': 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80'
+    const sampleAccounts = {
+      'Alice_TopGifter': { unique_id: 'bellapoarch', avatar: '/media/avatars/avatar_bellapoarch.webp' },
+      'Bob_VIP': { unique_id: 'xd_peakboy', avatar: '/media/avatars/avatar_xd_peakboy.webp' },
+      'Charlie_Fan': { unique_id: 'gwang_gimmick', avatar: '/media/avatars/avatar_gwang_gimmick.webp' },
+      'Dave_Rose': { unique_id: 'tiktok', avatar: '/media/avatars/avatar_tiktok.webp' }
     };
-    const avatarUrl = sampleAvatars[sender] || '';
+    const acc = sampleAccounts[sender] || { unique_id: sender, avatar: '' };
     try {
       const res = await fetch('/api/mock-event', {
         method: 'POST',
@@ -4615,12 +4615,13 @@ tailwind.config = {
           count: count,
           coins: coins,
           sender: sender,
-          profile_picture: avatarUrl
+          unique_id: acc.unique_id,
+          profile_picture: acc.avatar
         })
       });
       const data = await res.json();
       if (data.ok) {
-        appendLog(`[OK] อันดับ Leaderboard ได้รับของขวัญจาก "${sender}" แล้ว!`);
+        appendLog(`[OK] อันดับ Leaderboard ได้รับของขวัญจาก "${sender}" (@${acc.unique_id}) แล้ว!`);
       }
     } catch(e) {
       appendLog('[ERROR] ข้อผิดพลาดในการทดสอบ: ' + e);

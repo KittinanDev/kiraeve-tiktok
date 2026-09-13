@@ -1,6 +1,6 @@
 {
   "name": "kiraeve-tiktok",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Kiraeve TikTok — Live Studio & Overlays Manager (Electron Desktop App)",
   "main": "main.js",
   "private": true,
@@ -31,6 +31,7 @@
       { "from": "overlay_tts.html",      "to": "app/overlay_tts.html" },
       { "from": "overlay_video.html",    "to": "app/overlay_video.html" },
       { "from": "tiktok_connector.js",   "to": "app/tiktok_connector.js" },
+      { "from": "resolve_avatar.js",     "to": "app/resolve_avatar.js" },
       { "from": "config.json",           "to": "app/config.json" },
       { "from": "gift_cache.json",       "to": "app/gift_cache.json" },
       { "from": "gift_catalog_cache.json","to": "app/gift_catalog_cache.json" },

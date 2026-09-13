@@ -383,6 +383,9 @@
 
   function getAvatarUrl(url, name) {
     const safeName = encodeURIComponent(name || '');
+    if (url && typeof url === 'string' && url.startsWith('/media/avatars/')) {
+      return url;
+    }
     if (!url || typeof url !== 'string' || !url.startsWith('http')) {
       return `/api/avatar-proxy?name=${safeName}`;
     }
