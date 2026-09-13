@@ -924,7 +924,11 @@ tailwind.config = {
               <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span>
               <span>LIVE PREVIEW</span>
             </div>
-            <iframe class="widget-preview-frame" src="http://localhost:8765/overlay_auction.html?preview=true"></iframe>
+            <div class="widget-preview-frame flex flex-col items-center justify-center p-6 text-center bg-black/40">
+              <span class="material-symbols-outlined text-amber-400 text-4xl mb-2" style="font-variation-settings: 'FILL' 1;">gavel</span>
+              <span class="text-xs font-bold text-white">ระบบประมูลสด (Coin Match Auction)</span>
+              <span class="text-[10px] text-gray-400 mt-1">ใช้งานผ่าน Browser Source ใน OBS Studio</span>
+            </div>
           </div>
 
           <div class="flex gap-2 pt-1">
@@ -1711,78 +1715,90 @@ tailwind.config = {
         </div>
       </div>
 
-      <!-- Card 3: Live Preview & Real-Time Auction Controls -->
-      <div class="bg-tik-card border border-tik-card-border rounded-xl p-6 space-y-4">
-        <div class="flex justify-between items-center pb-2 border-b border-tik-card-border">
+      <!-- Card 3: Real-Time Auction Controls & Live Management -->
+      <div class="bg-tik-card border border-tik-card-border rounded-xl p-6 space-y-5">
+        <div class="flex justify-between items-center pb-3 border-b border-tik-card-border">
           <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-tik-cyan text-lg">visibility</span>
-            <h3 class="text-base font-bold text-white">Live Auction Overlay Preview & Live Controls</h3>
+            <span class="material-symbols-outlined text-tik-cyan text-lg">sports_score</span>
+            <h3 class="text-base font-bold text-white">แผงควบคุมการประมูลสด (Live Auction Controls & Manager)</h3>
           </div>
-          <button onclick="refreshAuctionPreview()" class="text-xs text-tik-cyan font-bold hover:underline flex items-center gap-1">
-            <span class="material-symbols-outlined text-[14px]">refresh</span> รีเฟรชพรีวิว
-          </button>
+          <div class="flex items-center gap-2">
+            <a href="http://localhost:8765/overlay_auction.html" target="_blank" class="bg-tik-bg hover:bg-tik-card-border text-tik-cyan border border-tik-card-border px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all">
+              <span class="material-symbols-outlined text-[15px]">open_in_new</span>
+              <span>เปิดดู Overlay ในเบราว์เซอร์</span>
+            </a>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Left: Live Preview Frame -->
-          <div class="preview-wrapper-box obs-checkerboard-bg flex items-center justify-center min-h-[420px] rounded-xl overflow-hidden border border-tik-card-border">
-            <iframe id="auction-preview-iframe" class="widget-preview-frame w-full h-[420px]" src="http://localhost:8765/overlay_auction.html?preview=true"></iframe>
-          </div>
-
-          <!-- Right: Live Controls & Simulator -->
-          <div class="bg-tik-bg border border-tik-card-border rounded-xl p-4 flex flex-col justify-between space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <!-- Left Column: Status, Clock & Quick Controls -->
+          <div class="bg-tik-bg border border-tik-card-border rounded-xl p-5 space-y-4 flex flex-col justify-between">
             <div class="space-y-4">
               <!-- Status & Clock Header -->
               <div class="flex justify-between items-center pb-3 border-b border-tik-card-border">
                 <div class="flex items-center gap-2">
-                  <span id="auc-dash-status-pill" class="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-800 text-gray-400">
+                  <span id="auc-dash-status-pill" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-800 text-gray-400">
                     <span class="w-2 h-2 rounded-full bg-gray-400"></span>
                     <span id="auc-status-badge">OFF (ปิด)</span>
                   </span>
-                  <span id="auc-dash-clock" class="font-mono text-xl font-black text-emerald-400">05:00</span>
+                  <span id="auc-dash-clock" class="font-mono text-2xl font-black text-emerald-400">05:00</span>
                 </div>
-                <div class="flex items-center gap-1">
-                  <button onclick="controlAuction('adjust_time', { seconds: 30 })" class="bg-tik-card-border hover:bg-tik-sidebar text-white px-2 py-1 rounded text-xs font-mono font-bold" title="บวกเวลา 30 วิ">+30s</button>
-                  <button onclick="controlAuction('adjust_time', { seconds: 60 })" class="bg-tik-card-border hover:bg-tik-sidebar text-white px-2 py-1 rounded text-xs font-mono font-bold" title="บวกเวลา 1 นาที">+1m</button>
-                  <button onclick="controlAuction('adjust_time', { seconds: -30 })" class="bg-tik-card-border hover:bg-tik-sidebar text-gray-400 hover:text-white px-2 py-1 rounded text-xs font-mono font-bold" title="ลดเวลา 30 วิ">-30s</button>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="controlAuction('adjust_time', { seconds: 30 })" class="bg-tik-card hover:bg-tik-sidebar text-white px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold border border-tik-card-border" title="บวกเวลา 30 วิ">+30s</button>
+                  <button onclick="controlAuction('adjust_time', { seconds: 60 })" class="bg-tik-card hover:bg-tik-sidebar text-white px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold border border-tik-card-border" title="บวกเวลา 1 นาที">+1m</button>
+                  <button onclick="controlAuction('adjust_time', { seconds: -30 })" class="bg-tik-card hover:bg-tik-sidebar text-gray-400 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold border border-tik-card-border" title="ลดเวลา 30 วิ">-30s</button>
                 </div>
               </div>
 
               <!-- Main Control Buttons -->
-              <div class="grid grid-cols-3 gap-2">
-                <button onclick="controlAuction('start')" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30 py-2.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1">
-                  <span class="material-symbols-outlined text-sm">play_arrow</span> <span>START</span>
+              <div class="grid grid-cols-3 gap-2.5">
+                <button onclick="controlAuction('start')" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all hover:scale-102">
+                  <span class="material-symbols-outlined text-base">play_arrow</span> <span>START</span>
                 </button>
-                <button id="auc-btn-pause" onclick="toggleAuctionPause()" class="bg-amber-500/20 text-amber-400 border border-amber-500/40 hover:bg-amber-500/30 py-2.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1">
-                  <span class="material-symbols-outlined text-sm">pause</span> <span>PAUSE</span>
+                <button id="auc-btn-pause" onclick="toggleAuctionPause()" class="bg-amber-500/20 text-amber-400 border border-amber-500/40 hover:bg-amber-500/30 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all hover:scale-102">
+                  <span class="material-symbols-outlined text-base">pause</span> <span>PAUSE</span>
                 </button>
-                <button onclick="controlAuction('end')" class="bg-purple-500/20 text-purple-300 border border-purple-500/40 hover:bg-purple-500/30 py-2.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1">
-                  <span class="material-symbols-outlined text-sm">flag</span> <span>จบประมูล</span>
+                <button onclick="controlAuction('end')" class="bg-purple-500/20 text-purple-300 border border-purple-500/40 hover:bg-purple-500/30 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all hover:scale-102">
+                  <span class="material-symbols-outlined text-base">flag</span> <span>จบประมูล</span>
                 </button>
               </div>
 
-              <!-- Instant Dismiss / Hide Button -->
-              <button onclick="controlAuction('dismiss_winner')" class="w-full bg-tik-card hover:bg-gray-800 text-gray-300 border border-tik-card-border hover:border-gray-600 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm" title="ปิดการแสดงผลผู้ชนะและซ่อน Overlay ทันทีโดยไม่ต้องรอหมดเวลา">
-                <span class="material-symbols-outlined text-sm">visibility_off</span> <span>ปิดหน้าจอผู้ชนะ / ซ่อน Overlay ทันที (Dismiss Now)</span>
+              <!-- Dismiss Winner Button -->
+              <button onclick="controlAuction('dismiss_winner')" class="w-full bg-tik-card hover:bg-gray-800 text-gray-300 border border-tik-card-border hover:border-gray-600 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm">
+                <span class="material-symbols-outlined text-sm">visibility_off</span> <span>ปิดหน้าจอผู้ชนะ / เคลียร์การฉลอง (Dismiss Winner)</span>
               </button>
+            </div>
 
-              <!-- Top Bidders Box -->
-              <div>
-                <span class="text-xs font-bold text-tik-amber flex items-center gap-1 mb-2">
-                  <span class="material-symbols-outlined text-[15px]">format_list_numbered</span>
+            <!-- Reset Button -->
+            <div class="pt-3 border-t border-tik-card-border flex items-center justify-between">
+              <span class="text-xs text-on-surface-variant">ต้องการเริ่มประมูลใหม่รอบถัดไป?</span>
+              <button onclick="controlAuction('reset')" class="text-red-400 hover:text-red-300 text-xs font-bold flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-red-500/10 transition-colors">
+                <span class="material-symbols-outlined text-[15px]">restart_alt</span> รีเซ็ตประมูล
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Column: Top Bidders Feed -->
+          <div class="bg-tik-bg border border-tik-card-border rounded-xl p-5 flex flex-col justify-between space-y-4">
+            <div>
+              <div class="flex justify-between items-center pb-2.5 border-b border-tik-card-border mb-3">
+                <span class="text-xs font-bold text-tik-amber flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-base">format_list_numbered</span>
                   <span>อันดับผู้เสนอราคา (Top Bidders):</span>
                 </span>
-                <div id="bidders-list-el" class="space-y-1.5 text-xs max-h-36 overflow-y-auto pr-1">
-                  <div class="text-on-surface-variant text-center py-3">ยังไม่มีการเสนอราคา</div>
-                </div>
+                <span class="text-[11px] text-gray-400 font-mono">ส่งของขวัญเพื่อร่วมประมูล</span>
               </div>
+              <div id="bidders-list-el" class="space-y-2 text-xs max-h-48 overflow-y-auto pr-1">
+                <div class="text-on-surface-variant text-center py-8">ยังไม่มีการเสนอราคา</div>
+              </div>
+            </div>
 
-              <div class="pt-2 border-t border-tik-card-border flex items-center justify-between">
-                <span class="text-xs text-on-surface-variant">รีเซ็ตข้อมูลทั้งหมด?</span>
-                <button onclick="controlAuction('reset')" class="text-red-400 hover:text-red-300 text-xs font-bold flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[14px]">restart_alt</span> รีเซ็ตประมูล
-                </button>
-              </div>
+            <!-- Quick Simulator Bid -->
+            <div class="pt-3 border-t border-tik-card-border flex items-center gap-2 flex-wrap">
+              <span class="text-[11px] text-gray-400 shrink-0">ทดสอบยิงบิด:</span>
+              <button onclick="triggerAuctionTest('Alice', 'Rose', 1, 1)" class="bg-tik-card hover:bg-gray-800 text-white border border-tik-card-border px-2.5 py-1 rounded text-xs font-bold">+1 Coin</button>
+              <button onclick="triggerAuctionTest('Bob', 'Doughnut', 1, 30)" class="bg-tik-card hover:bg-gray-800 text-amber-400 border border-tik-card-border px-2.5 py-1 rounded text-xs font-bold">+30 Coins</button>
+              <button onclick="triggerAuctionTest('Charlie', 'Lion', 1, 500)" class="bg-tik-card hover:bg-gray-800 text-rose-400 border border-tik-card-border px-2.5 py-1 rounded text-xs font-bold">+500 Coins</button>
             </div>
           </div>
         </div>

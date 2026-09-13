@@ -118,24 +118,22 @@
     animation: coinBump 0.4s ease-out;
   }
 
-  /* Smooth Fade for Entire Auction Widget */
+  /* Auction Widget: ALWAYS Visible & Responsive */
   #auction-widget {
-    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: translateY(0) scale(1) !important;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   #auction-widget.widget-hidden {
-    opacity: 0 !important;
-    pointer-events: none !important;
-    transform: translateY(12px) scale(0.97) !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: translateY(0) scale(1) !important;
   }
   #auction-widget.widget-visible {
     opacity: 1 !important;
     pointer-events: auto !important;
     transform: translateY(0) scale(1) !important;
-  }
-  body.preview-mode #auction-widget.widget-hidden {
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    transform: none !important;
   }
 </style>
 </head>
@@ -357,11 +355,11 @@
   const sndApplause = document.getElementById('snd-applause');
   const sndPop = document.getElementById('snd-pop');
 
+  // Always visible by default
+  aucWidgetEl.classList.remove('widget-hidden');
+  aucWidgetEl.classList.add('widget-visible');
   if (isPreview) {
     bodyEl.className = 'preview-mode';
-    aucWidgetEl.classList.add('widget-visible');
-  } else {
-    aucWidgetEl.classList.add('widget-hidden');
   }
 
   function setScale(scaleVal) {
@@ -519,9 +517,15 @@
     }
     prevHighestCoins = highestCoins;
 
-    aucHighestBidderEl.innerText = highestName !== '-' ? `@${highestName}` : 'ยังไม่มีผู้เสนอราคา';
-    aucBidCoinsEl.innerText = `${highestCoins.toLocaleString()} Coins`;
-    highestAvatarContainer.innerHTML = renderAvatarHtml(highestPic, highestName, 48, 'border-2 border-amber-400 shadow-md');
+    if (highestCoins > 0 && highestName && highestName !== '-') {
+      aucHighestBidderEl.innerText = `@${highestName}`;
+      aucBidCoinsEl.innerText = `${highestCoins.toLocaleString()} Coins`;
+      highestAvatarContainer.innerHTML = renderAvatarHtml(highestPic, highestName, 48, 'border-2 border-amber-400 shadow-md');
+    } else {
+      aucHighestBidderEl.innerText = 'รอผู้เปิดประมูล...';
+      aucBidCoinsEl.innerText = '0 Coins';
+      highestAvatarContainer.innerHTML = renderAvatarHtml('', 'U', 48, 'border-2 border-white/20 shadow-md');
+    }
 
     const isUnlimited = auc.unlimited_coins || auc.is_unlimited || !auc.target_coins || auc.target_coins <= 0;
     const goalLabel = document.getElementById('auc-goal-label');
@@ -561,13 +565,7 @@
       if (auc.is_winner_announced && auc.winner_name && auc.winner_name !== '-') {
         showWinner(auc);
       } else {
-        if (!winnerShown) {
-          if (autoHide && !isPreview) {
-            hideWidget();
-          } else {
-            showWidget();
-          }
-        }
+        showWidget();
       }
     }
   }
@@ -575,12 +573,12 @@
   function showWidget() {
     aucWidgetEl.classList.remove('widget-hidden');
     aucWidgetEl.classList.add('widget-visible');
+    aucWidgetEl.style.opacity = '1';
+    aucWidgetEl.style.display = 'block';
   }
 
   function hideWidget() {
-    if (isPreview) return;
-    aucWidgetEl.classList.remove('widget-visible');
-    aucWidgetEl.classList.add('widget-hidden');
+    showWidget(); // Always remain visible in OBS
   }
 
   function renderContenders(topList, highestCoins) {
