@@ -44,7 +44,7 @@ tailwind.config = {
 <style>
   html, body {
     margin: 0; padding: 0;
-    width: 100vw; height: 100vh;
+    width: 100%; height: 100%;
     background: transparent;
     font-family: 'Inter', 'Kanit', sans-serif;
     color: #e5e2e1;
@@ -517,12 +517,12 @@ tailwind.config = {
       this.currentAudio = null;
     }
 
-    enqueue(soundUrl, volume = 1.0, count = 1) {
+    enqueue(soundUrl, volume = 1.0) {
       if (!soundUrl) return;
-      const repeat = Math.max(1, Math.min(10, parseInt(count || 1)));
-      for (let i = 0; i < repeat; i++) {
-        this.queue.push({ soundUrl, volume });
-      }
+      this.queue.push({
+        soundUrl: soundUrl,
+        volume: volume !== undefined ? Math.max(0, Math.min(1, parseFloat(volume))) : 1.0
+      });
       if (this.queue.length > 30) {
         this.queue = this.queue.slice(-30);
       }
@@ -1033,7 +1033,7 @@ tailwind.config = {
       } else if (data.type === 'gift') {
         spawnGiftItems(data.gift_name, data.gift_icon, data.count, data.coins);
         if (!isPreviewMode && data.sound_effect && (isJarMode || (!isTimerMode && !isLeaderboardMode && !isTTSMode && !isAuctionMode && !isGachaMode))) {
-          giftSoundQueue.enqueue(data.sound_effect, data.sound_volume, data.count);
+          giftSoundQueue.enqueue(data.sound_effect, data.sound_volume);
         }
         if (data.coins >= 500) launchConfettiBurst();
         if (data.added_seconds !== undefined && data.added_seconds !== 0) {

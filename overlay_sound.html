@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kiraeve Audio Alerts Overlay</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent !important;
+    overflow: hidden;
+    pointer-events: none;
+    font-family: sans-serif;
+  }
+
+  #audio-container {
+    display: none;
+  }
+
+  #debug-indicator {
+    position: fixed;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #4edea3;
+    font-family: monospace;
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(78, 222, 163, 0.4);
+    display: none;
+    pointer-events: auto;
+  }
+</style>
+</head>
+<body>
+
+<div id="audio-container"></div>
+<div id="debug-indicator">AUDIO OVERLAY ACTIVE</div>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const isDebug = urlParams.get('debug') === 'true';
+  const debugEl = document.getElementById('debug-indicator');
+  if (isDebug && debugEl) {
+    debugEl.style.display = 'block';
+  }
+
+  function debugLog(msg) {
+    if (isDebug) {
+      console.log('[AudioOverlay]', msg);
+      if (debugEl) debugEl.innerText = String(msg);
+    }
+  }
+
+  // Sequential Sound Queue (guarantees 1 sound plays at a time, never overlapping)
+  class SequentialSoundQueue {
+    constructor() {
+      this.queue = [];
+      this.isPlaying = false;
+      this.currentAudio = null;
+      this.watchdogTimer = null;
+    }
+
+    enqueue(soundUrl, volume = 1.0, metadata = {}) {
+      if (!soundUrl) return;
+      
+      // Enqueue exactly 1 playback item per gift alert batch (do not loop count times)
+      this.queue.push({
+        soundUrl: soundUrl,
+        volume: volume !== undefined ? Math.max(0, Math.min(1, parseFloat(volume))) : 1.0,
+        metadata: metadata
+      });
+
+      // Bound queue to prevent memory leak
+      if (this.queue.length > 50) {
+        this.queue = this.queue.slice(-50);
+      }
+
+      debugLog('Queued: ' + soundUrl + ' (Queue length: ' + this.queue.length + ')');
+
+      if (!this.isPlaying) {
+        this.playNext();
+      }
+    }
+
+    playNext() {
+      if (this.queue.length === 0) {
+        this.isPlaying = false;
+        this.currentAudio = null;
+        debugLog('Queue empty, idle');
+        return;
+      }
+
+      this.isPlaying = true;
+      const item = this.queue.shift();
+
+      if (this.watchdogTimer) {
+        clearTimeout(this.watchdogTimer);
+        this.watchdogTimer = null;
+      }
+
+      try {
+        const audio = new Audio(item.soundUrl);
+        audio.volume = item.volume;
+        this.currentAudio = audio;
+
+        let finished = false;
+        const done = () => {
+          if (finished) return;
+          finished = true;
+          if (this.watchdogTimer) {
+            clearTimeout(this.watchdogTimer);
+            this.watchdogTimer = null;
+          }
+          // Buffer delay between sounds (160ms) to ensure clean acoustic separation
+          setTimeout(() => this.playNext(), 160);
+        };
+
+        audio.onended = () => {
+          debugLog('Finished playing: ' + item.soundUrl);
+          done();
+        };
+
+        audio.onerror = (e) => {
+          console.warn('[AudioOverlay] Error loading audio:', item.soundUrl, e);
+          done();
+        };
+
+        // Safety watchdog: fallback if audio duration is corrupted or stalls
+        audio.onloadedmetadata = () => {
+          const durationSec = audio.duration;
+          const maxMs = (durationSec && !isNaN(durationSec) && durationSec > 0)
+            ? Math.ceil((durationSec + 2) * 1000)
+            : 30000;
+          this.watchdogTimer = setTimeout(() => {
+            if (!finished && this.currentAudio === audio) {
+              debugLog('Watchdog timeout reached for: ' + item.soundUrl);
+              done();
+            }
+          }, maxMs);
+        };
+
+        // Absolute fallback watchdog in case metadata never loads
+        this.watchdogTimer = setTimeout(() => {
+          if (!finished && this.currentAudio === audio) {
+            done();
+          }
+        }, 30000);
+
+        audio.play().then(() => {
+          debugLog('Now playing: ' + item.soundUrl);
+        }).catch(err => {
+          console.warn('[AudioOverlay] Audio play rejected (autoplay policy?):', err);
+          done();
+        });
+
+      } catch (err) {
+        console.error('[AudioOverlay] Exception playing audio:', err);
+        this.playNext();
+      }
+    }
+
+    stopAll() {
+      this.queue = [];
+      if (this.watchdogTimer) {
+        clearTimeout(this.watchdogTimer);
+        this.watchdogTimer = null;
+      }
+      if (this.currentAudio) {
+        try {
+          this.currentAudio.pause();
+          this.currentAudio.currentTime = 0;
+        } catch(e) {}
+        this.currentAudio = null;
+      }
+      this.isPlaying = false;
+      debugLog('All audio stopped and queue flushed');
+    }
+  }
+
+  const soundQueue = new SequentialSoundQueue();
+
+  // Allow clicking anywhere to unlock audio context in browsers
+  window.addEventListener('click', () => {
+    try {
+      const dummy = new Audio();
+      dummy.play().catch(() => {});
+    } catch(e) {}
+  });
+
+  function connectWebSocket() {
+    const WS_URL = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws';
+    const ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      debugLog('Connected to WebSocket');
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'refresh_overlays') {
+          window.location.reload();
+          return;
+        }
+
+        if (data.type === 'stop_audio') {
+          soundQueue.stopAll();
+          return;
+        }
+
+        if (data.type === 'gift') {
+          if (data.sound_effect) {
+            soundQueue.enqueue(data.sound_effect, data.sound_volume, {
+              sender: data.sender,
+              gift_name: data.gift_name,
+              count: data.count
+            });
+          }
+        }
+      } catch (err) {
+        console.error('[AudioOverlay] WS message parse error:', err);
+      }
+    };
+
+    ws.onclose = () => {
+      debugLog('WebSocket disconnected, retrying in 2s...');
+      setTimeout(connectWebSocket, 2000);
+    };
+
+    ws.onerror = () => {
+      try { ws.close(); } catch(e){}
+    };
+  }
+
+  connectWebSocket();
+</script>
+</body>
+</html>

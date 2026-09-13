@@ -30,24 +30,36 @@ if (!fs.existsSync(latestYmlPath)) {
 const latestYmlContent = fs.readFileSync(latestYmlPath, 'utf-8');
 console.log('[Release Publisher] Step 2: Validated dist/latest.yml:\n' + latestYmlContent.trim());
 
-// Step 3: Ensure both space-separated and dashed exe names exist
+// Step 3: Ensure both space-separated and dashed exe names exist and are ALWAYS in sync
 const spaceExe = path.join(distDir, `Kiraeve TikTok Setup ${version}.exe`);
 const dashExe = path.join(distDir, `Kiraeve-TikTok-Setup-${version}.exe`);
 
-if (fs.existsSync(spaceExe) && !fs.existsSync(dashExe)) {
+if (fs.existsSync(spaceExe)) {
     fs.copyFileSync(spaceExe, dashExe);
-    console.log(`[Release Publisher] Created alias: ${dashExe}`);
-}
-if (fs.existsSync(dashExe) && !fs.existsSync(spaceExe)) {
+    console.log(`[Release Publisher] Synced fresh alias: ${dashExe}`);
+} else if (fs.existsSync(dashExe)) {
     fs.copyFileSync(dashExe, spaceExe);
-    console.log(`[Release Publisher] Created alias: ${spaceExe}`);
+    console.log(`[Release Publisher] Synced fresh alias: ${spaceExe}`);
 }
 
 const spaceBlockmap = path.join(distDir, `Kiraeve TikTok Setup ${version}.exe.blockmap`);
 const dashBlockmap = path.join(distDir, `Kiraeve-TikTok-Setup-${version}.exe.blockmap`);
-if (fs.existsSync(spaceBlockmap) && !fs.existsSync(dashBlockmap)) {
+if (fs.existsSync(spaceBlockmap)) {
     fs.copyFileSync(spaceBlockmap, dashBlockmap);
+} else if (fs.existsSync(dashBlockmap)) {
+    fs.copyFileSync(dashBlockmap, spaceBlockmap);
 }
+
+// Step 3.5: Cryptographic checksum validation against latest.yml
+const crypto = require('crypto');
+const dashHash = crypto.createHash('sha512').update(fs.readFileSync(dashExe)).digest('base64');
+console.log(`[Release Publisher] Calculated sha512 for ${path.basename(dashExe)}:\n  ${dashHash}`);
+
+if (!latestYmlContent.includes(dashHash)) {
+    console.error(`[CRITICAL ERROR] sha512 mismatch! latest.yml does not match ${path.basename(dashExe)}!`);
+    process.exit(1);
+}
+console.log('[Release Publisher] Verified sha512 checksum matches latest.yml 100%!');
 
 // Step 4: Collect assets to upload
 const assetsToUpload = [latestYmlPath];
@@ -56,7 +68,7 @@ if (fs.existsSync(spaceExe)) assetsToUpload.push(spaceExe);
 if (fs.existsSync(dashBlockmap)) assetsToUpload.push(dashBlockmap);
 if (fs.existsSync(spaceBlockmap)) assetsToUpload.push(spaceBlockmap);
 
-console.log(`[Release Publisher] Step 3: Assets to upload (${assetsToUpload.length} files):`);
+console.log(`[Release Publisher] Step 4: Assets to upload (${assetsToUpload.length} files):`);
 assetsToUpload.forEach(a => console.log('  - ' + path.basename(a)));
 
 // Step 5: Check if GitHub release tag exists

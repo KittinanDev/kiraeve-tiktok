@@ -20,7 +20,7 @@
 
   html, body {
     margin: 0; padding: 0;
-    width: 100vw; height: 100vh;
+    width: 100%; height: 100%;
     background: transparent;
     font-family: 'Inter', 'Kanit', sans-serif;
     color: #f1f5f9;
@@ -34,20 +34,21 @@
   body.obs-mode {
     align-items: center;
     justify-content: center;
-    padding: 16px;
+    padding: 0;
   }
 
   body.preview-mode {
     align-items: center;
     justify-content: center;
-    padding: 12px;
+    padding: 0;
   }
 
   #scale-wrapper {
     width: 100%;
-    max-width: 440px;
+    height: 100%;
     margin: 0 auto;
     display: flex;
+    align-items: center;
     justify-content: center;
     transform: scale(var(--overlay-scale));
     transform-origin: center center;
@@ -144,7 +145,7 @@
   <div id="scale-wrapper" class="relative">
     
     <!-- Main Auction Card -->
-    <div id="auction-widget" class="broadcast-panel w-[440px] rounded-2xl overflow-hidden relative transition-all duration-300 widget-hidden">
+    <div id="auction-widget" class="broadcast-panel w-full max-w-[440px] rounded-2xl overflow-hidden relative transition-all duration-300 widget-hidden">
       
       <!-- Top Accent Line -->
       <div class="h-[3px] w-full top-accent-line"></div>
@@ -692,6 +693,7 @@
   }
 
   function playPopSound() {
+    if (isPreview) return;
     try {
       sndPop.currentTime = 0;
       sndPop.volume = 0.5;
@@ -700,6 +702,7 @@
   }
 
   function playApplauseSound() {
+    if (isPreview) return;
     try {
       sndApplause.currentTime = 0;
       sndApplause.volume = 0.9;

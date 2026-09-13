@@ -188,7 +188,6 @@ DEFAULT_CONFIG = {
         "floating_alerts_enabled": True
     },
     "gift_sound_mappings": [
-        { "gift_name": "Rose", "min_count": 1, "sound_file": "dragon-studio-pop-402324.mp3", "volume": 0.8, "enabled": True },
         { "gift_name": "Lion", "min_count": 1, "sound_file": "roesisch-applause-01-253125.mp3", "volume": 1.0, "enabled": True }
     ],
     "gift_video_mappings": [
@@ -1383,6 +1382,13 @@ async def handle_overlay_video(request: web.Request) -> web.Response:
             return web.Response(text=f.read(), content_type="text/html")
     return web.Response(status=404, text="overlay_video.html not found")
 
+async def handle_overlay_sound(request: web.Request) -> web.Response:
+    path = BASE_DIR / "overlay_sound.html"
+    if path.exists():
+        with open(path, "r", encoding="utf-8") as f:
+            return web.Response(text=f.read(), content_type="text/html")
+    return web.Response(status=404, text="overlay_sound.html not found")
+
 async def handle_tts_audio(request: web.Request) -> web.Response:
     text = request.query.get("text", "").strip()
     voice = request.query.get("voice", "th-TH-PremwadeeNeural")
@@ -2383,6 +2389,8 @@ def build_app() -> web.Application:
     app.router.add_get("/overlay_gacha.html", handle_overlay_gacha)
     app.router.add_get("/overlay_vfx.html", handle_overlay_vfx)
     app.router.add_get("/overlay_video.html", handle_overlay_video)
+    app.router.add_get("/overlay_sound.html", handle_overlay_sound)
+    app.router.add_get("/overlay_audio.html", handle_overlay_sound)
 
     app.router.add_get("/overlay/jar", handle_overlay_jar)
     app.router.add_get("/overlay/timer", handle_overlay_timer)
@@ -2392,6 +2400,8 @@ def build_app() -> web.Application:
     app.router.add_get("/overlay/gacha", handle_overlay_gacha)
     app.router.add_get("/overlay/vfx", handle_overlay_vfx)
     app.router.add_get("/overlay/video", handle_overlay_video)
+    app.router.add_get("/overlay/sound", handle_overlay_sound)
+    app.router.add_get("/overlay/audio", handle_overlay_sound)
 
     app.router.add_get("/api/gift-catalog", handle_get_gift_catalog)
     app.router.add_post("/api/connect-tiktok", handle_connect_tiktok)
