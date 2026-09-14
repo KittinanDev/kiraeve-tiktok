@@ -2,6 +2,7 @@
   "tiktok_username": "gwang_gimmick",
   "tts_config": {
     "enabled": true,
+    "theme": "solid",
     "voice": "th-TH-PremwadeeNeural",
     "speed": "+0%",
     "pitch": "+0Hz",
@@ -101,51 +102,7 @@
   "gacha_config": {
     "enabled": true,
     "items": [
-      {
-        "text": "+300s โบนัสใหญ่",
-        "tier": "legendary",
-        "rarity_name": "LEGENDARY",
-        "color": "#fbbf24"
-      },
-      {
-        "text": "+60s",
-        "tier": "epic",
-        "rarity_name": "EPIC",
-        "color": "#c084fc"
-      },
-      {
-        "text": "+30s",
-        "tier": "rare",
-        "rarity_name": "RARE",
-        "color": "#34d399"
-      },
-      {
-        "text": "-30s ลดเวลา",
-        "tier": "hazard",
-        "rarity_name": "HAZARD",
-        "color": "#f87171"
-      },
-      {
-        "text": "วิดพื้น 10 ครั้ง",
-        "tier": "custom",
-        "rarity_name": "ทำโทษ",
-        "color": "#ec4899"
-      },
-      {
-        "text": "Rose",
-        "type": "gift",
-        "gift_name": "Rose",
-        "tier": "legendary",
-        "rarity_name": "GIFT",
-        "color": "#fbbf24",
-        "is_gift": true
-      },
-      {
-        "text": "+15s",
-        "tier": "common",
-        "rarity_name": "COMMON",
-        "color": "#94a3b8"
-      }
+      "Rose"
     ],
     "rarity_names": {
       "legendary": "LEGENDARY",
@@ -155,7 +112,7 @@
       "hazard": "HAZARD",
       "custom": "CUSTOM"
     },
-    "spin_duration": 4,
+    "spin_duration": 5,
     "trigger_gift_name": "Rose",
     "tick_sound_enabled": true,
     "win_sound_enabled": true,
@@ -169,10 +126,10 @@
   },
   "gift_sound_mappings": [
     {
-      "gift_name": "Lion",
+      "gift_name": "Rose",
       "min_count": 1,
-      "sound_file": "roesisch-applause-01-253125.mp3",
-      "volume": 1.0,
+      "sound_file": "coin.mp3",
+      "volume": 0.9,
       "enabled": true
     }
   ],

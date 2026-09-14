@@ -1036,24 +1036,58 @@ tailwind.config = {
           <span class="material-symbols-outlined text-tik-purple text-xl">forum</span>
           <span>Siri TTS Chat Reader Setup & Dedicated Settings</span>
         </h2>
-        <div class="space-y-3">
-          <label class="text-xs text-on-surface-variant font-medium">Browser Source URL (นำไปใส่ใน TikTok LIVE Studio):</label>
-          <div class="flex flex-wrap gap-2">
-            <input type="text" readonly class="flex-1 min-w-[200px] bg-tik-bg border border-tik-card-border rounded-lg px-3 py-2 font-mono text-xs text-white" value="http://localhost:8765/overlay_tts.html">
-            <button onclick="copyToClipboard('http://localhost:8765/overlay_tts.html')" class="bg-tik-pink hover:bg-tik-pink-hover text-white px-4 py-2 rounded-lg font-bold text-xs">COPY URL</button>
-            <a href="http://localhost:8765/overlay_tts.html" target="_blank" class="bg-tik-card-border hover:bg-tik-sidebar text-white px-3 py-2 rounded-lg text-xs flex items-center justify-center">
-              <span class="material-symbols-outlined text-[16px]">open_in_new</span>
-            </a>
-            <!-- ปุ่มปิด / แสดง Overlay -->
-            <button id="btn-toggle-tts-overlay" onclick="toggleTTSOverlayVisibility()" class="bg-tik-card hover:bg-tik-sidebar text-white border border-tik-card-border px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm">
-              <span id="tts-vis-btn-icon" class="material-symbols-outlined text-tik-emerald text-[16px]">visibility</span>
-              <span id="tts-vis-btn-label">ซ่อน Overlay</span>
-            </button>
-            <!-- ปุ่มล้างแชทบนจอ -->
-            <button onclick="clearTTSOverlayChats()" title="ล้างข้อความแชทที่ค้างบนหน้าจอ Overlay ทั้งหมด" class="bg-tik-card hover:bg-tik-sidebar text-on-surface-variant hover:text-white border border-tik-card-border px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all">
-              <span class="material-symbols-outlined text-[16px]">cleaning_services</span>
-              <span>ล้างแชท</span>
-            </button>
+        <div class="space-y-4">
+          <!-- Option 1: Solid Mode -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs text-white font-bold flex items-center gap-1.5">
+                <span class="inline-block w-2 h-2 rounded-full bg-tik-cyan"></span>
+                <span>1. รูปแบบทึบ (Solid Dark) — สำหรับวางเป็นกล่องแชททึบคมชัด มีขอบสวยงาม</span>
+              </label>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <input type="text" readonly class="flex-1 min-w-[200px] bg-tik-bg border border-tik-card-border rounded-lg px-3 py-2 font-mono text-xs text-white" value="http://localhost:8765/overlay_tts.html?theme=solid">
+              <button onclick="copyToClipboard('http://localhost:8765/overlay_tts.html?theme=solid')" class="bg-tik-pink hover:bg-tik-pink-hover text-white px-4 py-2 rounded-lg font-bold text-xs transition-colors">COPY URL (ทึบ)</button>
+              <a href="http://localhost:8765/overlay_tts.html?theme=solid" target="_blank" class="bg-tik-card-border hover:bg-tik-sidebar text-white px-3 py-2 rounded-lg text-xs flex items-center justify-center">
+                <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Option 2: Transparent Mode -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs text-white font-bold flex items-center gap-1.5">
+                <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>2. รูปแบบโปร่งใส (Transparent Ghost) — ข้อความลอยโปร่งแสงเหนือวิดีโอ/เกม ไร้กรอบทึบ</span>
+              </label>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <input type="text" readonly class="flex-1 min-w-[200px] bg-tik-bg border border-tik-card-border rounded-lg px-3 py-2 font-mono text-xs text-white" value="http://localhost:8765/overlay_tts.html?theme=transparent">
+              <button onclick="copyToClipboard('http://localhost:8765/overlay_tts.html?theme=transparent')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold text-xs transition-colors">COPY URL (โปร่งใส)</button>
+              <a href="http://localhost:8765/overlay_tts.html?theme=transparent" target="_blank" class="bg-tik-card-border hover:bg-tik-sidebar text-white px-3 py-2 rounded-lg text-xs flex items-center justify-center">
+                <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-tik-card-border">
+            <div class="text-[11px] text-on-surface-variant flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-amber-400 text-[16px]">info</span>
+              <span>คำแนะนำ TikTok LIVE Studio: หากต้องการให้เสียง Siri ออกในสตรีม ให้ตรวจสอบใน TikTok LIVE Studio ว่าได้เปิดเสียง (Unmute) ให้กับแหล่งสัญญาณ Browser Source หรือติ๊ก 'ส่งเสียงผ่านสตรีม'</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <!-- ปุ่มปิด / แสดง Overlay -->
+              <button id="btn-toggle-tts-overlay" onclick="toggleTTSOverlayVisibility()" class="bg-tik-card hover:bg-tik-sidebar text-white border border-tik-card-border px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm">
+                <span id="tts-vis-btn-icon" class="material-symbols-outlined text-tik-emerald text-[16px]">visibility</span>
+                <span id="tts-vis-btn-label">ซ่อน Overlay</span>
+              </button>
+              <!-- ปุ่มล้างแชทบนจอ -->
+              <button onclick="clearTTSOverlayChats()" title="ล้างข้อความแชทที่ค้างบนหน้าจอ Overlay ทั้งหมด" class="bg-tik-card hover:bg-tik-sidebar text-on-surface-variant hover:text-white border border-tik-card-border px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all">
+                <span class="material-symbols-outlined text-[16px]">cleaning_services</span>
+                <span>ล้างแชท</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1108,6 +1142,20 @@ tailwind.config = {
 
           <div class="space-y-5">
             <div class="bg-tik-bg border border-tik-card-border rounded-lg p-4 space-y-2">
+              <label class="font-bold text-white text-xs block"> ธีมหน้าตา Overlay เริ่มต้น (Overlay Style):</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" id="btn-tts-theme-solid" onclick="setTTSTheme('solid')" class="bg-tik-cyan/20 text-tik-cyan border border-tik-cyan/50 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
+                  <span class="material-symbols-outlined text-[16px]">crop_square</span>
+                  <span>แบบทึบ (Solid)</span>
+                </button>
+                <button type="button" id="btn-tts-theme-transparent" onclick="setTTSTheme('transparent')" class="bg-tik-card hover:bg-tik-card-border text-on-surface-variant py-2 px-3 rounded-lg text-xs font-medium border border-tik-card-border flex items-center justify-center gap-1.5 transition-all">
+                  <span class="material-symbols-outlined text-[16px]">opacity</span>
+                  <span>แบบโปร่งใส (Ghost)</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="bg-tik-bg border border-tik-card-border rounded-lg p-4 space-y-2">
               <label class="font-bold text-white text-xs block"> เสียงพากย์ภาษาไทย:</label>
               <select id="tts-voice-select" class="w-full bg-tik-card border border-tik-card-border rounded-lg px-3 py-2 text-xs text-tik-cyan font-bold focus:outline-none focus:border-tik-pink">
                 <option value="th-TH-PremwadeeNeural" selected>th-TH-PremwadeeNeural (ผู้หญิง - เสียงธรรมชาติ)</option>
@@ -1142,6 +1190,16 @@ tailwind.config = {
             <span>Live Siri TTS Overlay Preview</span>
           </h3>
           <div class="flex items-center gap-2">
+            <div class="inline-flex rounded-lg border border-tik-card-border p-0.5 bg-tik-bg">
+              <button type="button" onclick="switchTTSPreviewTheme('solid')" class="px-2.5 py-1 text-[11px] font-bold rounded text-white hover:bg-tik-sidebar transition-colors flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-tik-cyan"></span>
+                <span>ดูแบบทึบ</span>
+              </button>
+              <button type="button" onclick="switchTTSPreviewTheme('transparent')" class="px-2.5 py-1 text-[11px] font-bold rounded text-white hover:bg-tik-sidebar transition-colors flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <span>ดูแบบโปร่งใส</span>
+              </button>
+            </div>
             <button type="button" id="btn-live-toggle-tts" onclick="toggleTTSOverlayVisibility()" class="bg-tik-card hover:bg-tik-sidebar text-white border border-tik-card-border font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all">
               <span id="live-tts-vis-icon" class="material-symbols-outlined text-tik-emerald text-[16px]">visibility</span>
               <span id="live-tts-vis-text">ปิด/ซ่อน Overlay</span>
@@ -3135,6 +3193,7 @@ tailwind.config = {
 
   let ttsCurrentConfig = {
     enabled: true,
+    theme: "solid",
     audio_muted: false,
     speed: "+0%",
     volume: 1.0,
@@ -3286,6 +3345,35 @@ tailwind.config = {
 
 
   // Siri TTS Personal Controls
+  function setTTSTheme(themeName) {
+    ttsCurrentConfig.theme = (themeName === 'transparent') ? 'transparent' : 'solid';
+    renderTTSThemeUI();
+    saveTTSSettings();
+  }
+
+  function renderTTSThemeUI() {
+    const btnSolid = document.getElementById('btn-tts-theme-solid');
+    const btnTrans = document.getElementById('btn-tts-theme-transparent');
+    const isTrans = (ttsCurrentConfig.theme === 'transparent');
+
+    if (btnSolid && btnTrans) {
+      if (isTrans) {
+        btnTrans.className = 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all';
+        btnSolid.className = 'bg-tik-card hover:bg-tik-card-border text-on-surface-variant py-2 px-3 rounded-lg text-xs font-medium border border-tik-card-border flex items-center justify-center gap-1.5 transition-all';
+      } else {
+        btnSolid.className = 'bg-tik-cyan/20 text-tik-cyan border border-tik-cyan/50 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all';
+        btnTrans.className = 'bg-tik-card hover:bg-tik-card-border text-on-surface-variant py-2 px-3 rounded-lg text-xs font-medium border border-tik-card-border flex items-center justify-center gap-1.5 transition-all';
+      }
+    }
+  }
+
+  function switchTTSPreviewTheme(themeName) {
+    const iframe = document.getElementById('tts-preview-iframe');
+    if (iframe) {
+      iframe.src = `http://localhost:8765/overlay_tts.html?preview=true&theme=${themeName}`;
+    }
+  }
+
   function toggleTTSSoundMute() {
     ttsCurrentConfig.audio_muted = !ttsCurrentConfig.audio_muted;
     renderTTSUIState();
@@ -3302,6 +3390,8 @@ tailwind.config = {
   function renderTTSUIState() {
     const btn = document.getElementById('btn-tts-sound-toggle');
     const statusText = document.getElementById('tts-audio-toggle-status');
+
+    renderTTSThemeUI();
 
     if (ttsCurrentConfig.audio_muted) {
       if (statusText) { statusText.innerText = 'ปิดเสียงอ่านแชทอยู่ (Muted)'; statusText.className = 'text-[11px] text-red-400'; }
@@ -3337,6 +3427,7 @@ tailwind.config = {
     ttsCurrentConfig = {
       ...ttsCurrentConfig,
       enabled: true,
+      theme: ttsCurrentConfig.theme || "solid",
       audio_muted: ttsCurrentConfig.audio_muted || false,
       speed,
       volume,

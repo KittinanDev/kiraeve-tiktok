@@ -86,6 +86,8 @@ SOUNDEFFECT_DIR = BASE_DIR / "Soundeffect"
 SOUNDEFFECT_DIR.mkdir(exist_ok=True)
 VIDEO_DIR = BASE_DIR / "media" / "Video"
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+TTS_CACHE_DIR = BASE_DIR / "media" / "tts_cache"
+TTS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 GIFT_CACHE_PATH = BASE_DIR / "gift_cache.json"
 
@@ -121,6 +123,7 @@ DEFAULT_CONFIG = {
     "tiktok_username": "your_tiktok_username",
     "tts_config": {
         "enabled": True,
+        "theme": "solid",
         "voice": "th-TH-PremwadeeNeural",
         "speed": "+0%",
         "pitch": "+0Hz",
@@ -1452,14 +1455,39 @@ async def handle_overlay_sound(request: web.Request) -> web.FileResponse:
     return web.FileResponse(BASE_DIR / "overlay_sound.html", headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"})
 
 async def handle_tts_audio(request: web.Request) -> web.Response:
+    if request.method == "OPTIONS":
+        return web.Response(status=204, headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "*"
+        })
+
     text = request.query.get("text", "").strip()
     voice = request.query.get("voice", "th-TH-PremwadeeNeural")
     if "nawat" in voice.lower() or "niwat" in voice.lower():
         voice = "th-TH-PremwadeeNeural"
     speed = request.query.get("speed", "+0%").strip()
 
+    cors_headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Cache-Control": "public, max-age=86400",
+        "Content-Type": "audio/mpeg",
+        "Accept-Ranges": "bytes"
+    }
+
     if not text:
-        return web.Response(status=400, text="Missing text query param")
+        return web.Response(status=400, text="Missing text query param", headers=cors_headers)
+
+    cache_key = hashlib.md5(f"{text}_{voice}_{speed}".encode("utf-8")).hexdigest()
+    cached_file = TTS_CACHE_DIR / f"{cache_key}.mp3"
+
+    if cached_file.exists() and cached_file.stat().st_size > 100:
+        try:
+            with open(cached_file, "rb") as f:
+                return web.Response(body=f.read(), headers=cors_headers)
+        except Exception:
+            pass
 
     try:
         if EDGE_TTS_AVAILABLE:
@@ -1469,7 +1497,14 @@ async def handle_tts_audio(request: web.Request) -> web.Response:
                 if chunk["type"] == "audio":
                     fp.write(chunk["data"])
             fp.seek(0)
-            return web.Response(body=fp.read(), content_type="audio/mpeg", headers={"Cache-Control": "public, max-age=3600"})
+            audio_bytes = fp.read()
+            if len(audio_bytes) > 100:
+                try:
+                    with open(cached_file, "wb") as f:
+                        f.write(audio_bytes)
+                except Exception:
+                    pass
+            return web.Response(body=audio_bytes, headers=cors_headers)
 
         elif GTTS_AVAILABLE:
             def generate_gtts():
@@ -1480,13 +1515,19 @@ async def handle_tts_audio(request: web.Request) -> web.Response:
                 return fp_gtts.read()
 
             mp3_data = await asyncio.to_thread(generate_gtts)
-            return web.Response(body=mp3_data, content_type="audio/mpeg", headers={"Cache-Control": "public, max-age=3600"})
+            if len(mp3_data) > 100:
+                try:
+                    with open(cached_file, "wb") as f:
+                        f.write(mp3_data)
+                except Exception:
+                    pass
+            return web.Response(body=mp3_data, headers=cors_headers)
         else:
-            return web.Response(status=500, text="No TTS library available")
+            return web.Response(status=500, text="No TTS library available", headers=cors_headers)
 
     except Exception as e:
         log.error("TTS Generation Error: %s", e)
-        return web.Response(status=500, text=str(e))
+        return web.Response(status=500, text=str(e), headers=cors_headers)
 
 async def handle_mock_event(request: web.Request) -> web.Response:
     global last_gacha_play_time, auto_dismiss_auction_task
@@ -2480,7 +2521,7 @@ def build_app() -> web.Application:
     app.router.add_delete("/api/delete-sound", handle_delete_sound)
     app.router.add_post("/api/upload-video", handle_upload_video)
     app.router.add_delete("/api/delete-video", handle_delete_video)
-    app.router.add_get("/api/tts", handle_tts_audio)
+    app.router.add_route("*", "/api/tts", handle_tts_audio)
     app.router.add_post("/api/gacha-settle", handle_gacha_settle)
     app.router.add_post("/api/mock-event", handle_mock_event)
     app.router.add_static("/media/", path=MEDIA_DIR, show_index=False)

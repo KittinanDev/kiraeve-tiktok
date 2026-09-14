@@ -160,23 +160,109 @@
             pointer-events: none !important;
             visibility: hidden !important;
         }
+
+        /* THEME 1: Solid Dark (แบบทึบ) */
+        .theme-solid {
+            background: #141417 !important;
+            border: 1px solid rgba(208, 188, 255, 0.28) !important;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7) !important;
+            border-radius: 12px;
+        }
+        .theme-solid::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-left: 4px solid #d0bcff;
+            pointer-events: none;
+            z-index: 10;
+            border-radius: 12px 0 0 12px;
+        }
+        .theme-solid #tts-header {
+            background: #1c1b22 !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            padding: 8px 14px !important;
+            border-radius: 12px 12px 0 0;
+        }
+        .theme-solid #chat-list-container {
+            padding: 12px !important;
+            gap: 8px !important;
+        }
+        .theme-solid .chat-bubble {
+            background: transparent !important;
+            padding: 2px 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        /* THEME 2: Transparent Ghost (แบบโปร่งใส) */
+        .theme-transparent {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+        }
+        .theme-transparent::before {
+            display: none !important;
+        }
+        .theme-transparent #tts-header {
+            background: rgba(18, 18, 22, 0.75) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            border-radius: 9999px !important;
+            padding: 5px 14px !important;
+            margin-bottom: 8px !important;
+            width: fit-content !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+        }
+        .theme-transparent #chat-list-container {
+            padding: 0 !important;
+            gap: 6px !important;
+        }
+        .theme-transparent .chat-bubble {
+            background: rgba(15, 15, 18, 0.82) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 8px !important;
+            padding: 6px 12px !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45) !important;
+        }
+        .theme-transparent .chat-sender {
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 1), 0 0 5px rgba(0, 0, 0, 0.95);
+            font-weight: 700 !important;
+        }
+        .theme-transparent .chat-text {
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 1), 0 0 4px rgba(0, 0, 0, 0.9);
+            font-weight: 500 !important;
+            color: #f4f4f5 !important;
+        }
     </style>
 </head>
 <body id="body-el" class="obs-mode">
 
-<!-- Siri TTS Chat Widget (User Template) -->
-<div id="tts-widget" class="animate-slide-up-fade w-[400px] bg-surface-container-low/90 backdrop-blur-md border border-primary/30 shadow-2xl rounded-lg overflow-hidden flex flex-col relative before:absolute before:inset-0 before:border-l-4 before:border-primary before:z-10">
+<!-- Autoplay Unlock Notification (shown if browser policy blocks initial audio) -->
+<div id="tts-audio-unlock-banner" class="hidden fixed top-3 left-3 right-3 z-50 animate-bounce">
+  <button onclick="unlockAudioManually()" class="w-full bg-primary text-on-primary font-bold py-2.5 px-4 rounded-xl shadow-2xl flex items-center justify-center gap-2 cursor-pointer text-xs border border-white/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+    <span class="material-symbols-outlined text-[18px]">volume_off</span>
+    <span>คลิกที่นี่เพื่อเปิดเสียงสิริ (Click to Unmute Siri Voice)</span>
+  </button>
+</div>
+
+<!-- Siri TTS Chat Widget -->
+<div id="tts-widget" class="theme-solid animate-slide-up-fade w-[400px] overflow-hidden flex flex-col relative">
   
   <!-- Header with Siri Wave Animation -->
-  <div class="bg-surface-container/50 px-container-padding py-stack-sm flex items-center justify-between border-b border-outline-variant/30">
-    <div class="flex items-center gap-stack-sm">
+  <div id="tts-header" class="flex items-center justify-between">
+    <div class="flex items-center gap-2">
       <div class="flex items-end h-4 gap-[2px]">
         <div id="w1" class="wave-bar idle h-2"></div>
         <div id="w2" class="wave-bar idle h-3"></div>
         <div id="w3" class="wave-bar idle h-4"></div>
         <div id="w4" class="wave-bar idle h-2"></div>
       </div>
-      <span id="tts-status-badge" class="font-label-md text-label-md text-primary uppercase">Siri TTS Active</span>
+      <span id="tts-status-badge" class="font-bold text-xs tracking-wider text-primary uppercase">Siri TTS Active</span>
+      <span id="tts-theme-badge" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-white/70">Solid</span>
     </div>
     <div class="flex items-center gap-2">
       <span id="tts-audio-icon" class="material-symbols-outlined text-outline text-[16px]">volume_up</span>
@@ -188,27 +274,27 @@
   </div>
 
   <!-- Dynamic Chat List Content -->
-  <div id="chat-list-container" class="p-container-padding flex flex-col gap-1.5 max-h-[340px] overflow-y-auto">
+  <div id="chat-list-container" class="flex flex-col max-h-[340px] overflow-y-auto">
     <!-- Default Sample Chat Stream -->
-    <div class="flex items-baseline gap-2">
-      <span class="font-mono-label text-mono-label text-[#ff79c6] shrink-0">CyberElite:</span>
-      <span class="font-body-sm text-on-surface">Dropping elixir like it's hot!</span>
+    <div class="chat-bubble flex items-baseline gap-2">
+      <span class="chat-sender font-mono-label text-xs shrink-0" style="color: #ff79c6">CyberElite:</span>
+      <span class="chat-text font-body-sm text-sm text-on-surface">Dropping elixir like it's hot!</span>
     </div>
-    <div class="flex items-baseline gap-2">
-      <span class="font-mono-label text-mono-label text-[#ffb86c] shrink-0">TrevorKnight45:</span>
-      <span class="font-body-sm text-on-surface">Support the stream with some elixir!</span>
+    <div class="chat-bubble flex items-baseline gap-2">
+      <span class="chat-sender font-mono-label text-xs shrink-0" style="color: #ffb86c">TrevorKnight45:</span>
+      <span class="chat-text font-body-sm text-sm text-on-surface">Support the stream with some elixir!</span>
     </div>
-    <div class="flex items-baseline gap-2">
-      <span class="font-mono-label text-mono-label text-[#ff5555] shrink-0">@Misty:</span>
-      <span class="font-body-sm text-on-surface">you always think that...</span>
+    <div class="chat-bubble flex items-baseline gap-2">
+      <span class="chat-sender font-mono-label text-xs shrink-0" style="color: #ff5555">@Misty:</span>
+      <span class="chat-text font-body-sm text-sm text-on-surface">you always think that...</span>
     </div>
-    <div class="flex items-baseline gap-2">
-      <span class="font-mono-label text-mono-label text-[#8be9fd] shrink-0">RetroGamer:</span>
-      <span class="font-body-sm text-on-surface">Chat moving too fast!</span>
+    <div class="chat-bubble flex items-baseline gap-2">
+      <span class="chat-sender font-mono-label text-xs shrink-0" style="color: #8be9fd">RetroGamer:</span>
+      <span class="chat-text font-body-sm text-sm text-on-surface">Chat moving too fast!</span>
     </div>
-    <div class="flex items-baseline gap-2">
-      <span class="font-mono-label text-mono-label text-[#f1fa8c] shrink-0">RealTimeTweets24:</span>
-      <span class="font-body-sm text-on-surface">Who else is glued to their screen right now?</span>
+    <div class="chat-bubble flex items-baseline gap-2">
+      <span class="chat-sender font-mono-label text-xs shrink-0" style="color: #f1fa8c">RealTimeTweets24:</span>
+      <span class="chat-text font-body-sm text-sm text-on-surface">Who else is glued to their screen right now?</span>
     </div>
   </div>
 </div>
@@ -221,21 +307,48 @@
   </button>
 </div>
 
-<audio id="tts-audio-player" preload="auto"></audio>
+<audio id="tts-audio-player" preload="auto" crossorigin="anonymous"></audio>
 
 <script>
   const urlParams = new URLSearchParams(window.location.search);
   const isPreview = urlParams.get('preview') === 'true';
   const bodyEl = document.getElementById('body-el');
+  const widgetEl = document.getElementById('tts-widget');
   const chatContainer = document.getElementById('chat-list-container');
   const ttsAudio = document.getElementById('tts-audio-player');
   const audioIcon = document.getElementById('tts-audio-icon');
   const statusBadge = document.getElementById('tts-status-badge');
+  const themeBadge = document.getElementById('tts-theme-badge');
   const waveBars = document.querySelectorAll('.wave-bar');
+  const unlockBanner = document.getElementById('tts-audio-unlock-banner');
 
   if (isPreview) {
     bodyEl.className = 'preview-mode';
   }
+
+  // Theme resolution (Query Parameter overrides server setting)
+  const explicitThemeParam = urlParams.get('theme') || urlParams.get('style');
+  const isExplicitTransparent = explicitThemeParam === 'transparent' || urlParams.get('transparent') === 'true';
+  const isExplicitSolid = explicitThemeParam === 'solid' || explicitThemeParam === 'opaque';
+
+  let currentTheme = isExplicitTransparent ? 'transparent' : (isExplicitSolid ? 'solid' : 'solid');
+
+  function applyTheme(themeName) {
+    currentTheme = (themeName === 'transparent') ? 'transparent' : 'solid';
+    if (widgetEl) {
+      if (currentTheme === 'transparent') {
+        widgetEl.classList.remove('theme-solid');
+        widgetEl.classList.add('theme-transparent');
+        if (themeBadge) themeBadge.innerText = 'โปร่งใส';
+      } else {
+        widgetEl.classList.remove('theme-transparent');
+        widgetEl.classList.add('theme-solid');
+        if (themeBadge) themeBadge.innerText = 'ทึบ';
+      }
+    }
+  }
+
+  applyTheme(currentTheme);
 
   const userColors = ['#ff79c6', '#ffb86c', '#ff5555', '#8be9fd', '#f1fa8c', '#50fa7b', '#d0bcff', '#6ffbbe'];
   function getRandomUserColor(sender) {
@@ -246,12 +359,55 @@
 
   let ttsConfig = {
     enabled: true,
+    theme: "solid",
     audio_muted: false,
     speed: "+0%",
     volume: 1.0,
     voice: "th-TH-PremwadeeNeural",
     max_history: 8
   };
+
+  // Web Audio Context & Audio Unlock Engine
+  let audioContext = null;
+  let isAudioUnlocked = false;
+
+  function getAudioContext() {
+    if (!audioContext) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        audioContext = new AudioCtx();
+      }
+    }
+    return audioContext;
+  }
+
+  function unlockAudioManually() {
+    isAudioUnlocked = true;
+    if (unlockBanner) unlockBanner.classList.add('hidden');
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+    if (ttsAudio) {
+      ttsAudio.play().then(() => {
+        ttsAudio.pause();
+      }).catch(() => {});
+    }
+    if (ttsQueue.length > 0 && !isTTSSpeaking) {
+      processTTSQueue();
+    }
+  }
+
+  window.addEventListener('click', unlockAudioManually, { passive: true });
+  window.addEventListener('pointerdown', unlockAudioManually, { passive: true });
+  window.addEventListener('keydown', unlockAudioManually, { passive: true });
+  window.addEventListener('touchstart', unlockAudioManually, { passive: true });
+
+  function showUnlockBanner() {
+    if (!isAudioUnlocked && unlockBanner) {
+      unlockBanner.classList.remove('hidden');
+    }
+  }
 
   function setSpeakingAnimation(isSpeaking) {
     waveBars.forEach(bar => {
@@ -268,10 +424,10 @@
   function appendChatMessage(sender, text) {
     const color = getRandomUserColor(sender);
     const div = document.createElement('div');
-    div.className = 'flex items-baseline gap-2 animate-slide-up-fade';
+    div.className = 'chat-bubble flex items-baseline gap-2 animate-slide-up-fade';
     div.innerHTML = `
-      <span class="font-mono-label text-mono-label shrink-0" style="color: ${color}">${sender}:</span>
-      <span class="font-body-sm text-on-surface">${text}</span>
+      <span class="chat-sender font-mono-label text-xs shrink-0" style="color: ${color}">${escapeHtml(sender)}:</span>
+      <span class="chat-text font-body-sm text-sm text-on-surface">${escapeHtml(text)}</span>
     `;
     chatContainer.appendChild(div);
 
@@ -282,8 +438,15 @@
     chatContainer.scrollTop = chatContainer.scrollHeight;
   }
 
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.innerText = str || '';
+    return div.innerHTML;
+  }
+
   const ttsQueue = [];
   let isTTSSpeaking = false;
+  let audioWatchdogTimer = null;
 
   const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
   const ws = new WebSocket(WS_URL);
@@ -311,28 +474,34 @@
 
   function hideTTSWidget(stopAudio = false) {
     isWidgetVisible = false;
-    const widget = document.getElementById('tts-widget');
-    if (widget) widget.classList.add('widget-hidden');
+    if (widgetEl) widgetEl.classList.add('widget-hidden');
     const reopen = document.getElementById('tts-reopen-container');
     if (reopen) reopen.classList.remove('hidden');
 
     if (stopAudio) {
-      if (ttsAudio) {
-        ttsAudio.pause();
-        ttsAudio.currentTime = 0;
-      }
-      ttsQueue.length = 0;
-      isTTSSpeaking = false;
-      setSpeakingAnimation(false);
+      stopCurrentAudio();
     }
   }
 
   function showTTSWidget() {
     isWidgetVisible = true;
-    const widget = document.getElementById('tts-widget');
-    if (widget) widget.classList.remove('widget-hidden');
+    if (widgetEl) widgetEl.classList.remove('widget-hidden');
     const reopen = document.getElementById('tts-reopen-container');
     if (reopen) reopen.classList.add('hidden');
+  }
+
+  function stopCurrentAudio() {
+    if (audioWatchdogTimer) {
+      clearTimeout(audioWatchdogTimer);
+      audioWatchdogTimer = null;
+    }
+    if (ttsAudio) {
+      ttsAudio.pause();
+      ttsAudio.currentTime = 0;
+    }
+    ttsQueue.length = 0;
+    isTTSSpeaking = false;
+    setSpeakingAnimation(false);
   }
 
   ws.onmessage = (event) => {
@@ -345,6 +514,9 @@
       if (data.type === 'init' && data.config) {
         if (data.config.tts_config) {
           ttsConfig = { ...ttsConfig, ...data.config.tts_config };
+          if (!explicitThemeParam && ttsConfig.theme) {
+            applyTheme(ttsConfig.theme);
+          }
           updateAudioState();
         }
         if (data.config.widgets_visibility && data.config.widgets_visibility.tts !== undefined) {
@@ -354,6 +526,9 @@
       } else if (data.type === 'config_updated' && data.config) {
         if (data.config.tts_config) {
           ttsConfig = { ...ttsConfig, ...data.config.tts_config };
+          if (!explicitThemeParam && ttsConfig.theme) {
+            applyTheme(ttsConfig.theme);
+          }
           updateAudioState();
         }
         if (data.config.widgets_visibility && data.config.widgets_visibility.tts !== undefined) {
@@ -372,13 +547,7 @@
           if (!isTTSSpeaking) processTTSQueue();
         }
       } else if (data.type === 'stop_audio') {
-        ttsQueue.length = 0;
-        if (ttsAudio) {
-          ttsAudio.pause();
-          ttsAudio.currentTime = 0;
-        }
-        isTTSSpeaking = false;
-        setSpeakingAnimation(false);
+        stopCurrentAudio();
       }
     } catch(e) {}
   };
@@ -396,7 +565,34 @@
       statusBadge.classList.add("text-primary");
     }
     if (ttsAudio) {
-      ttsAudio.volume = ttsConfig.volume !== undefined ? ttsConfig.volume : 1.0;
+      ttsAudio.volume = ttsConfig.volume !== undefined ? Math.max(0, Math.min(1, parseFloat(ttsConfig.volume))) : 1.0;
+    }
+  }
+
+  // Play audio via Web Audio API buffer as fallback in CEF / TikTok LIVE Studio
+  async function playWithWebAudioFallback(audioUrl, onComplete) {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) { onComplete(); return; }
+      if (ctx.state === 'suspended') {
+        await ctx.resume();
+      }
+      const resp = await fetch(audioUrl);
+      const arrayBuf = await resp.arrayBuffer();
+      const decoded = await ctx.decodeAudioData(arrayBuf);
+      const source = ctx.createBufferSource();
+      source.buffer = decoded;
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = ttsConfig.volume !== undefined ? Math.max(0, Math.min(1, parseFloat(ttsConfig.volume))) : 1.0;
+      source.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      source.onended = onComplete;
+      source.start(0);
+      isAudioUnlocked = true;
+      if (unlockBanner) unlockBanner.classList.add('hidden');
+    } catch (err) {
+      console.warn('[TTS] WebAudio playback failed:', err);
+      onComplete();
     }
   }
 
@@ -423,30 +619,53 @@
     const voice = ttsConfig.voice || "th-TH-PremwadeeNeural";
     const audioUrl = `/api/tts?text=${encodeURIComponent(current.text)}&voice=${encodeURIComponent(voice)}&speed=${encodeURIComponent(speed)}`;
     
+    if (audioWatchdogTimer) {
+      clearTimeout(audioWatchdogTimer);
+      audioWatchdogTimer = null;
+    }
+
+    const finishStep = () => {
+      if (audioWatchdogTimer) {
+        clearTimeout(audioWatchdogTimer);
+        audioWatchdogTimer = null;
+      }
+      setSpeakingAnimation(false);
+      setTimeout(processTTSQueue, 250);
+    };
+
+    // Safety watchdog: advance queue after 15s if audio is stalled
+    audioWatchdogTimer = setTimeout(() => {
+      console.warn('[TTS] Audio playback watchdog timeout reached for:', current.text);
+      finishStep();
+    }, 15000);
+
     ttsAudio.src = audioUrl;
-    ttsAudio.volume = ttsConfig.volume !== undefined ? ttsConfig.volume : 1.0;
+    ttsAudio.volume = ttsConfig.volume !== undefined ? Math.max(0, Math.min(1, parseFloat(ttsConfig.volume))) : 1.0;
 
     ttsAudio.play().then(() => {
-      ttsAudio.onended = () => {
-        setSpeakingAnimation(false);
-        setTimeout(processTTSQueue, 300);
-      };
-      ttsAudio.onerror = () => {
-        setSpeakingAnimation(false);
-        setTimeout(processTTSQueue, 300);
+      isAudioUnlocked = true;
+      if (unlockBanner) unlockBanner.classList.add('hidden');
+      ttsAudio.onended = finishStep;
+      ttsAudio.onerror = (e) => {
+        console.warn('[TTS] HTML5 Audio error, attempting WebAudio fallback:', e);
+        playWithWebAudioFallback(audioUrl, finishStep);
       };
     }).catch(err => {
-      setSpeakingAnimation(false);
-      setTimeout(processTTSQueue, 1500);
+      console.warn('[TTS] Audio play() rejected:', err);
+      if (err.name === 'NotAllowedError') {
+        showUnlockBanner();
+      }
+      // Attempt Web Audio API fallback
+      playWithWebAudioFallback(audioUrl, finishStep);
     });
   }
 
   const demoParam = urlParams.get('demo');
   if (demoParam === 'thai' || demoParam === 'speaking') {
     chatContainer.innerHTML = '';
-    appendChatMessage('น้องแพรว', 'สวัสดีครับคุณสตรีมเมอร์ ยินดีที่ได้รู้จักครับ! ');
-    appendChatMessage('DJ_Kaneo', 'ขอเพลงเพราะๆ สัก 1 เพลงได้ไหมครับ ');
-    appendChatMessage('น้องบ็อบ', 'สวัสดีครับคุณสตรีมเมอร์ สู้ๆ นะครับเป็นกำลังใจให้เสมอเลย ');
+    appendChatMessage('น้องแพรว', 'สวัสดีครับคุณสตรีมเมอร์ ยินดีที่ได้รู้จักครับ');
+    appendChatMessage('DJ_Kaneo', 'ขอเพลงเพราะๆ สัก 1 เพลงได้ไหมครับ');
+    appendChatMessage('น้องบ็อบ', 'สวัสดีครับคุณสตรีมเมอร์ สู้ๆ นะครับเป็นกำลังใจให้เสมอเลย');
     if (demoParam === 'speaking') {
       setSpeakingAnimation(true);
     }

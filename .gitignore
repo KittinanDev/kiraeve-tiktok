@@ -21,3 +21,6 @@ python_embed.zip
 server.exe
 server.spec
 get-pip.py
+media/tts_cache/
+media/avatars/
+media/test_tts.mp3
