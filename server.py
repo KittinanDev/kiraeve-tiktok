@@ -2384,7 +2384,6 @@ async def handle_connect_tiktok(request: web.Request) -> web.Response:
         log.info("Connecting to real TikTok LIVE for @%s...", username)
         await spawn_tiktok_process(username)
         await broadcast({"type": "tiktok_status_update", "connection": tiktok_connection_state})
-        await broadcast({"type": "refresh_overlays"})
         return web.json_response({
             "ok": True,
             "message": f"Connecting to TikTok LIVE (@{username})...",
@@ -2421,7 +2420,6 @@ async def handle_tiktok_event(request: web.Request) -> web.Response:
             tiktok_connection_state["status"] = "connected"
             tiktok_connection_state["room_id"] = data.get("roomId")
             await broadcast({"type": "tiktok_status_update", "connection": tiktok_connection_state})
-            await broadcast({"type": "refresh_overlays"})
             return web.json_response({"ok": True})
 
         elif event_type == "live_error":

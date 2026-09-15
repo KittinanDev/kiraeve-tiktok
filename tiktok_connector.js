@@ -517,13 +517,30 @@ async function tryConnect() {
             }
         });
 
+        let pendingLikeBatch = null;
+        let likeBatchTimer = null;
+
         tiktokLiveConnection.on('like', data => {
             const sender = data.uniqueId || data.nickname || (data.user && data.user.uniqueId) || 'Anonymous';
-            postEventToServer('like', {
-                sender: sender,
-                likeCount: data.likeCount,
-                totalLikes: data.totalLikeCount
-            });
+            const count = parseInt(data.likeCount || 1, 10);
+            const total = parseInt(data.totalLikeCount || 0, 10);
+
+            if (!pendingLikeBatch) {
+                pendingLikeBatch = { sender, likeCount: 0, totalLikes: total };
+            }
+            pendingLikeBatch.sender = sender;
+            pendingLikeBatch.likeCount += count;
+            pendingLikeBatch.totalLikes = total;
+
+            if (!likeBatchTimer) {
+                likeBatchTimer = setTimeout(() => {
+                    if (pendingLikeBatch) {
+                        postEventToServer('like', pendingLikeBatch);
+                        pendingLikeBatch = null;
+                    }
+                    likeBatchTimer = null;
+                }, 1000);
+            }
         });
 
         tiktokLiveConnection.on('streamEnd', action => {

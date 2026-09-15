@@ -724,7 +724,7 @@ tailwind.config = {
           </div>
           <!-- Live Status Pill -->
           <div id="tiktok-status-pill" class="flex items-center gap-2 bg-red-500/10 border border-red-500/30 px-3 py-1.5 rounded-full text-xs font-bold text-red-400 shadow">
-            <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+            <span id="tiktok-status-dot" class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
             <span id="tiktok-status-text">DISCONNECTED</span>
           </div>
         </div>
@@ -3280,12 +3280,37 @@ tailwind.config = {
     document.getElementById('breadcrumb-sub').innerText = info.sub;
   }
 
+  const logQueue = [];
+  let logFlushRequested = false;
+  const MAX_LOG_LINES = 250;
+
   function appendLog(msg) {
-    const box = document.getElementById('log-box');
-    if (box) {
-      box.innerText += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
-      box.scrollTop = box.scrollHeight;
+    const timeStr = new Date().toLocaleTimeString();
+    logQueue.push(`[${timeStr}] ${msg}`);
+    if (logQueue.length > MAX_LOG_LINES * 2) {
+      logQueue.splice(0, logQueue.length - MAX_LOG_LINES);
     }
+    if (!logFlushRequested) {
+      logFlushRequested = true;
+      requestAnimationFrame(flushLogQueue);
+    }
+  }
+
+  function flushLogQueue() {
+    logFlushRequested = false;
+    const box = document.getElementById('log-box');
+    if (!box || logQueue.length === 0) return;
+    const existing = box.textContent || '';
+    const lines = existing ? existing.split('\n') : [];
+    if (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+    while (logQueue.length > 0) {
+      lines.push(logQueue.shift());
+    }
+    if (lines.length > MAX_LOG_LINES) {
+      lines.splice(0, lines.length - MAX_LOG_LINES);
+    }
+    box.textContent = lines.join('\n') + '\n';
+    box.scrollTop = box.scrollHeight;
   }
 
   function copyToClipboard(text) {
@@ -4683,6 +4708,7 @@ tailwind.config = {
   function updateTikTokConnectionUI(conn) {
     if (!conn) return;
     const pill = document.getElementById('tiktok-status-pill');
+    const dotEl = document.getElementById('tiktok-status-dot');
     const textEl = document.getElementById('tiktok-status-text');
     const btnConn = document.getElementById('btn-tiktok-connect');
     const btnDis = document.getElementById('btn-tiktok-disconnect');
@@ -4692,32 +4718,38 @@ tailwind.config = {
     }
 
     if (conn.status === 'connected') {
-      if (pill) pill.className = 'flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-full text-xs font-bold text-emerald-400 shadow animate-pulse';
+      if (pill) pill.className = 'flex items-center gap-2 bg-emerald-500/20 border border-emerald-500/40 px-3 py-1.5 rounded-full text-xs font-bold text-emerald-300 shadow';
+      if (dotEl) dotEl.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]';
       if (textEl) textEl.innerText = `CONNECTED (@${conn.username}) Room: ${conn.room_id || 'LIVE'}`;
       if (btnConn) btnConn.classList.add('hidden');
       if (btnDis) btnDis.classList.remove('hidden');
     } else if (conn.status === 'connecting') {
-      if (pill) pill.className = 'flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-full text-xs font-bold text-amber-400 shadow animate-pulse';
+      if (pill) pill.className = 'flex items-center gap-2 bg-amber-500/20 border border-amber-500/40 px-3 py-1.5 rounded-full text-xs font-bold text-amber-300 shadow animate-pulse';
+      if (dotEl) dotEl.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping';
       if (textEl) textEl.innerText = `CONNECTING TO @${conn.username}...`;
       if (btnConn) btnConn.classList.add('hidden');
       if (btnDis) btnDis.classList.remove('hidden');
     } else if (conn.status === 'waiting_for_live') {
-      if (pill) pill.className = 'flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-full text-xs font-bold text-amber-400 shadow animate-pulse';
+      if (pill) pill.className = 'flex items-center gap-2 bg-amber-500/20 border border-amber-500/40 px-3 py-1.5 rounded-full text-xs font-bold text-amber-300 shadow';
+      if (dotEl) dotEl.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
       if (textEl) textEl.innerText = `WAITING FOR LIVE (@${conn.username}) — Auto-polling (จะเชื่อมต่อให้อัตโนมัติเมื่อเริ่มไลฟ์สด)`;
       if (btnConn) btnConn.classList.add('hidden');
       if (btnDis) btnDis.classList.remove('hidden');
     } else if (conn.status === 'error') {
-      if (pill) pill.className = 'flex items-center gap-2 bg-red-500/10 border border-red-500/30 px-3 py-1.5 rounded-full text-xs font-bold text-red-400 shadow';
+      if (pill) pill.className = 'flex items-center gap-2 bg-red-500/20 border border-red-500/40 px-3 py-1.5 rounded-full text-xs font-bold text-red-400 shadow';
+      if (dotEl) dotEl.className = 'w-2.5 h-2.5 rounded-full bg-red-500';
       if (textEl) textEl.innerText = `CONNECTION ERROR: ${conn.error || 'Check username'}`;
       if (btnConn) btnConn.classList.remove('hidden');
       if (btnDis) btnDis.classList.add('hidden');
     } else if (conn.status === 'stream_end') {
-      if (pill) pill.className = 'flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 px-3 py-1.5 rounded-full text-xs font-bold text-purple-400 shadow';
+      if (pill) pill.className = 'flex items-center gap-2 bg-purple-500/20 border border-purple-500/40 px-3 py-1.5 rounded-full text-xs font-bold text-purple-400 shadow';
+      if (dotEl) dotEl.className = 'w-2.5 h-2.5 rounded-full bg-purple-400';
       if (textEl) textEl.innerText = `STREAM ENDED (@${conn.username})`;
       if (btnConn) btnConn.classList.remove('hidden');
       if (btnDis) btnDis.classList.add('hidden');
     } else {
-      if (pill) pill.className = 'flex items-center gap-2 bg-red-500/10 border border-red-500/30 px-3 py-1.5 rounded-full text-xs font-bold text-red-400 shadow';
+      if (pill) pill.className = 'flex items-center gap-2 bg-red-500/20 border border-red-500/40 px-3 py-1.5 rounded-full text-xs font-bold text-red-400 shadow';
+      if (dotEl) dotEl.className = 'w-2.5 h-2.5 rounded-full bg-red-500';
       if (textEl) textEl.innerText = `DISCONNECTED`;
       if (btnConn) btnConn.classList.remove('hidden');
       if (btnDis) btnDis.classList.add('hidden');

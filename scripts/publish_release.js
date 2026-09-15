@@ -7,13 +7,31 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const crypto = require('crypto');
 
 const rootDir = path.resolve(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf-8'));
 const version = pkg.version;
 const tag = `v${version}`;
+const distDir = path.join(rootDir, 'dist');
+const singleOutputDir = path.join(distDir, 'Single-File-For-Customer');
 
-console.log(`[Release Publisher] Starting automated release for ${tag}...`);
+console.log(`\n=======================================================`);
+console.log(`[Release Publisher] Building & Publishing ${tag}...`);
+console.log(`=======================================================\n`);
+
+// Step 0: Clean old builds in dist to eliminate multiple old files
+if (fs.existsSync(distDir)) {
+    console.log('[Release Publisher] Step 0: Cleaning old build files in dist/ to keep directory clean...');
+    const existing = fs.readdirSync(distDir);
+    for (const f of existing) {
+        if (f.endsWith('.exe') || f.endsWith('.blockmap') || f.endsWith('.yml')) {
+            try {
+                fs.unlinkSync(path.join(distDir, f));
+            } catch (_) {}
+        }
+    }
+}
 
 // Step 1: Ensure dist directory exists and build Windows target
 console.log('[Release Publisher] Step 1: Building with electron-builder...');
@@ -51,27 +69,36 @@ if (fs.existsSync(spaceBlockmap)) {
 }
 
 // Step 3.5: Cryptographic checksum validation against latest.yml
-const crypto = require('crypto');
-const dashHash = crypto.createHash('sha512').update(fs.readFileSync(dashExe)).digest('base64');
-console.log(`[Release Publisher] Calculated sha512 for ${path.basename(dashExe)}:\n  ${dashHash}`);
+const primaryExe = fs.existsSync(dashExe) ? dashExe : spaceExe;
+const fileHash = crypto.createHash('sha512').update(fs.readFileSync(primaryExe)).digest('base64');
+console.log(`[Release Publisher] Calculated sha512 for ${path.basename(primaryExe)}:\n  ${fileHash}`);
 
-if (!latestYmlContent.includes(dashHash)) {
-    console.error(`[CRITICAL ERROR] sha512 mismatch! latest.yml does not match ${path.basename(dashExe)}!`);
+if (!latestYmlContent.includes(fileHash)) {
+    console.error(`[CRITICAL ERROR] sha512 mismatch! latest.yml does not match ${path.basename(primaryExe)}!`);
     process.exit(1);
 }
 console.log('[Release Publisher] Verified sha512 checksum matches latest.yml 100%!');
 
-// Step 4: Collect assets to upload
+// Step 4: Create single-file folder for user to send directly to customer
+if (!fs.existsSync(singleOutputDir)) {
+    fs.mkdirSync(singleOutputDir, { recursive: true });
+}
+const customerFile = path.join(singleOutputDir, `Kiraeve-TikTok-Setup-${version}.exe`);
+fs.copyFileSync(primaryExe, customerFile);
+console.log(`\n[Release Publisher] Isolated single customer file ready:`);
+console.log(`  -> ${customerFile}\n`);
+
+// Step 5: Collect assets to upload
 const assetsToUpload = [latestYmlPath];
 if (fs.existsSync(dashExe)) assetsToUpload.push(dashExe);
 if (fs.existsSync(spaceExe)) assetsToUpload.push(spaceExe);
 if (fs.existsSync(dashBlockmap)) assetsToUpload.push(dashBlockmap);
 if (fs.existsSync(spaceBlockmap)) assetsToUpload.push(spaceBlockmap);
 
-console.log(`[Release Publisher] Step 4: Assets to upload (${assetsToUpload.length} files):`);
+console.log(`[Release Publisher] Step 5: Assets to upload (${assetsToUpload.length} files):`);
 assetsToUpload.forEach(a => console.log('  - ' + path.basename(a)));
 
-// Step 5: Check if GitHub release tag exists
+// Step 6: Check if GitHub release tag exists
 let releaseExists = false;
 try {
     execSync(`gh release view ${tag}`, { cwd: rootDir, stdio: 'ignore' });
@@ -80,27 +107,26 @@ try {
     releaseExists = false;
 }
 
+const filesArgs = assetsToUpload.map(f => `"${f}"`).join(' ');
 if (!releaseExists) {
-    console.log(`[Release Publisher] Step 4: Creating GitHub release ${tag}...`);
-    const filesArgs = assetsToUpload.map(f => `"${f}"`).join(' ');
-    execSync(`gh release create ${tag} ${filesArgs} --title "${tag} - Kiraeve TikTok" --notes "Release ${tag}"`, {
+    console.log(`[Release Publisher] Step 6: Creating GitHub release ${tag}...`);
+    execSync(`gh release create ${tag} ${filesArgs} --title "${tag} - Kiraeve TikTok" --notes "Release ${tag}: Fix TikTok LIVE connection freeze, remove flickering, and optimize event handling."`, {
         cwd: rootDir,
         stdio: 'inherit'
     });
 } else {
-    console.log(`[Release Publisher] Step 4: Release ${tag} exists. Uploading/clobbering assets...`);
-    const filesArgs = assetsToUpload.map(f => `"${f}"`).join(' ');
+    console.log(`[Release Publisher] Step 6: Release ${tag} exists. Uploading/clobbering assets...`);
     execSync(`gh release upload ${tag} ${filesArgs} --clobber`, {
         cwd: rootDir,
         stdio: 'inherit'
     });
 }
 
-// Step 6: Verify latest.yml on GitHub Releases with HTTP GET
-console.log('[Release Publisher] Step 5: Verifying latest.yml on GitHub...');
+// Step 7: Verify latest.yml on GitHub Releases with HTTP GET
+console.log('[Release Publisher] Step 7: Verifying latest.yml on GitHub for in-app Auto-Updater...');
 const checkUrl = `https://github.com/KittinanDev/kiraeve-tiktok/releases/download/${tag}/latest.yml`;
 
-function verifyOnlineYml(retries = 5) {
+function verifyOnlineYml(retries = 6) {
     return new Promise((resolve, reject) => {
         const attempt = (left) => {
             https.get(checkUrl, { headers: { 'User-Agent': 'Kiraeve-Release-Verifier' } }, (res) => {
@@ -128,6 +154,8 @@ function verifyOnlineYml(retries = 5) {
 verifyOnlineYml().then(() => {
     console.log(`\n=======================================================`);
     console.log(`[RELEASE SUCCESS] ${tag} published with verified latest.yml!`);
+    console.log(`[READY TO SEND] ไฟล์ตัวติดตั้งตัวเดียวสำหรับส่งให้ลูกค้า:`);
+    console.log(`  -> ${customerFile}`);
     console.log(`=======================================================\n`);
     process.exit(0);
 }).catch((err) => {

@@ -6,6 +6,8 @@ const fs = require("fs");
 
 // อนุญาตให้เล่นเสียง Audio/TTS อัตโนมัติใน Electron โดยไม่ต้องรอ User Gesture
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
+// ป้องกันปัญหาหน้าต่างกระพริบ (Flickering / Stuttering) บนการ์ดจอ Windows บางรุ่น
+app.commandLine.appendSwitch("disable-gpu-compositing");
 
 // ============================================================
 // Single Instance Lock (ป้องกันการเปิดโปรแกรมซ้อนกันหลายตัว)
